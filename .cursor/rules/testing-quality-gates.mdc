@@ -1,0 +1,32 @@
+---
+description: Red / yellow / green quality gates for agent-delivered work before merge
+alwaysApply: true
+---
+
+Use these gates for **every** task before marking it done or requesting merge. State the gate in the Task Log / PR description in one line.
+
+## Green — ship-ready
+
+- **Scope**: Implements only what the task asked; no unrelated refactors.
+- **Tests**: New logic covered by **unit or integration tests** where failure would hurt users or data; existing tests pass (`pnpm test` / `npm test` as configured).
+- **Types & lint**: Typecheck and lint pass with **no new** errors (fix or explicitly justify in task notes).
+- **Migrations**: If schema changed, migration is **reversible** or documented, and applied cleanly on a fresh DB.
+- **Manual smoke** (when UI/API): happy path verified locally or noted with clear steps.
+
+## Yellow — merge with explicit follow-up
+
+- Use when **timeboxed MVP** requires shipping but debt remains.
+- Requirements: list **concrete** follow-ups (issue links or backlog IDs), **risk** (who/what is affected), and **expiry** (e.g. “before next release”).
+- Never yellow for **security** or **data loss** issues — those stay **red** until fixed.
+
+## Red — do not merge
+
+- Secrets in code, logs, or repo.
+- Skipping validation on auth, payment, or webhook endpoints.
+- Failing typecheck/lint/test without agreement.
+- Schema or API changes **without** migration or contract update when the rest of the app depends on them.
+- “Works on my machine” with no reproducible steps and no tests for critical paths.
+
+## Agent habit
+
+After implementation, run the **narrowest** test command for the touched area (single test file or `pnpm test path`), then widen if green. Prefer fixing failures over silencing linters.

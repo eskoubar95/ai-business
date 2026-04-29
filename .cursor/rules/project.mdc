@@ -1,0 +1,28 @@
+---
+description: AI Business Platform — product scope, MVP boundaries, and what the codebase is responsible for
+alwaysApply: true
+---
+
+## What this project is
+
+**AI Business Platform** — an orchestration “cockpit” for AI-driven businesses and teams: humans **curate and approve**; **Cursor CLI** (MVP) runs agents **locally**. This repo is **not** an LLM host, not a replacement for Cursor or Notion, and not the execution engine.
+
+## First use case
+
+**MercFlow** (AI coding factory) is **use case #1**: model it as a **business** on the platform. Avoid baking “MercFlow” as special-case logic across the core domain when `businesses` + configuration is enough.
+
+## MVP pillars (what we build)
+
+- **Grill-Me** onboarding → structured **business memory** (markdown) for injection into runs.
+- **Agent roster** (not hardcoded): name, role, instructions, heartbeat template, MCP metadata, execution environment.
+- **Teams** with a **lead agent** (PRD → sprint brief → task distribution).
+- **Webhooks** to orchestrate *when* things run; **approval** UI (approve / reject + comment); **agent status** (idle / working / awaiting approval).
+- **Persistent memory** (markdown in the database, PARA-style where applicable).
+- **Notion** as source of truth for backlog / PRD / sprint / changelog — integrate via **server-side API** in the app (IDE MCP is for development only).
+
+## Boundaries
+
+- **Notion** stays the external SoT; the DB holds orchestration state, memory, and integration metadata (e.g. Notion IDs per business).
+- **Webhooks** signal work; a **local runner** (or dedicated worker) invokes **Cursor CLI** — do not rely on short-lived serverless handlers to run long agent jobs without an explicit async/worker design.
+
+For **PostgreSQL on Neon**, table layout, and migration rules, see `database-architecture.mdc`.

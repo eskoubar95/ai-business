@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "hooks": {
+    "subagentStop": [
+      {
+        "type": "prompt",
+        "prompt": "A Worker sub-agent just completed. Read .apm/bus/*/report.md for any new report, update .apm/tracker.md Task status, assess what Tasks are now ready, and dispatch the next one. If the project is complete or awaiting human approval, summarize and pause.",
+        "timeout": 30
+      }
+    ]
+  }
+}

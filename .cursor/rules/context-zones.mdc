@@ -1,0 +1,23 @@
+---
+description: Smart vs dumb context — keep agent focus small and avoid blowing the context window
+alwaysApply: true
+---
+
+## Smart zone (load, edit, reason here)
+
+- The **current task**: acceptance criteria, file paths the Task Prompt names, and **only** the modules those paths depend on.
+- **Contracts**: shared types (`types/`, `schema/`), public API of a service you call, env **names** (not values).
+- **Entry points**: `app/` route segments, one level of colocated components, the specific hook or service under change.
+
+## Dumb zone (avoid loading into context unless necessary)
+
+- **Generated output**: build dirs, lockfile bodies, huge `node_modules`, coverage HTML, `.next/`.
+- **Bulk data**: full migration history, entire schema dumps, large fixtures, log files, CSV/JSON blobs.
+- **Noise**: minified assets, unrelated feature folders, “read the whole repo” scans.
+
+## Working rules
+
+1. **Prefer targeted reads** — open the smallest file set that answers the question; use search/grep for symbols instead of reading whole trees.
+2. **Summarize externally** — if you must understand a large area, read in chunks; keep **working notes** in the Task Log or a short scratch file, not by pasting huge file contents into chat.
+3. **Sub-agents for exploration** — use `explore` (or narrow `generalPurpose`) sub-agents for broad codebase search; keep the parent thread for integration decisions and edits.
+4. **Stop when scope creeps** — if the task needs more than ~3–5 new files or a cross-cutting refactor, **pause** and split the work or ask for a scope decision instead of absorbing half the codebase into context.

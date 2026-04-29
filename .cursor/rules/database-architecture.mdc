@@ -1,0 +1,35 @@
+---
+description: PostgreSQL on Neon — connections, migrations, and core schema for AI Business Platform
+alwaysApply: true
+---
+
+## Neon and connectivity
+
+- **Neon** is the managed PostgreSQL target. Connection string only via environment (e.g. `DATABASE_URL`). Never commit real credentials.
+- Use Neon’s **pooled** connection string for **serverless** app runtimes; use a **direct** (non-pooled) URL only when a migration tool explicitly requires it.
+- **ORM:** Use **Drizzle ORM** for schema and queries. Use **`@neondatabase/serverless`** with Drizzle’s Neon HTTP driver for serverless runtimes; use a **direct** connection only for `drizzle-kit` migrations when required.
+- **Migrations** define schema truth; run them in CI and locally before merging schema changes.
+- Use **short transactions** for invariants that touch multiple rows (e.g. approval + status + event row).
+
+## Core entities (tables / domains)
+
+Design around these; add tables only with a **one-line rationale** in the PR or migration.
+
+| Area | Purpose |
+|------|--------|
+| **businesses** | Tenant / company; anchor for onboarding, memory, agents, teams. |
+| **memory** | Markdown (e.g. PARA); business-wide and/or per-agent; `updated_at` or version for concurrency. |
+| **agents** | Roster: name, role, instructions (markdown), heartbeat template, MCP allowlist metadata, `execution_env` (MVP: `cursor_cli_local`). |
+| **teams** | Agent groups; **lead_agent_id** for lead flows. |
+| **team_members** | `team_id`, `agent_id`, sort order. |
+| **orchestration** | Events / triggers: type, payload, status, correlation to runs. |
+| **webhook_deliveries** | Audit / retries: target, signature, attempts, errors, **idempotency** key. |
+| **approvals** | Human gate: artifact ref, `pending` / `approved` / `rejected`, comment, timestamps; link to business and/or agent. |
+
+**Agent status** (`idle` / `working` / `awaiting_approval`): either a column on `agents` or derived consistently from events + approvals — **one** approach, same semantics in API and UI.
+
+## Naming and data rules
+
+- Primary keys: **uuid** (or team standard) with **foreign keys** and indexes on common lookup paths.
+- Timestamps: **UTC** `timestamptz` everywhere.
+- **JSON** columns only for bounded, validated payloads (e.g. webhook snapshots, tool allowlists), not for core relations that should be normalized.

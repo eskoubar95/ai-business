@@ -1,0 +1,21 @@
+---
+description: APM Manager dispatches Workers via Cursor Task sub-agents (single chat workflow)
+alwaysApply: true
+---
+
+## Worker dispatch via sub-agents
+
+When the Plan requires dispatching a Task to a Worker, **do not** wait for the user to open a new chat or run worker initiation commands manually.
+
+Instead:
+
+1. Use the **Task** tool with an appropriate `subagent_type` (e.g. `generalPurpose`) and pass the **full self-contained Task Prompt** as the task prompt.
+2. The Worker sub-agent must:
+   - Read its Task Bus file at `.apm/bus/<worker-id>/task.md` for full instructions (as populated by APM).
+   - Execute the task in the repository.
+   - Write the Task Log to the path given in the Task Prompt under `.apm/memory/`.
+   - Write a brief Task Report to `.apm/bus/<worker-id>/report.md`.
+   - Return a **one-paragraph summary** to the parent (Manager).
+3. The Manager reads the returned summary and the report file, updates mental model of project state, and continues orchestration (next Task, follow-up, or human approval gate).
+
+**Planner note:** When creating or updating `AGENTS.md`, **keep this workflow**; do not revert to “user opens a new chat per Worker.”

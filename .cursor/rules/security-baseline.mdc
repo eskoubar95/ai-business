@@ -1,0 +1,33 @@
+---
+description: Security baseline — secrets, server boundaries, webhooks, and common holes to avoid
+alwaysApply: true
+---
+
+## Secrets and config
+
+- **Never** commit secrets, tokens, connection strings, or private keys. Use environment variables and server-only config; document variable **names** in `.env.example` without real values.
+- **Never** log secrets, full cookies, or raw `Authorization` headers. Redact in logs and error messages.
+
+## Server vs client (Next.js)
+
+- **Database and Notion credentials** — only in **server** contexts: Route Handlers, Server Actions, server-only modules. Do not import server secrets into Client Components.
+- **Validate all inbound data** at API boundaries (body, query, headers). Reject unknown fields when strictness helps security.
+- **Authn/authz** — if you add sessions or OAuth later, enforce checks on **every** sensitive route/mutation, not only on UI.
+
+## Webhooks and orchestration
+
+- **Verify** webhook signatures (HMAC or equivalent) before doing work. Use a constant-time compare when checking signatures.
+- **Idempotency** — safe to retry deliveries (dedupe key or idempotency key stored in DB).
+- **Least privilege** — local runners or CLI wrappers should not accept arbitrary shell from webhook payloads; map events to **allowlisted** commands or scripts.
+
+## Common holes to avoid
+
+- SQL injection: use parameterized queries / ORM; never string-concatenate user input into SQL.
+- XSS: prefer React’s escaping; be careful with `dangerouslySetInnerHTML` and markdown rendering without sanitization.
+- CSRF: follow Next.js defaults for mutations; if you use cookie sessions across origins, use explicit CSRF protection.
+- SSRF: do not let user-controlled URLs drive server-side `fetch` without an allowlist.
+- **Dependencies**: prefer well-maintained packages; run `npm audit` / pnpm audit before merging risky upgrades.
+
+## Dependency supply chain
+
+- Pin major tooling versions in lockfile; review lockfile changes in PRs that touch dependencies.
