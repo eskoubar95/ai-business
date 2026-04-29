@@ -1,5 +1,5 @@
 ---
-title: <Project Name>
+title: AI Business Platform
 ---
 
 # APM Memory Index

@@ -58,6 +58,11 @@ APM_RULES {
 - Use Conventional Commits for all commit messages: `feat:`, `fix:`, `chore:`, `test:`, `docs:`, `refactor:`. Example: `feat: add agent CRUD server actions`.
 - Keep commits focused — one logical change per commit. Do not bundle unrelated changes.
 
+## Version control (APM)
+
+- Base branch: `main`. Create one feature branch per dispatch unit; use descriptive kebab-case names that reflect the work (do not embed APM Task IDs or Stage numbers in branch names).
+- All implementation commits for the assigned unit go on that branch only; do not merge—leave merge coordination to the Manager.
+
 ## Code Language
 
 - All code, comments, variable names, function names, file names, and inline documentation must be written in English.
