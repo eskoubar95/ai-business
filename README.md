@@ -12,7 +12,7 @@ Agentic development setup using **APM** (Agentic Project Management) with **Curs
 
 - **Next.js 15** (App Router, TypeScript, Turbopack dev).
 - **Drizzle ORM** + **drizzle-kit** for schema and migrations.
-- **Neon** via `@neondatabase/serverless` and `drizzle-orm/neon-http` (see [`db/index.ts`](db/index.ts) — server-only).
+- **Neon** via `@neondatabase/serverless` and `drizzle-orm/neon-http` (see `[db/index.ts](db/index.ts)` — server-only).
 
 ```bash
 cp .env.example .env
@@ -24,14 +24,16 @@ npm run dev
 
 Database scripts:
 
-| Script | Purpose |
-|--------|--------|
-| `npm run db:generate` | Generate SQL from `db/schema.ts` |
-| `npm run db:migrate` | Apply migrations (needs `DATABASE_URL`) |
-| `npm run db:push` | Push schema to DB (dev convenience) |
-| `npm run db:studio` | Open Drizzle Studio |
 
-Initial schema: [`db/schema.ts`](db/schema.ts) includes a starter **`businesses`** table; SQL is under [`drizzle/`](drizzle/).
+| Script                | Purpose                                 |
+| --------------------- | --------------------------------------- |
+| `npm run db:generate` | Generate SQL from `db/schema.ts`        |
+| `npm run db:migrate`  | Apply migrations (needs `DATABASE_URL`) |
+| `npm run db:push`     | Push schema to DB (dev convenience)     |
+| `npm run db:studio`   | Open Drizzle Studio                     |
+
+
+Initial schema: `[db/schema.ts](db/schema.ts)` includes a starter `**businesses**` table; SQL is under `[drizzle/](drizzle/)`.
 
 ## One-time: APM init (already done in this repo)
 
@@ -69,14 +71,16 @@ Reload hooks: save `hooks.json` or restart Cursor. Use **Hooks** in settings / o
 
 ## Agent skills (project)
 
-Installed under [`.agents/skills/`](.agents/skills/) via `npx skills add … -y`:
+Installed under `[.agents/skills/](.agents/skills/)` via `npx skills add … -y`:
 
-| Skill | Source |
-|--------|--------|
-| `vercel-react-best-practices` | `vercel-labs/agent-skills@vercel-react-best-practices` |
-| `playwright-best-practices` | `currents-dev/playwright-best-practices-skill@playwright-best-practices` |
-| `notion-api` | `intellectronica/agent-skills@notion-api` |
-| `postgres-drizzle` | `ccheney/robust-skills@postgres-drizzle` (Drizzle + Postgres; Neon-compatible) |
+
+| Skill                         | Source                                                                         |
+| ----------------------------- | ------------------------------------------------------------------------------ |
+| `vercel-react-best-practices` | `vercel-labs/agent-skills@vercel-react-best-practices`                         |
+| `playwright-best-practices`   | `currents-dev/playwright-best-practices-skill@playwright-best-practices`       |
+| `notion-api`                  | `intellectronica/agent-skills@notion-api`                                      |
+| `postgres-drizzle`            | `ccheney/robust-skills@postgres-drizzle` (Drizzle + Postgres; Neon-compatible) |
+
 
 **Note:** `bobmatnyc/claude-mpm-skills@drizzle-orm` is listed on skills.sh but that repo no longer exposes that skill id — `postgres-drizzle` is the installed substitute.
 
