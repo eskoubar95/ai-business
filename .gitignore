@@ -15,3 +15,6 @@ npm-debug.log*
 
 # typescript
 *.tsbuildinfo
+
+# apm parallel worktrees (local only)
+.apm/worktrees/
