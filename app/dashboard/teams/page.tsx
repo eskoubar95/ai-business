@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { BusinessSelector } from "@/components/business-selector";
+import { PageEmptyState } from "@/components/page-empty-state";
 import { Button } from "@/components/ui/button";
 import { listTeamsByBusiness } from "@/lib/teams/actions";
 import { loadUserBusinesses, resolveBusinessIdParam } from "@/lib/dashboard/business-scope";
@@ -35,12 +36,17 @@ export default async function TeamsDashboardPage({
 
       <ul className="flex flex-col gap-2">
         {teams.length === 0 ? (
-          <li className="text-muted-foreground text-sm">
-            No teams yet.{" "}
-            <Link href={`/dashboard/teams/new?businessId=${businessId}`} className="text-primary underline">
-              Create one
-            </Link>
-            .
+          <li>
+            <PageEmptyState
+              title="No teams yet"
+              description="Teams group agents under a lead for sprint-style flows: PRD to brief to task routing. Once you have a few agents, create a team to model how work is distributed."
+            >
+              <Button asChild data-testid="teams-empty-cta">
+                <Link href={`/dashboard/teams/new?businessId=${encodeURIComponent(businessId)}`}>
+                  Create team
+                </Link>
+              </Button>
+            </PageEmptyState>
           </li>
         ) : (
           teams.map((t) => (

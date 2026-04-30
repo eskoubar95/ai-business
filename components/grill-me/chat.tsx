@@ -10,6 +10,7 @@ import { GRILL_ME_COMPLETE_MARKER } from "@/lib/grill-me/markers";
 import { getBusinessSoulMemory } from "@/lib/grill-me/memory-read";
 import type { GrillMeMessage } from "@/lib/grill-me/session-queries";
 import { grillMessagesToUIMessages } from "@/lib/grill-me/ui-messages";
+import type { GrillBusinessType } from "@/lib/grill-me/grill-prompt";
 
 import { InputForm } from "./input-form";
 import { MessageList } from "./message-list";
@@ -17,10 +18,13 @@ import { SoulFilePreview } from "./soul-file-preview";
 
 export function Chat({
   businessId,
+  businessType = "existing",
   initialTurns,
   initialSoulMarkdown,
 }: {
   businessId: string;
+  /** Onboarding path from Grill-Me setup (query param); forwarded to the UI API. */
+  businessType?: GrillBusinessType;
   initialTurns: GrillMeMessage[];
   initialSoulMarkdown: string | null;
 }) {
@@ -39,12 +43,13 @@ export function Chat({
             body: {
               chatId: id,
               businessId,
+              businessType,
               message: last,
             },
           };
         },
       }),
-    [businessId],
+    [businessId, businessType],
   );
 
   const { messages, sendMessage, status, error } = useChat({

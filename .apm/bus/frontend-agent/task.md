@@ -2,35 +2,35 @@
 
 **Phase:** 2  
 **Stage:** 5  
-**Task:** **5.2 — Brand color + UI polish + empty states + business dashboard**  
+**Task:** **5.2 — Brand color + UI polish + empty states + business dashboard** — **STATUS: leveret på gren** **`phase2/stage5-frontend`** (commit **`acc2e27`**) — **afventer PR / merge til `main`**  
 **Worker:** Frontend Agent  
 
-**Status:** **READY TO DISPATCH** — Backend **5.1** er **merged til `main`** (**[PR #10](https://github.com/eskoubar95/ai-business/pull/10)** @ `4f3821b`).
-
-**Branch:** Opret **`phase2/stage5-frontend`** fra **`main`** (seneste **`main`** efter merge).
+**Branch:** **`phase2/stage5-frontend`** (ingen ny gren nødvendig for 5.2).
 
 ---
 
-## Instruktioner til Worker
+## Manager (aktuel)
 
-1. Læs `[.apm/plan.md](../plan.md)` → **Stage 5**, **Task 5.2** (Implementation + Validation).
-2. Udfør på **`phase2/stage5-frontend`**.
-3. Task log: `.apm/memory/stage-05/task-05-02.log.md`
-4. Report: `.apm/bus/frontend-agent/report.md`
-5. Returnér ét-afsnit summary til Manager.
+1. Åbn og gennemgå **PR** fra **`phase2/stage5-frontend`** → **`main`**.
+2. Efter merge: Phase 2 Frontend er færdig jf. **`.apm/tracker.md`**.
+3. **Næste dispatch:** Afvent **Planner** — opdater denne fil når ny task er defineret (Phase 3 el.l.).
 
-### Hovedpunkter (fra plan)
+---
 
-- Empty states: Agents, Teams, Approvals, Tasks — forklaring + primær CTA.
-- `app/dashboard/page.tsx` — business cards med agent count + tasks in progress (+ gerne “last active” hvis data findes).
-- Sonner toasts på relevante forms (agent edit, team create, osv.) hvis ikke allerede dækket.
-- Onboarding / Grill-Me: trin **før** chat — existing vs new project; send **`businessType`** (`existing` \| `new`) til **`POST /api/grill-me/ui`** i tråd med **5.1** (sammen med `businessId` og `message`).
-- Dark mode: fjern død `dark:bg-green-950` ell. lign. minimum.
-- Nav: “New business” som knap/ikon frem for ren nav-link (jf. plan).
+## Reference (5.2 — udført)
 
-### Quality gate
+Leverancer (se **`.apm/memory/stage-05/task-05-02.log.md`** og **`report.md`**):
 
-`npm test`, `npm run lint`, `npm run build`; ved UI-flow ændring: `npm run test:e2e` hvis projektets Grill-Me/onboarding specs berøres.
+- Empty states: Agents, Teams, Approvals, Tasks (`PageEmptyState`).
+- Dashboard: agent count, tasks in progress / blocked, sidste roster-aktivitet.
+- Onboarding: existing vs new → Grill-Me med `businessType` til **`POST /api/grill-me/ui`**.
+- Nav: **New business** som ikon-knap.
+- Sonner på agent / team-formularer; primær farve-fintuning i `globals.css`.
+- Playwright: onboarding-path + URL-match for grill-me.
+
+### Quality gate (ved PR)
+
+`npm test`, `npm run lint`, `npm run build`; ved merge-krav: `npm run test:e2e` hvis CI dækker Grill-Me/agents/tasks/approvals.
 
 ---
 

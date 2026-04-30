@@ -28,14 +28,16 @@ test.describe("approvals queue", () => {
     );
 
     await page.goto("/dashboard/onboarding");
-    await expect(page.getByTestId("onboarding-business-name")).toBeVisible({
+    await expect(page.getByTestId("onboarding-path-existing")).toBeVisible({
       timeout: 30_000,
     });
+    await page.getByTestId("onboarding-path-existing").click();
+    await expect(page.getByTestId("onboarding-business-name")).toBeVisible();
 
     const bizName = `E2E Approvals ${Date.now()}`;
     await page.getByTestId("onboarding-business-name").fill(bizName);
     await page.getByTestId("onboarding-submit").click();
-    await page.waitForURL(/\/dashboard\/grill-me\/[0-9a-f-]+$/i, {
+    await page.waitForURL(/\/dashboard\/grill-me\/[0-9a-f-]+/i, {
       timeout: 120_000,
     });
 
