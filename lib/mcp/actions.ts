@@ -18,37 +18,36 @@ export async function saveMcpCredential(
   const { ivBase64, encryptedPayload } = encryptCredentialCrypto(payloadObject);
   const db = getDb();
 
-  await db.transaction(async (tx) => {
-    const rows = await tx
-      .insert(mcpCredentials)
-      .values({
-        businessId,
-        mcpName: nm,
+  // Neon HTTP driver does not support db.transaction(); run steps sequentially.
+  const rows = await db
+    .insert(mcpCredentials)
+    .values({
+      businessId,
+      mcpName: nm,
+      encryptedPayload,
+      iv: ivBase64,
+    })
+    .onConflictDoUpdate({
+      target: [mcpCredentials.businessId, mcpCredentials.mcpName],
+      set: {
         encryptedPayload,
         iv: ivBase64,
-      })
-      .onConflictDoUpdate({
-        target: [mcpCredentials.businessId, mcpCredentials.mcpName],
-        set: {
-          encryptedPayload,
-          iv: ivBase64,
-          updatedAt: new Date(),
-        },
-      })
-      .returning({ id: mcpCredentials.id });
+        updatedAt: new Date(),
+      },
+    })
+    .returning({ id: mcpCredentials.id });
 
-    const cred = rows[0];
-    if (!cred) throw new Error("Failed to save MCP credential");
+  const cred = rows[0];
+  if (!cred) throw new Error("Failed to save MCP credential");
 
-    await tx
-      .insert(agentMcpAccess)
-      .values({
-        businessId,
-        agentId,
-        mcpCredentialId: cred.id,
-      })
-      .onConflictDoNothing();
-  });
+  await db
+    .insert(agentMcpAccess)
+    .values({
+      businessId,
+      agentId,
+      mcpCredentialId: cred.id,
+    })
+    .onConflictDoNothing();
 }
 
 export async function getMcpCredentialsMeta(agentId: string) {

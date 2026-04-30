@@ -34,18 +34,21 @@ export async function createSkill(params: {
   await ensureBusinessMembership(businessId);
   const db = getDb();
 
-  const row = await db.transaction(async (tx) => {
-    const [skillRow] = await tx.insert(skills).values({ businessId, name: nm }).returning();
-    if (!skillRow) throw new Error("Failed to create skill");
-    await tx.insert(skillFiles).values({
+  // Neon HTTP driver (drizzle-orm/neon-http) does not support db.transaction().
+  const [skillRow] = await db.insert(skills).values({ businessId, name: nm }).returning();
+  if (!skillRow) throw new Error("Failed to create skill");
+  try {
+    await db.insert(skillFiles).values({
       skillId: skillRow.id,
       path: SKILL_MD_PATH,
       content: md.length ? md : "",
     });
-    return skillRow;
-  });
+  } catch (err) {
+    await db.delete(skills).where(eq(skills.id, skillRow.id));
+    throw err;
+  }
 
-  return row;
+  return skillRow;
 }
 
 export async function updateSkill(
@@ -68,35 +71,34 @@ export async function updateSkill(
     payload.name = nm;
   }
 
-  return db.transaction(async (tx) => {
-    if (patch.markdown !== undefined) {
-      const trimmed = patch.markdown.trim();
-      await tx
-        .insert(skillFiles)
-        .values({
-          skillId,
-          path: SKILL_MD_PATH,
-          content: trimmed,
-        })
-        .onConflictDoUpdate({
-          target: [skillFiles.skillId, skillFiles.path],
-          set: { content: trimmed },
-        });
-    }
+  // Neon HTTP driver does not support db.transaction(); run steps sequentially.
+  if (patch.markdown !== undefined) {
+    const trimmed = patch.markdown.trim();
+    await db
+      .insert(skillFiles)
+      .values({
+        skillId,
+        path: SKILL_MD_PATH,
+        content: trimmed,
+      })
+      .onConflictDoUpdate({
+        target: [skillFiles.skillId, skillFiles.path],
+        set: { content: trimmed },
+      });
+  }
 
-    if (patch.name !== undefined || patch.markdown !== undefined) {
-      payload.updatedAt = new Date();
-      const [updated] = await tx.update(skills).set(payload).where(eq(skills.id, skillId)).returning();
-      if (!updated) throw new Error("Skill not found");
-      return updated;
-    }
+  if (patch.name !== undefined || patch.markdown !== undefined) {
+    payload.updatedAt = new Date();
+    const [updated] = await db.update(skills).set(payload).where(eq(skills.id, skillId)).returning();
+    if (!updated) throw new Error("Skill not found");
+    return updated;
+  }
 
-    const unchanged = await tx.query.skills.findFirst({
-      where: eq(skills.id, skillId),
-    });
-    if (!unchanged) throw new Error("Skill not found");
-    return unchanged;
+  const unchanged = await db.query.skills.findFirst({
+    where: eq(skills.id, skillId),
   });
+  if (!unchanged) throw new Error("Skill not found");
+  return unchanged;
 }
 
 export async function deleteSkill(skillId: string): Promise<void> {
