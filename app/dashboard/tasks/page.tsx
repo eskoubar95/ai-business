@@ -2,8 +2,10 @@ import Link from "next/link";
 
 import { BusinessSelector } from "@/components/business-selector";
 import { PageEmptyState } from "@/components/page-empty-state";
+import { TasksKanbanBoard } from "@/components/tasks/tasks-kanban-board";
 import { Button } from "@/components/ui/button";
-import { TaskStatusBoard } from "@/components/tasks/task-status-board";
+import { PageHeader } from "@/components/ui/page-header";
+import { PageWrapper } from "@/components/ui/page-wrapper";
 import { loadUserBusinesses, resolveBusinessIdParam } from "@/lib/dashboard/business-scope";
 import { getAgentsByBusiness } from "@/lib/agents/actions";
 import { getTasksByBusiness, type TaskStatus } from "@/lib/tasks/actions";
@@ -49,20 +51,25 @@ export default async function TasksDashboardPage({
   const teamNames = Object.fromEntries(teams.map((t) => [t.id, t.name]));
 
   return (
-    <div className="bg-background text-foreground flex flex-col gap-6 p-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Tasks</h1>
-          <p className="text-muted-foreground text-sm">
-            Orchestration tasks for the selected business. New tasks start in Backlog.
-          </p>
-        </div>
-        <Button asChild data-testid="tasks-new-link">
-          <Link href={`/dashboard/tasks/new?businessId=${encodeURIComponent(businessId)}`}>
-            New task
-          </Link>
-        </Button>
-      </div>
+    <PageWrapper className="mx-auto max-w-screen-2xl px-6 py-6">
+      <PageHeader
+        breadcrumb={
+          <div>
+            <h1 className="text-foreground text-lg font-semibold">Tasks</h1>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Orchestration tasks for the selected business. New tasks start in Backlog.
+            </p>
+          </div>
+        }
+        actions={
+          <Button asChild className="cursor-pointer" data-testid="tasks-new-link">
+            <Link href={`/dashboard/tasks/new?businessId=${encodeURIComponent(businessId)}`}>
+              New task
+            </Link>
+          </Button>
+        }
+        className="px-0 pt-0"
+      />
 
       <BusinessSelector businesses={businesses} currentBusinessId={businessId} />
 
@@ -78,14 +85,16 @@ export default async function TasksDashboardPage({
             </Link>
           </Button>
         </PageEmptyState>
-      ) : null}
-
-      <TaskStatusBoard
-        grouped={grouped}
-        agentNames={agentNames}
-        teamNames={teamNames}
-        businessId={businessId}
-      />
-    </div>
+      ) : (
+        <div className="mt-6">
+          <TasksKanbanBoard
+            grouped={grouped}
+            agentNames={agentNames}
+            teamNames={teamNames}
+            businessId={businessId}
+          />
+        </div>
+      )}
+    </PageWrapper>
   );
 }

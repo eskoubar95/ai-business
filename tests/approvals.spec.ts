@@ -86,7 +86,10 @@ test.describe("approvals queue", () => {
     await expect(page.getByTestId(`approval-card-${approvalId}`)).not.toBeVisible({
       timeout: 60_000,
     });
-    await expect(page.getByTestId("approvals-empty")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("approvals-board")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId(`approval-settled-${approvalId}`)).toBeVisible({
+      timeout: 30_000,
+    });
 
     await page.goto(`/dashboard/agents?businessId=${businessId}`);
     await expect(page.getByTestId(`agent-status-${agentId}`)).toContainText(/idle/i, {

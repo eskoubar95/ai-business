@@ -1,8 +1,10 @@
 import Link from "next/link";
 
 import { BusinessSelector } from "@/components/business-selector";
-import { PageEmptyState } from "@/components/page-empty-state";
+import { TeamsHubClient } from "@/components/teams/teams-hub-client";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { PageWrapper } from "@/components/ui/page-wrapper";
 import { listTeamsByBusiness } from "@/lib/teams/actions";
 import { loadUserBusinesses, resolveBusinessIdParam } from "@/lib/dashboard/business-scope";
 
@@ -18,53 +20,45 @@ export default async function TeamsDashboardPage({
   const businesses = await loadUserBusinesses();
   const teams = await listTeamsByBusiness(businessId);
 
+  const teamItems = teams.map((t) => ({
+    id: t.id,
+    name: t.name,
+    leadName: t.leadAgent?.name ?? null,
+    memberCount: t.members?.length ?? 0,
+  }));
+
+  const emptyCta = (
+    <Button asChild data-testid="teams-empty-cta">
+      <Link href={`/dashboard/teams/new?businessId=${encodeURIComponent(businessId)}`}>
+        Create team
+      </Link>
+    </Button>
+  );
+
   return (
-    <div className="bg-background text-foreground flex flex-col gap-6 p-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Teams</h1>
-          <p className="text-muted-foreground text-sm">Teams, leads, and roster groupings.</p>
-        </div>
-        <Button asChild data-testid="teams-new">
-          <Link href={`/dashboard/teams/new?businessId=${encodeURIComponent(businessId)}`}>
-            New team
-          </Link>
-        </Button>
-      </div>
+    <PageWrapper className="mx-auto max-w-screen-2xl px-6 py-6">
+      <PageHeader
+        breadcrumb={
+          <div>
+            <h1 className="text-foreground text-lg font-semibold">Teams</h1>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Teams, leads, and roster groupings.
+            </p>
+          </div>
+        }
+        actions={
+          <Button asChild className="cursor-pointer" data-testid="teams-new">
+            <Link href={`/dashboard/teams/new?businessId=${encodeURIComponent(businessId)}`}>
+              New team
+            </Link>
+          </Button>
+        }
+        className="px-0 pt-0"
+      />
 
       <BusinessSelector businesses={businesses} currentBusinessId={businessId} />
 
-      <ul className="flex flex-col gap-2">
-        {teams.length === 0 ? (
-          <li>
-            <PageEmptyState
-              title="No teams yet"
-              description="Teams group agents under a lead for sprint-style flows: PRD to brief to task routing. Once you have a few agents, create a team to model how work is distributed."
-            >
-              <Button asChild data-testid="teams-empty-cta">
-                <Link href={`/dashboard/teams/new?businessId=${encodeURIComponent(businessId)}`}>
-                  Create team
-                </Link>
-              </Button>
-            </PageEmptyState>
-          </li>
-        ) : (
-          teams.map((t) => (
-            <li key={t.id}>
-              <Link
-                href={`/dashboard/teams/${t.id}?businessId=${encodeURIComponent(businessId)}`}
-                data-testid={`team-card-${t.id}`}
-                className="border-border hover:bg-muted/40 flex flex-wrap items-center justify-between gap-2 rounded-lg border px-4 py-3"
-              >
-                <span className="font-medium">{t.name}</span>
-                <span className="text-muted-foreground text-sm">
-                  Lead: {t.leadAgent?.name ?? "—"} · {t.members?.length ?? 0} members
-                </span>
-              </Link>
-            </li>
-          ))
-        )}
-      </ul>
-    </div>
+      <TeamsHubClient businessId={businessId} teams={teamItems} emptyCta={emptyCta} />
+    </PageWrapper>
   );
 }

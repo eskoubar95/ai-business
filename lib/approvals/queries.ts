@@ -2,7 +2,15 @@ import { getDb } from "@/db/index";
 import { agents, approvals, userBusinesses } from "@/db/schema";
 import { assertUserBusinessAccess } from "@/lib/grill-me/access";
 import { requireSessionUserId } from "@/lib/roster/session";
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, inArray } from "drizzle-orm";
+
+export type SerializableApprovalCard = {
+  id: string;
+  artifactRef: Record<string, unknown>;
+  createdAt: string;
+  agentId: string | null;
+  agentName: string | null;
+};
 
 export type PendingApprovalRow = {
   id: string;
@@ -93,4 +101,58 @@ export async function getApprovalDetailForUser(
     artifactRef: row.artifactRef as Record<string, unknown>,
     approvalStatus: row.approvalStatus,
   };
+}
+
+/** Approvals grouped for a 3-column board (pending / approved / rejected). */
+export async function listApprovalsGroupedForBusiness(businessId: string): Promise<{
+  pending: SerializableApprovalCard[];
+  approved: SerializableApprovalCard[];
+  rejected: SerializableApprovalCard[];
+}> {
+  const userId = await requireSessionUserId();
+  await assertUserBusinessAccess(userId, businessId);
+
+  const db = getDb();
+  const rows = await db
+    .select({
+      id: approvals.id,
+      approvalStatus: approvals.approvalStatus,
+      artifactRef: approvals.artifactRef,
+      createdAt: approvals.createdAt,
+      agentId: approvals.agentId,
+      agentName: agents.name,
+    })
+    .from(approvals)
+    .leftJoin(agents, eq(approvals.agentId, agents.id))
+    .where(
+      and(
+        eq(approvals.businessId, businessId),
+        inArray(approvals.approvalStatus, ["pending", "approved", "rejected"]),
+      ),
+    )
+    .orderBy(desc(approvals.updatedAt))
+    .limit(120);
+
+  const pending: SerializableApprovalCard[] = [];
+  const approved: SerializableApprovalCard[] = [];
+  const rejected: SerializableApprovalCard[] = [];
+
+  for (const r of rows) {
+    const item: SerializableApprovalCard = {
+      id: r.id,
+      artifactRef: r.artifactRef as Record<string, unknown>,
+      createdAt: r.createdAt.toISOString(),
+      agentId: r.agentId,
+      agentName: r.agentName,
+    };
+    if (r.approvalStatus === "pending") {
+      pending.push(item);
+    } else if (r.approvalStatus === "approved") {
+      approved.push(item);
+    } else {
+      rejected.push(item);
+    }
+  }
+
+  return { pending, approved, rejected };
 }
