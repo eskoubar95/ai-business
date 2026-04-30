@@ -8,6 +8,20 @@
       "when": 1777498308671,
       "tag": "0000_last_sentry",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777506505908,
+      "tag": "0001_lethal_marauders",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777506906208,
+      "tag": "0002_brainy_rogue",
+      "breakpoints": true
     }
   ]
 }

@@ -12,7 +12,7 @@ Agentic development setup using **APM** (Agentic Project Management) with **Curs
 
 - **Next.js 15** (App Router, TypeScript, Turbopack dev).
 - **Drizzle ORM** + **drizzle-kit** for schema and migrations.
-- **Neon** via `@neondatabase/serverless` and `drizzle-orm/neon-http` (see [`db/index.ts`](db/index.ts) — server-only).
+- **Neon** via `@neondatabase/serverless` and `drizzle-orm/neon-http` (see `[db/index.ts](db/index.ts)` — server-only).
 
 ```bash
 cp .env.example .env
@@ -24,14 +24,47 @@ npm run dev
 
 Database scripts:
 
-| Script | Purpose |
-|--------|--------|
-| `npm run db:generate` | Generate SQL from `db/schema.ts` |
-| `npm run db:migrate` | Apply migrations (needs `DATABASE_URL`) |
-| `npm run db:push` | Push schema to DB (dev convenience) |
-| `npm run db:studio` | Open Drizzle Studio |
 
-Initial schema: [`db/schema.ts`](db/schema.ts) includes a starter **`businesses`** table; SQL is under [`drizzle/`](drizzle/).
+| Script                | Purpose                                 |
+| --------------------- | --------------------------------------- |
+| `npm run db:generate` | Generate SQL from `db/schema.ts`        |
+| `npm run db:migrate`  | Apply migrations (needs `DATABASE_URL`) |
+| `npm run db:push`     | Push schema to DB (dev convenience)     |
+| `npm run db:studio`   | Open Drizzle Studio                     |
+
+
+## CI: Playwright E2E (GitHub Actions)
+
+Workflow: `[.github/workflows/e2e.yml](.github/workflows/e2e.yml)`.
+
+
+| Behavior                                 | When                                                                                   |
+| ---------------------------------------- | -------------------------------------------------------------------------------------- |
+| Smoke (`/`, sign-in)                     | Always runs on PRs and pushes to `main`.                                               |
+| Full Grill-Me (`tests/grill-me.spec.ts`) | Runs when **all** repository secrets below are set; otherwise that spec stays skipped. |
+| Agents (`tests/agents.spec.ts`)          | Needs **`ENCRYPTION_KEY`** (64 hex chars) so MCP install Server Actions can encrypt credentials; without it the MCP badge assertion fails. |
+| Approvals (`tests/approvals.spec.ts`)    | **Optional:** set **`E2E_SETUP_SECRET`**; if missing, that spec is skipped.            |
+
+
+Configure **Settings → Secrets and variables → Actions** (repository secrets):
+
+
+| Secret                    | Purpose                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------ |
+| `DATABASE_URL`            | Neon pooled URL — required for `createBusiness` / Grill-Me persistence in E2E. |
+| `NEON_AUTH_BASE_URL`      | Neon Auth configuration URL (same as local `.env`).                            |
+| `NEON_AUTH_COOKIE_SECRET` | 32+ character cookie signing secret (same as local).                           |
+| `ENCRYPTION_KEY`          | Exactly **64 hex characters** (same as local `.env` / `openssl rand -hex 32`). **Required** for agents E2E (MCP install). |
+| `E2E_EMAIL`               | Test user email that can sign in via Neon Auth UI.                             |
+| `E2E_PASSWORD`            | Matching password for `E2E_EMAIL`.                                             |
+| `E2E_SETUP_SECRET`        | Shared secret for `/api/e2e/seed-approval` — **optional**; enables approvals E2E. |
+
+
+Use a dedicated Neon branch or disposable credentials for CI; never reuse production secrets.
+
+Ensure the database pointed at by `DATABASE_URL` has migrations applied (`npm run db:migrate` against that branch) before expecting Grill-Me E2E to pass.
+
+Initial schema: `[db/schema.ts](db/schema.ts)` includes a starter `**businesses`** table; SQL is under `[drizzle/](drizzle/)`.
 
 ## One-time: APM init (already done in this repo)
 
@@ -69,14 +102,16 @@ Reload hooks: save `hooks.json` or restart Cursor. Use **Hooks** in settings / o
 
 ## Agent skills (project)
 
-Installed under [`.agents/skills/`](.agents/skills/) via `npx skills add … -y`:
+Installed under `[.agents/skills/](.agents/skills/)` via `npx skills add … -y`:
 
-| Skill | Source |
-|--------|--------|
-| `vercel-react-best-practices` | `vercel-labs/agent-skills@vercel-react-best-practices` |
-| `playwright-best-practices` | `currents-dev/playwright-best-practices-skill@playwright-best-practices` |
-| `notion-api` | `intellectronica/agent-skills@notion-api` |
-| `postgres-drizzle` | `ccheney/robust-skills@postgres-drizzle` (Drizzle + Postgres; Neon-compatible) |
+
+| Skill                         | Source                                                                         |
+| ----------------------------- | ------------------------------------------------------------------------------ |
+| `vercel-react-best-practices` | `vercel-labs/agent-skills@vercel-react-best-practices`                         |
+| `playwright-best-practices`   | `currents-dev/playwright-best-practices-skill@playwright-best-practices`       |
+| `notion-api`                  | `intellectronica/agent-skills@notion-api`                                      |
+| `postgres-drizzle`            | `ccheney/robust-skills@postgres-drizzle` (Drizzle + Postgres; Neon-compatible) |
+
 
 **Note:** `bobmatnyc/claude-mpm-skills@drizzle-orm` is listed on skills.sh but that repo no longer exposes that skill id — `postgres-drizzle` is the installed substitute.
 
