@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth/server";
 import { getDb } from "@/db/index";
 import { businesses, userBusinesses } from "@/db/schema";
+import { getTaskCountsForUserBusinesses } from "@/lib/tasks/dashboard-queries";
 import { eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,8 @@ export default async function DashboardPage() {
     .from(userBusinesses)
     .innerJoin(businesses, eq(userBusinesses.businessId, businesses.id))
     .where(eq(userBusinesses.userId, userId));
+
+  const taskCounts = await getTaskCountsForUserBusinesses();
 
   return (
     <div className="bg-background text-foreground flex flex-col gap-6 p-8">
@@ -56,20 +59,45 @@ export default async function DashboardPage() {
           <ul className="flex flex-col gap-2">
             {rows.map((b) => (
               <li key={b.id}>
-                <Link
-                  href={`/dashboard/agents?businessId=${encodeURIComponent(b.id)}`}
-                  className="border-border hover:bg-muted/50 hover:border-primary/30 block rounded-lg border px-4 py-3 text-sm font-medium transition-colors"
+                <div
+                  className="border-border hover:bg-muted/50 hover:border-primary/30 rounded-lg border px-4 py-3 text-sm transition-colors"
                   data-testid={`dashboard-business-${b.id}`}
                 >
-                  <span className="text-foreground block font-medium">{b.name}</span>
+                  <Link
+                    href={`/dashboard/agents?businessId=${encodeURIComponent(b.id)}`}
+                    className="text-foreground block font-medium hover:underline"
+                  >
+                    {b.name}
+                  </Link>
                   <span className="text-muted-foreground mt-1 block text-xs font-normal">
                     Since{" "}
                     {new Date(b.createdAt).toLocaleDateString("en-US", {
                       month: "short",
                       year: "numeric",
                     })}
+                    {(() => {
+                      const c = taskCounts.get(b.id) ?? { inProgress: 0, blocked: 0 };
+                      if (c.inProgress === 0 && c.blocked === 0) return null;
+                      const parts: string[] = [];
+                      if (c.inProgress > 0) {
+                        parts.push(
+                          `${c.inProgress} task${c.inProgress === 1 ? "" : "s"} in progress`,
+                        );
+                      }
+                      if (c.blocked > 0) {
+                        parts.push(`${c.blocked} blocked`);
+                      }
+                      return <> · {parts.join(" · ")}</>;
+                    })()}
                   </span>
-                </Link>
+                  <Link
+                    href={`/dashboard/tasks?businessId=${encodeURIComponent(b.id)}`}
+                    className="text-primary mt-2 inline-block text-xs underline"
+                    data-testid={`dashboard-business-tasks-${b.id}`}
+                  >
+                    Open tasks
+                  </Link>
+                </div>
               </li>
             ))}
           </ul>

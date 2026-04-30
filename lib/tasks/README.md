@@ -6,10 +6,12 @@ Server Actions and helpers for business-scoped **tasks**, **task logs**, and **@
 
 | File | Role |
 |------|------|
-| `actions.ts` | `"use server"` — CRUD, status updates (including approval link), subtree delete, tree listing by business, list by agent |
+| `actions.ts` | `"use server"` — CRUD, status updates (including approval link), subtree delete, tree listing by business, list by agent, `getTaskById` |
 | `log-actions.ts` | `"use server"` — append log lines and fetch logs; human-authored logs trigger mention parsing |
 | `mention-trigger.ts` | Scans log text for `@Name`, matches agents in the same business (case-insensitive), emits `orchestration_events` with `type: mention_trigger` (`status: pending`) |
 | `task-tree.ts` | Pure helpers: subtree collection and safe delete ordering (children before parents) |
+| `flatten-task-tree.ts` | Pure `flattenTaskTree` for kanban listings (depth-first over `TaskTreeNode[]`) |
+| `dashboard-queries.ts` | Signed-in user's per-business task counts (in progress, blocked) for dashboard cards |
 
 ## Usage
 

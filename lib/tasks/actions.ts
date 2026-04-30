@@ -18,6 +18,17 @@ export type TaskStatus = (typeof tasks.$inferSelect)["status"];
 export type TaskTreeNode = TaskRow & { children: TaskTreeNode[] };
 export type { TaskRow };
 
+export async function getTaskById(taskId: string): Promise<TaskRow | null> {
+  const userId = await requireSessionUserId();
+  const db = getDb();
+  const task = await db.query.tasks.findFirst({
+    where: eq(tasks.id, taskId),
+  });
+  if (!task) return null;
+  await assertUserBusinessAccess(userId, task.businessId);
+  return task;
+}
+
 async function assertTaskInBusinessForUser(taskId: string): Promise<TaskRow> {
   const userId = await requireSessionUserId();
   const db = getDb();
