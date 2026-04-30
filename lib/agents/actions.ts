@@ -56,20 +56,21 @@ export async function createAgent(params: {
     reportsToAgentId,
   );
 
-  const created = await db.transaction(async (tx) => {
-    const [agentRow] = await tx
-      .insert(agents)
-      .values({
-        businessId,
-        name: trimmedName,
-        role: trimmedRole,
-        reportsToAgentId: validatedReports,
-      })
-      .returning();
+  // Neon HTTP driver (`drizzle-orm/neon-http`) does not support `db.transaction()`.
+  const [agentRow] = await db
+    .insert(agents)
+    .values({
+      businessId,
+      name: trimmedName,
+      role: trimmedRole,
+      reportsToAgentId: validatedReports,
+    })
+    .returning();
 
-    if (!agentRow) throw new Error("Failed to create agent");
+  if (!agentRow) throw new Error("Failed to create agent");
 
-    await tx.insert(agentDocuments).values([
+  try {
+    await db.insert(agentDocuments).values([
       {
         agentId: agentRow.id,
         slug: "soul",
@@ -89,11 +90,12 @@ export async function createAgent(params: {
         content: "",
       },
     ]);
+  } catch (err) {
+    await db.delete(agents).where(eq(agents.id, agentRow.id));
+    throw err;
+  }
 
-    return agentRow;
-  });
-
-  return { ...created, instructions: trimmedInstructions };
+  return { ...agentRow, instructions: trimmedInstructions };
 }
 
 export async function updateAgent(
@@ -137,37 +139,36 @@ export async function updateAgent(
   const shouldPatchAgentRow =
     patch.name !== undefined || patch.role !== undefined || patch.reportsToAgentId !== undefined;
 
-  return db.transaction(async (tx) => {
-    if (patch.instructions !== undefined) {
-      const ins = patch.instructions.trim();
-      if (!ins) throw new Error("Instructions are required");
-      await tx
-        .update(agentDocuments)
-        .set({ content: ins, updatedAt: new Date() })
-        .where(and(eq(agentDocuments.agentId, agentId), eq(agentDocuments.slug, "soul")));
-    }
+  // Neon HTTP driver does not support `db.transaction()`; run steps sequentially.
+  if (patch.instructions !== undefined) {
+    const ins = patch.instructions.trim();
+    if (!ins) throw new Error("Instructions are required");
+    await db
+      .update(agentDocuments)
+      .set({ content: ins, updatedAt: new Date() })
+      .where(and(eq(agentDocuments.agentId, agentId), eq(agentDocuments.slug, "soul")));
+  }
 
-    let updated: typeof agents.$inferSelect | undefined;
-    if (shouldPatchAgentRow) {
-      payload.updatedAt = new Date();
-      const rows = await tx.update(agents).set(payload).where(eq(agents.id, agentId)).returning();
-      updated = rows[0];
-    } else {
-      updated = await tx.query.agents.findFirst({
-        where: eq(agents.id, agentId),
-      });
-    }
-
-    if (!updated) throw new Error("Agent not found");
-
-    const soulRows = await tx.query.agentDocuments.findMany({
-      where: and(eq(agentDocuments.agentId, agentId), eq(agentDocuments.slug, "soul")),
-      columns: { content: true },
+  let updated: typeof agents.$inferSelect | undefined;
+  if (shouldPatchAgentRow) {
+    payload.updatedAt = new Date();
+    const rows = await db.update(agents).set(payload).where(eq(agents.id, agentId)).returning();
+    updated = rows[0];
+  } else {
+    updated = await db.query.agents.findFirst({
+      where: eq(agents.id, agentId),
     });
-    const soulContent = soulRows[0]?.content ?? "";
+  }
 
-    return { ...updated, instructions: soulContent };
+  if (!updated) throw new Error("Agent not found");
+
+  const soulRows = await db.query.agentDocuments.findMany({
+    where: and(eq(agentDocuments.agentId, agentId), eq(agentDocuments.slug, "soul")),
+    columns: { content: true },
   });
+  const soulContent = soulRows[0]?.content ?? "";
+
+  return { ...updated, instructions: soulContent };
 }
 
 export async function deleteAgent(agentId: string): Promise<void> {
