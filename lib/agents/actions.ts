@@ -2,11 +2,28 @@
 
 import { assertUserBusinessAccess } from "@/lib/grill-me/access";
 import { getDb } from "@/db/index";
-import { agents, teams } from "@/db/schema";
+import { agentDocuments, agents, teams } from "@/db/schema";
 import { requireSessionUserId } from "@/lib/roster/session";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 import { validateReportsToForBusiness } from "./reports-cycle";
+
+/** Columns persisted on `agents` (no legacy `instructions` column; soul is in `agent_documents`). */
+const agentsPublicColumns = {
+  id: true,
+  businessId: true,
+  archetypeId: true,
+  name: true,
+  role: true,
+  reportsToAgentId: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
+/** Agent row with soul markdown exposed as `instructions` for existing UI contracts. */
+export type AgentWithInstructions = typeof agents.$inferSelect & {
+  instructions: string;
+};
 
 async function ensureBusinessMembership(businessId: string): Promise<void> {
   const userId = await requireSessionUserId();
@@ -51,25 +68,54 @@ export async function createAgent(params: {
     reportsToAgentId,
   );
 
-  const [created] = await db
+  // Neon HTTP driver (`drizzle-orm/neon-http`) does not support `db.transaction()`.
+  const [agentRow] = await db
     .insert(agents)
     .values({
       businessId,
       name: trimmedName,
       role: trimmedRole,
-      instructions: trimmedInstructions,
       reportsToAgentId: validatedReports,
     })
     .returning();
 
-  if (!created) throw new Error("Failed to create agent");
-  return created;
+  if (!agentRow) throw new Error("Failed to create agent");
+
+  try {
+    await db.insert(agentDocuments).values([
+      {
+        agentId: agentRow.id,
+        slug: "soul",
+        filename: "soul.md",
+        content: trimmedInstructions,
+      },
+      {
+        agentId: agentRow.id,
+        slug: "tools",
+        filename: "tools.md",
+        content: "",
+      },
+      {
+        agentId: agentRow.id,
+        slug: "heartbeat",
+        filename: "heartbeat.md",
+        content: "",
+      },
+    ]);
+  } catch (err) {
+    await db.delete(agents).where(eq(agents.id, agentRow.id));
+    throw err;
+  }
+
+  return { ...agentRow, instructions: trimmedInstructions };
 }
 
 export async function updateAgent(
   agentId: string,
   patch: Partial<
-    Pick<typeof agents.$inferSelect, "name" | "role" | "instructions" | "reportsToAgentId">
+    Pick<typeof agents.$inferSelect, "name" | "role" | "reportsToAgentId"> & {
+      instructions?: string;
+    }
   >,
 ) {
   await assertUserOwnsAgent(agentId);
@@ -81,9 +127,7 @@ export async function updateAgent(
   });
   if (!existing) throw new Error("Agent not found");
 
-  const payload: Partial<typeof agents.$inferInsert> = {
-    updatedAt: new Date(),
-  };
+  const payload: Partial<typeof agents.$inferInsert> = {};
 
   if (patch.name !== undefined) {
     const nm = patch.name.trim();
@@ -95,11 +139,6 @@ export async function updateAgent(
     if (!rl) throw new Error("Agent role is required");
     payload.role = rl;
   }
-  if (patch.instructions !== undefined) {
-    const ins = patch.instructions.trim();
-    if (!ins) throw new Error("Instructions are required");
-    payload.instructions = ins;
-  }
   if (patch.reportsToAgentId !== undefined) {
     const validated = await validateReportsToForBusiness(
       existing.businessId,
@@ -109,10 +148,40 @@ export async function updateAgent(
     payload.reportsToAgentId = validated;
   }
 
-  const [updated] = await db.update(agents).set(payload).where(eq(agents.id, agentId)).returning();
+  const shouldPatchAgentRow =
+    patch.name !== undefined || patch.role !== undefined || patch.reportsToAgentId !== undefined;
+
+  // Neon HTTP driver does not support `db.transaction()`; run steps sequentially.
+  if (patch.instructions !== undefined) {
+    const ins = patch.instructions.trim();
+    if (!ins) throw new Error("Instructions are required");
+    await db
+      .update(agentDocuments)
+      .set({ content: ins, updatedAt: new Date() })
+      .where(and(eq(agentDocuments.agentId, agentId), eq(agentDocuments.slug, "soul")));
+  }
+
+  let updated: typeof agents.$inferSelect | undefined;
+  if (shouldPatchAgentRow) {
+    payload.updatedAt = new Date();
+    const rows = await db.update(agents).set(payload).where(eq(agents.id, agentId)).returning();
+    updated = rows[0];
+  } else {
+    updated = await db.query.agents.findFirst({
+      where: eq(agents.id, agentId),
+      columns: agentsPublicColumns,
+    });
+  }
 
   if (!updated) throw new Error("Agent not found");
-  return updated;
+
+  const soulRows = await db.query.agentDocuments.findMany({
+    where: and(eq(agentDocuments.agentId, agentId), eq(agentDocuments.slug, "soul")),
+    columns: { content: true },
+  });
+  const soulContent = soulRows[0]?.content ?? "";
+
+  return { ...updated, instructions: soulContent };
 }
 
 export async function deleteAgent(agentId: string): Promise<void> {
@@ -132,11 +201,24 @@ export async function deleteAgent(agentId: string): Promise<void> {
   await db.delete(agents).where(eq(agents.id, agentId));
 }
 
-export async function getAgentsByBusiness(businessId: string) {
+export async function getAgentsByBusiness(businessId: string): Promise<AgentWithInstructions[]> {
   await ensureBusinessMembership(businessId);
   const db = getDb();
-  return db.query.agents.findMany({
+  const rows = await db.query.agents.findMany({
     where: eq(agents.businessId, businessId),
     orderBy: [asc(agents.name)],
+    columns: agentsPublicColumns,
+    with: {
+      documents: {
+        where: eq(agentDocuments.slug, "soul"),
+        columns: { slug: true, content: true },
+      },
+    },
+  });
+
+  return rows.map((r) => {
+    const soulContent = r.documents.find((d) => d.slug === "soul")?.content ?? "";
+    const { documents: _documents, ...agent } = r;
+    return { ...agent, instructions: soulContent };
   });
 }

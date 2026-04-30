@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth/server";
 import { getDb } from "@/db/index";
-import { agents, mcpCredentials } from "@/db/schema";
+import { mcpCredentials } from "@/db/schema";
 import { assertUserBusinessAccess } from "@/lib/grill-me/access";
 import {
   decryptCredential,
@@ -33,8 +33,7 @@ export async function resolveNotionForBusiness(
       encryptedPayload: mcpCredentials.encryptedPayload,
     })
     .from(mcpCredentials)
-    .innerJoin(agents, eq(mcpCredentials.agentId, agents.id))
-    .where(and(eq(agents.businessId, businessId), eq(mcpCredentials.mcpName, "notion")))
+    .where(and(eq(mcpCredentials.businessId, businessId), eq(mcpCredentials.mcpName, "notion")))
     .limit(1);
 
   const row = rows[0];

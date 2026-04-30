@@ -18,9 +18,42 @@ export const businesses = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
+    description: text("description"),
+    githubRepoUrl: text("github_repo_url"),
+    localPath: text("local_path"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("businesses_created_at_idx").on(t.createdAt)],
+);
+
+/** Per-user settings (e.g. encrypted Cursor API key). */
+export const userSettings = pgTable(
+  "user_settings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull(),
+    cursorApiKeyEncrypted: jsonb("cursor_api_key_encrypted"),
+    cursorApiKeyIv: text("cursor_api_key_iv"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("user_settings_user_id_unique").on(t.userId)],
+);
+
+/** Platform-managed agent presets (soul/tools/heartbeat addenda). */
+export const agentArchetypes = pgTable(
+  "agent_archetypes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    description: text("description").notNull(),
+    soulAddendum: text("soul_addendum").notNull().default(""),
+    toolsAddendum: text("tools_addendum").notNull().default(""),
+    heartbeatAddendum: text("heartbeat_addendum").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("agent_archetypes_slug_unique").on(t.slug)],
 );
 
 /** Neon Auth user id (opaque string); links authenticated users to businesses. */
@@ -50,10 +83,12 @@ export const agents = pgTable(
     businessId: uuid("business_id")
       .notNull()
       .references(() => businesses.id, { onDelete: "cascade" }),
+    archetypeId: uuid("archetype_id").references(() => agentArchetypes.id, {
+      onDelete: "set null",
+    }),
     name: text("name").notNull(),
     /** Job / roster role label (distinct from DB role names). */
     role: text("role").notNull(),
-    instructions: text("instructions").notNull(),
     reportsToAgentId: uuid("reports_to_agent_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -63,8 +98,30 @@ export const agents = pgTable(
       columns: [t.reportsToAgentId],
       foreignColumns: [t.id],
     }).onDelete("set null"),
+    uniqueIndex("agents_business_id_id_unique").on(t.businessId, t.id),
     index("agents_business_id_idx").on(t.businessId),
     index("agents_reports_to_agent_id_idx").on(t.reportsToAgentId),
+    index("agents_archetype_id_idx").on(t.archetypeId),
+  ],
+);
+
+/** Markdown documents per agent (soul, tools, heartbeat, custom). */
+export const agentDocuments = pgTable(
+  "agent_documents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    agentId: uuid("agent_id")
+      .notNull()
+      .references(() => agents.id, { onDelete: "cascade" }),
+    slug: text("slug").notNull(),
+    filename: text("filename").notNull(),
+    content: text("content").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("agent_documents_agent_id_slug_unique").on(t.agentId, t.slug),
+    index("agent_documents_agent_id_idx").on(t.agentId),
   ],
 );
 
@@ -119,11 +176,28 @@ export const skills = pgTable(
       .notNull()
       .references(() => businesses.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    markdown: text("markdown").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("skills_business_id_idx").on(t.businessId)],
+);
+
+/** Files belonging to a skill (folder model). */
+export const skillFiles = pgTable(
+  "skill_files",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    skillId: uuid("skill_id")
+      .notNull()
+      .references(() => skills.id, { onDelete: "cascade" }),
+    path: text("path").notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("skill_files_skill_id_path_unique").on(t.skillId, t.path),
+    index("skill_files_skill_id_idx").on(t.skillId),
+  ],
 );
 
 export const agentSkills = pgTable(
@@ -159,6 +233,7 @@ export const teams = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
+    uniqueIndex("teams_business_id_id_unique").on(t.businessId, t.id),
     index("teams_business_id_idx").on(t.businessId),
     index("teams_lead_agent_id_idx").on(t.leadAgentId),
   ],
@@ -183,13 +258,14 @@ export const teamMembers = pgTable(
   ],
 );
 
+/** Encrypted MCP credentials library per business; agents opt in via `agent_mcp_access`. */
 export const mcpCredentials = pgTable(
   "mcp_credentials",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    agentId: uuid("agent_id")
+    businessId: uuid("business_id")
       .notNull()
-      .references(() => agents.id, { onDelete: "cascade" }),
+      .references(() => businesses.id, { onDelete: "cascade" }),
     mcpName: text("mcp_name").notNull(),
     encryptedPayload: jsonb("encrypted_payload").notNull(),
     /** Base64-encoded IV / nonce for AES. */
@@ -198,8 +274,40 @@ export const mcpCredentials = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    uniqueIndex("mcp_credentials_agent_id_mcp_name_unique").on(t.agentId, t.mcpName),
-    index("mcp_credentials_agent_id_idx").on(t.agentId),
+    uniqueIndex("mcp_credentials_business_id_mcp_name_unique").on(t.businessId, t.mcpName),
+    uniqueIndex("mcp_credentials_business_id_id_unique").on(t.businessId, t.id),
+    index("mcp_credentials_business_id_idx").on(t.businessId),
+  ],
+);
+
+/** Agent opt-in to business-level MCP credentials. */
+export const agentMcpAccess = pgTable(
+  "agent_mcp_access",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    agentId: uuid("agent_id").notNull(),
+    mcpCredentialId: uuid("mcp_credential_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      columns: [t.businessId, t.agentId],
+      foreignColumns: [agents.businessId, agents.id],
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [t.businessId, t.mcpCredentialId],
+      foreignColumns: [mcpCredentials.businessId, mcpCredentials.id],
+    }).onDelete("cascade"),
+    uniqueIndex("agent_mcp_access_agent_id_mcp_credential_id_unique").on(
+      t.agentId,
+      t.mcpCredentialId,
+    ),
+    index("agent_mcp_access_business_id_idx").on(t.businessId),
+    index("agent_mcp_access_agent_id_idx").on(t.agentId),
+    index("agent_mcp_access_mcp_credential_id_idx").on(t.mcpCredentialId),
   ],
 );
 
@@ -269,14 +377,80 @@ export const approvals = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
+    uniqueIndex("approvals_business_id_id_unique").on(t.businessId, t.id),
     index("approvals_business_id_idx").on(t.businessId),
     index("approvals_agent_id_idx").on(t.agentId),
     index("approvals_approval_status_idx").on(t.approvalStatus),
   ],
 );
 
-// --- Self-reference on agents (after table exists) ---
-// Drizzle resolves forward refs via callback returning column
+export const taskStatusEnum = pgEnum("task_status", [
+  "backlog",
+  "in_progress",
+  "blocked",
+  "in_review",
+  "done",
+]);
+
+export const taskLogAuthorTypeEnum = pgEnum("task_log_author_type", ["agent", "human"]);
+
+export const tasks = pgTable(
+  "tasks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    teamId: uuid("team_id"),
+    agentId: uuid("agent_id"),
+    parentTaskId: uuid("parent_task_id"),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    status: taskStatusEnum("status").notNull().default("backlog"),
+    blockedReason: text("blocked_reason"),
+    approvalId: uuid("approval_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      columns: [t.businessId, t.teamId],
+      foreignColumns: [teams.businessId, teams.id],
+    }).onDelete("set null"),
+    foreignKey({
+      columns: [t.businessId, t.agentId],
+      foreignColumns: [agents.businessId, agents.id],
+    }).onDelete("set null"),
+    foreignKey({
+      columns: [t.businessId, t.parentTaskId],
+      foreignColumns: [t.businessId, t.id],
+    }).onDelete("set null"),
+    foreignKey({
+      columns: [t.businessId, t.approvalId],
+      foreignColumns: [approvals.businessId, approvals.id],
+    }).onDelete("set null"),
+    index("tasks_business_id_idx").on(t.businessId),
+    index("tasks_agent_id_idx").on(t.agentId),
+    index("tasks_team_id_idx").on(t.teamId),
+    index("tasks_parent_task_id_idx").on(t.parentTaskId),
+    index("tasks_status_idx").on(t.status),
+  ],
+);
+
+export const taskLogs = pgTable(
+  "task_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    authorType: taskLogAuthorTypeEnum("author_type").notNull(),
+    authorId: text("author_id").notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("task_logs_task_id_idx").on(t.taskId)],
+);
 
 // --- Relations ---
 
@@ -290,6 +464,14 @@ export const businessesRelations = relations(businesses, ({ many }) => ({
   orchestrations: many(orchestrationEvents),
   webhookDeliveriesMany: many(webhookDeliveries),
   approvalsMany: many(approvals),
+  mcpCredentialsMany: many(mcpCredentials),
+  tasksMany: many(tasks),
+}));
+
+export const userSettingsRelations = relations(userSettings, () => ({}));
+
+export const agentArchetypesRelations = relations(agentArchetypes, ({ many }) => ({
+  agents: many(agents),
 }));
 
 export const userBusinessesRelations = relations(userBusinesses, ({ one }) => ({
@@ -304,6 +486,10 @@ export const agentsRelations = relations(agents, ({ one, many }) => ({
     fields: [agents.businessId],
     references: [businesses.id],
   }),
+  archetype: one(agentArchetypes, {
+    fields: [agents.archetypeId],
+    references: [agentArchetypes.id],
+  }),
   reportsTo: one(agents, {
     fields: [agents.reportsToAgentId],
     references: [agents.id],
@@ -314,8 +500,17 @@ export const agentsRelations = relations(agents, ({ one, many }) => ({
   skillsLinks: many(agentSkills),
   leadOfTeams: many(teams),
   teamMemberships: many(teamMembers),
-  mcpCreds: many(mcpCredentials),
+  documents: many(agentDocuments),
+  mcpAccessRows: many(agentMcpAccess),
   approvals: many(approvals),
+  tasksAssigned: many(tasks),
+}));
+
+export const agentDocumentsRelations = relations(agentDocuments, ({ one }) => ({
+  agent: one(agents, {
+    fields: [agentDocuments.agentId],
+    references: [agents.id],
+  }),
 }));
 
 export const memoryRelations = relations(memory, ({ one }) => ({
@@ -342,6 +537,14 @@ export const skillsRelations = relations(skills, ({ one, many }) => ({
     references: [businesses.id],
   }),
   agentLinks: many(agentSkills),
+  files: many(skillFiles),
+}));
+
+export const skillFilesRelations = relations(skillFiles, ({ one }) => ({
+  skill: one(skills, {
+    fields: [skillFiles.skillId],
+    references: [skills.id],
+  }),
 }));
 
 export const agentSkillsRelations = relations(agentSkills, ({ one }) => ({
@@ -365,6 +568,7 @@ export const teamsRelations = relations(teams, ({ one, many }) => ({
     references: [agents.id],
   }),
   members: many(teamMembers),
+  tasks: many(tasks),
 }));
 
 export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
@@ -378,10 +582,26 @@ export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
   }),
 }));
 
-export const mcpCredentialsRelations = relations(mcpCredentials, ({ one }) => ({
+export const mcpCredentialsRelations = relations(mcpCredentials, ({ one, many }) => ({
+  business: one(businesses, {
+    fields: [mcpCredentials.businessId],
+    references: [businesses.id],
+  }),
+  agentAccessRows: many(agentMcpAccess),
+}));
+
+export const agentMcpAccessRelations = relations(agentMcpAccess, ({ one }) => ({
+  business: one(businesses, {
+    fields: [agentMcpAccess.businessId],
+    references: [businesses.id],
+  }),
   agent: one(agents, {
-    fields: [mcpCredentials.agentId],
+    fields: [agentMcpAccess.agentId],
     references: [agents.id],
+  }),
+  credential: one(mcpCredentials, {
+    fields: [agentMcpAccess.mcpCredentialId],
+    references: [mcpCredentials.id],
   }),
 }));
 
@@ -399,7 +619,7 @@ export const webhookDeliveriesRelations = relations(webhookDeliveries, ({ one })
   }),
 }));
 
-export const approvalsRelations = relations(approvals, ({ one }) => ({
+export const approvalsRelations = relations(approvals, ({ one, many }) => ({
   business: one(businesses, {
     fields: [approvals.businessId],
     references: [businesses.id],
@@ -407,5 +627,39 @@ export const approvalsRelations = relations(approvals, ({ one }) => ({
   agent: one(agents, {
     fields: [approvals.agentId],
     references: [agents.id],
+  }),
+  tasksLinked: many(tasks),
+}));
+
+export const tasksRelations = relations(tasks, ({ one, many }) => ({
+  business: one(businesses, {
+    fields: [tasks.businessId],
+    references: [businesses.id],
+  }),
+  team: one(teams, {
+    fields: [tasks.teamId],
+    references: [teams.id],
+  }),
+  agent: one(agents, {
+    fields: [tasks.agentId],
+    references: [agents.id],
+  }),
+  parent: one(tasks, {
+    fields: [tasks.parentTaskId],
+    references: [tasks.id],
+    relationName: "task_subtasks",
+  }),
+  subtasks: many(tasks, { relationName: "task_subtasks" }),
+  approval: one(approvals, {
+    fields: [tasks.approvalId],
+    references: [approvals.id],
+  }),
+  logs: many(taskLogs),
+}));
+
+export const taskLogsRelations = relations(taskLogs, ({ one }) => ({
+  task: one(tasks, {
+    fields: [taskLogs.taskId],
+    references: [tasks.id],
   }),
 }));

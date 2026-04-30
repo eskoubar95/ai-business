@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import type { AgentWithInstructions } from "@/lib/agents/actions";
 import { createAgent, deleteAgent, updateAgent } from "@/lib/agents/actions";
 import type { agents } from "@/db/schema";
 
@@ -21,7 +22,7 @@ type Props =
   | {
       mode: "edit";
       businessId: string;
-      agent: typeof agents.$inferSelect;
+      agent: AgentWithInstructions;
       peerAgents: Peer[];
       children?: ReactNode;
     };

@@ -2,10 +2,12 @@
 
 import { assertUserBusinessAccess } from "@/lib/grill-me/access";
 import { getDb } from "@/db/index";
-import { agentSkills, agents, skills } from "@/db/schema";
+import { agentSkills, agents, skillFiles, skills } from "@/db/schema";
 import { requireSessionUserId } from "@/lib/roster/session";
 import { assertUserOwnsAgent } from "@/lib/agents/actions";
 import { and, asc, eq } from "drizzle-orm";
+
+const SKILL_MD_PATH = "SKILL.md";
 
 async function ensureBusinessMembership(businessId: string): Promise<void> {
   const userId = await requireSessionUserId();
@@ -31,21 +33,24 @@ export async function createSkill(params: {
   if (!nm) throw new Error("Skill name is required");
   await ensureBusinessMembership(businessId);
   const db = getDb();
-  const [row] = await db
-    .insert(skills)
-    .values({
-      businessId,
-      name: nm,
-      markdown: md.length ? md : "",
-    })
-    .returning();
-  if (!row) throw new Error("Failed to create skill");
+
+  const row = await db.transaction(async (tx) => {
+    const [skillRow] = await tx.insert(skills).values({ businessId, name: nm }).returning();
+    if (!skillRow) throw new Error("Failed to create skill");
+    await tx.insert(skillFiles).values({
+      skillId: skillRow.id,
+      path: SKILL_MD_PATH,
+      content: md.length ? md : "",
+    });
+    return skillRow;
+  });
+
   return row;
 }
 
 export async function updateSkill(
   skillId: string,
-  patch: Partial<Pick<typeof skills.$inferSelect, "name" | "markdown">>,
+  patch: Partial<{ name: string; markdown: string }>,
 ) {
   const db = getDb();
   const userId = await requireSessionUserId();
@@ -56,21 +61,42 @@ export async function updateSkill(
   if (!existing) throw new Error("Skill not found");
   await assertUserBusinessAccess(userId, existing.businessId);
 
-  const payload: Partial<typeof skills.$inferInsert> = {
-    updatedAt: new Date(),
-  };
+  const payload: Partial<typeof skills.$inferInsert> = {};
   if (patch.name !== undefined) {
     const nm = patch.name.trim();
     if (!nm) throw new Error("Skill name is required");
     payload.name = nm;
   }
-  if (patch.markdown !== undefined) {
-    payload.markdown = patch.markdown.trim();
-  }
 
-  const [updated] = await db.update(skills).set(payload).where(eq(skills.id, skillId)).returning();
-  if (!updated) throw new Error("Skill not found");
-  return updated;
+  return db.transaction(async (tx) => {
+    if (patch.markdown !== undefined) {
+      const trimmed = patch.markdown.trim();
+      await tx
+        .insert(skillFiles)
+        .values({
+          skillId,
+          path: SKILL_MD_PATH,
+          content: trimmed,
+        })
+        .onConflictDoUpdate({
+          target: [skillFiles.skillId, skillFiles.path],
+          set: { content: trimmed },
+        });
+    }
+
+    if (patch.name !== undefined || patch.markdown !== undefined) {
+      payload.updatedAt = new Date();
+      const [updated] = await tx.update(skills).set(payload).where(eq(skills.id, skillId)).returning();
+      if (!updated) throw new Error("Skill not found");
+      return updated;
+    }
+
+    const unchanged = await tx.query.skills.findFirst({
+      where: eq(skills.id, skillId),
+    });
+    if (!unchanged) throw new Error("Skill not found");
+    return unchanged;
+  });
 }
 
 export async function deleteSkill(skillId: string): Promise<void> {
@@ -121,7 +147,11 @@ export async function getSkillsByAgent(agentId: string) {
   const links = await db.query.agentSkills.findMany({
     where: eq(agentSkills.agentId, agentId),
     with: {
-      skill: true,
+      skill: {
+        with: {
+          files: true,
+        },
+      },
     },
   });
 
