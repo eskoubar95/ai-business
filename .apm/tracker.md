@@ -17,14 +17,14 @@ title: AI Business Platform
 | Task | Status | Agent | Branch |
 | ---- | ------ | ----- | ------ |
 | 4.1 | Done | backend-agent | merged → `main` |
-| 4.2 | Active | frontend-agent | approval-notion-ui |
+| 4.2 | Done | frontend-agent | `approval-notion-ui` (merge til `main` / PR) |
 
 ## Worker Tracking
 
 | Agent | Instance | Notes |
 | ----- | -------- | ----- |
 | backend-agent | 1 | Task 4.1 merged to `main`; idle |
-| frontend-agent | 1 | Task 4.2 on `approval-notion-ui` |
+| frontend-agent | 1 | Task 4.2 reviewed; idle — næste Task via bus |
 
 ## Version Control
 
@@ -39,4 +39,5 @@ title: AI Business Platform
 - **Grill-Me UI:** `POST /api/grill-me/ui` (AI SDK); `GET /api/grill-me/stream` er ældre SSE-sti.
 - **CI:** `.github/workflows/e2e.yml` — repo secrets + `GRILL_ME_E2E_MOCK`.
 - **APM:** Workers committer kun; merge/push er Manager/ejer.
+- **Task 4.2:** Bekræft `tests/approvals.spec.ts` i CI eller lokalt med fri **:3000** (`baseURL` / `webServer.url`) og `E2E_EMAIL` / `E2E_PASSWORD` / `E2E_SETUP_SECRET`.
 - **MCP:** `ENCRYPTION_KEY` som **64 hex-tegn** (32 bytes) i `.env.local` før man gemer rigtige MCP-credentials.
