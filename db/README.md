@@ -5,7 +5,7 @@ Schema is defined in Drizzle (`schema.ts`). Migrations live under `drizzle/` and
 ## Workflow
 
 1. **`npm run db:generate`** — Generates SQL under `drizzle/` from `schema.ts`. `drizzle.config.ts` loads `.env` / `.env.local` and chooses **`DATABASE_DIRECT_URL`** (if set), else **`DATABASE_URL`** — see `.cursor/rules/database-architecture.mdc`.
-2. **`npm run db:migrate`** — Applies pending migrations against that same resolved URL.
+2. **`npm run db:migrate`** — Applies pending migrations via **`scripts/run-drizzle-migrate.mjs`** (TCP **`postgres`** + Drizzle migrator). Uses **`DATABASE_DIRECT_URL`** when non-empty, otherwise **`DATABASE_URL`**. This path avoids flaky **`drizzle-kit migrate`** with Neon serverless in CI; `drizzle-kit` remains for **`db:generate`** / **`db:studio`**.
 
 ## Phase 2 migrations (`0003` / `0004`)
 
@@ -13,7 +13,7 @@ Schema is defined in Drizzle (`schema.ts`). Migrations live under `drizzle/` and
 | --- | --- |
 | **`0003_harsh_turbo.sql`** | DDL: enums (`task_status`, `task_log_author_type`), new tables (`user_settings`, `agent_archetypes`, `agent_documents`, `skill_files`, `agent_mcp_access`, `tasks`, `task_logs`), business columns (`description`, `github_repo_url`, `local_path`), `agents.archetype_id`, nullable `mcp_credentials.business_id`. Then **data backfill**: seed archetypes (`vertical-fullstack`, `harness-engineer`); copy legacy **`agents.instructions` → `agent_documents` with `slug = 'soul'` only**; **`tools` / `heartbeat`** rows are inserted as **empty shells** (see `0003_harsh_turbo.sql`); copy `skills.markdown` → `skill_files` (`SKILL.md`); set MCP `business_id`; populate `agent_mcp_access`. |
 | **`0004_phase2_drop_legacy_columns.sql`** | Dedupe MCP rows per `(business_id, mcp_name)`, tighten junction rows, drop `agents.instructions`, `skills.markdown`, `mcp_credentials.agent_id`, **`business_id` NOT NULL**, unique index `mcp_credentials_business_id_mcp_name_unique`. |
-| **`0005_compose_tenant_foreign_keys.sql`** | Same-tenant FKs: `(business_id, id)` unique anchors on `agents` / `teams` / `mcp_credentials` / `approvals`; `agent_mcp_access.business_id` + composite FKs; `tasks` composite FKs for `team_id` / `agent_id` / `parent_task_id` / `approval_id`. |
+| **`0005_slimy_cerebro.sql`** | Same-tenant FKs: `(business_id, id)` unique anchors on `agents` / `teams` / `mcp_credentials` / `approvals`; `agent_mcp_access.business_id` + composite FKs; `tasks` composite FKs for `team_id` / `agent_id` / `parent_task_id` / `approval_id`. |
 
 **Rollback:** Forward-only DDL + destructive drops in `0004`. To reverse in an emergency, restore from backup or recreate dropped columns from `agent_documents` / `skill_files` exports before re-applying older schema — not automated.
 
