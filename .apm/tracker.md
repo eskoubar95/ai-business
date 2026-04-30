@@ -6,23 +6,25 @@ title: AI Business Platform
 
 ## Task Tracking
 
+**Stage 1:** Complete
+
 **Stage 2:** Complete
 
-**Stage 3:**
+**Stage 3:** Complete
+
+**Stage 4:**
 
 | Task | Status | Agent | Branch |
 | ---- | ------ | ----- | ------ |
-| 3.1 | Done | backend-agent | |
-| 3.2 | Active | frontend-agent | agent-roster-frontend |
-
-**Stage 1:** Complete
+| 4.1 | Active | backend-agent | orchestration-backend |
+| 4.2 | Waiting | frontend-agent | — (after 4.1) |
 
 ## Worker Tracking
 
 | Agent | Instance | Notes |
 | ----- | -------- | ----- |
-| backend-agent | 1 | Task 3.1 merged to `main` |
-| frontend-agent | 1 | Dispatched Task 3.2 on `agent-roster-frontend` |
+| backend-agent | 1 | Task 4.1 on `orchestration-backend` |
+| frontend-agent | 1 | Idle; Task 4.2 after 4.1 merges |
 
 ## Version Control
 

@@ -32,10 +32,11 @@ Backend (2.1) delivered Cursor SDK wrapper, `createBusiness` / `startGrillMeTurn
 - `task-02-01.log.md`
 - `task-02-02.log.md`
 
-### Stage 3 — Agent roster (progress)
+### Stage 3 — Agent roster (complete)
 
-**3.1 (backend)** merged to `main`: agent/skill/MCP/team server actions, AES-GCM encryption, `lib/mcp/config.ts`, memory retrieval + `assembleAgentContext`, Vitest. **3.2 (frontend)** in flight — roster UI, org chart, MCP installer, teams UI, Playwright.
+**3.1 (backend)** merged to `main`: agent/skill/MCP/team server actions, AES-GCM encryption, `lib/mcp/config.ts`, memory retrieval + `assembleAgentContext`, Vitest. **3.2 (frontend)** merged to `main`: agents and teams routes, MCP installer with skills grouping, markdown editor on forms, org chart (`react-organizational-chart`), static idle badges, dashboard business scope helper, Playwright `tests/agents.spec.ts`; lint, build, Vitest green (agents E2E gated like Grill-Me until `E2E_*` + DB in env).
 
 **Task Logs (3.x):**
 
 - `task-03-01.log.md`
+- `task-03-02.log.md`
