@@ -106,10 +106,11 @@ test.describe("agent roster and teams", () => {
     });
 
     await expect(page.getByTestId("org-chart")).toBeVisible();
-    await expect(page.locator('[data-testid^="org-node-"]').first()).toBeVisible();
-    await expect(page.getByText("E2E Lead")).toBeVisible();
-    await expect(page.getByText("E2E Member One")).toBeVisible();
-    await expect(page.getByText("E2E Member Two")).toBeVisible();
+    const orgChart = page.getByTestId("org-chart");
+    await expect(orgChart.locator('[data-testid^="org-node-"]').first()).toBeVisible();
+    for (const name of ["E2E Lead", "E2E Member One", "E2E Member Two"] as const) {
+      await expect(orgChart.getByText(name, { exact: true })).toBeVisible();
+    }
     await expect(page.getByTestId("team-lead-label")).toContainText("E2E Lead");
   });
 });
