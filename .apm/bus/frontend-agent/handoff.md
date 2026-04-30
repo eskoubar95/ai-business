@@ -4,8 +4,8 @@ task: "5.2 — Brand color + UI polish + empty states + business dashboard"
 phase: 2
 stage: 5
 branch: phase2/stage5-frontend
-status: ready_for_pr
-pr_number: null
+status: pr_open
+pr_number: 11
 commit_tip: acc2e27
 handoff_version: 10
 backend_on_main_commit: 4f3821b
@@ -15,7 +15,7 @@ backend_on_main_commit: 4f3821b
 
 ## Summary
 
-**Task 5.2** er **implementeret** på **`phase2/stage5-frontend`** (tip **`acc2e27`**). Afventer **PR til `main`** og merge. Task log: **`.apm/memory/stage-05/task-05-02.log.md`**.
+**Task 5.2** er **implementeret** på **`phase2/stage5-frontend`** (tip **`acc2e27`**). **[PR #11](https://github.com/eskoubar95/ai-business/pull/11)** mod **`main`** er åben — afvent CI / merge. Task log: **`.apm/memory/stage-05/task-05-02.log.md`**.
 
 ## Authoritative artifacts
 
@@ -36,4 +36,4 @@ backend_on_main_commit: 4f3821b
 ## API-kontrakt (allerede på `main` fra 5.1)
 
 - **`POST /api/grill-me/ui`** — valgfri **`businessType`**: `existing` \| `new`.
-- UI sender **`businessType`** fra onboarding + Grill-Me-side (query + chat body) jf. implementering i **`acc2e27**.
+- UI sender **`businessType`** fra onboarding + Grill-Me-side (query + chat body) jf. implementering i **`acc2e27`**.

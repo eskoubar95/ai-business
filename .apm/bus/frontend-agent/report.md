@@ -6,7 +6,7 @@
 
 ## Status
 
-**Leveret — klar til PR** mod `main`. Handoff: `.apm/bus/frontend-agent/handoff.md` (**`ready_for_pr`**).
+**PR [#11](https://github.com/eskoubar95/ai-business/pull/11)** mod **`main`** — afvent CI / merge. Handoff: `.apm/bus/frontend-agent/handoff.md`.
 
 ## Deliverables
 
@@ -24,6 +24,6 @@
 
 ## Next (Manager)
 
-1. Open PR `phase2/stage5-frontend` → `main`; tilføj PR-nummer i `handoff.md` når kendt.
+1. ~~Open PR~~ — [**PR #11**](https://github.com/eskoubar95/ai-business/pull/11) (merge når CI er grøn).
 2. Run `npm run test:e2e` before merge if CI eller release kræver det.
-3. Efter merge: ingen yderligere Phase 2 Frontend-task — afvent Planner for Phase 3.
+3. Efter merge: **post-merge APM på `main`**; ingen yderligere Phase 2 Frontend-task — afvent Planner for Phase 3.

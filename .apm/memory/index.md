@@ -1,7 +1,7 @@
 ---
 
 ## phase: 2
-updated: 2026-04-30 (Task 5.1 merged **PR [#10](https://github.com/eskoubar95/ai-business/pull/10)** → `main` @ `4f3821b`; Task 5.2 kørbart)
+updated: 2026-04-30 (5.1 på `main` PR #10 @ 4f3821b; 5.2 **PR [#11](https://github.com/eskoubar95/ai-business/pull/11)** åben fra `phase2/stage5-frontend`)
 
 # Phase 2 Memory Index
 
@@ -20,7 +20,7 @@ updated: 2026-04-30 (Task 5.1 merged **PR [#10](https://github.com/eskoubar95/ai
 | 4.1 — Skills + Webhooks + MCP | `.apm/memory/stage-04/task-04-01.log.md` | ✅ Merged ([**PR #8**](https://github.com/eskoubar95/ai-business/pull/8) → `main` @ `fbe25fc`); `.apm/bus/backend-agent/handoff.md` |
 | 4.2 — Skills + MCP UI         | `.apm/memory/stage-04/task-04-02.log.md` | ✅ Merged ([**PR #9**](https://github.com/eskoubar95/ai-business/pull/9) → `main` @ `995d820`); `.apm/bus/frontend-agent/handoff.md` |
 | 5.1 — Archetypes + Grill-Me   | `.apm/memory/stage-05/task-05-01.log.md` | 🔄 [**PR #10**](https://github.com/eskoubar95/ai-business/pull/10) åben (`phase2/stage5-backend`); merge til `main` afventer |
-| 5.2 — UI Polish               | `.apm/memory/stage-05/task-05-02.log.md` | Not created yet                                                                                                                             |
+| 5.2 — UI Polish               | `.apm/memory/stage-05/task-05-02.log.md` | 🔄 [**PR #11**](https://github.com/eskoubar95/ai-business/pull/11) åben (`phase2/stage5-frontend`) — merge til `main` afventer |
 
 
 ## Recovered Worker handoffs (Task 1.1 / 1.2)
@@ -30,7 +30,7 @@ Genskabt fra Cursor **agent transcripts** (2026-04-30) eftersom filerne aldrig b
 - `.apm/memory/handoffs/worker-recovered/backend-agent-task-1.1-handoff.md`
 - `.apm/memory/handoffs/worker-recovered/frontend-agent-task-1.2-handoff.md`
 
-Nyeste **backend** bus-handoff (Task **5.1** merged **PR #10**) ligger i `.apm/bus/backend-agent/handoff.md`. Nyeste **frontend** bus-handoff (**Task 5.2** klar til dispatch) ligger i `.apm/bus/frontend-agent/handoff.md`.
+Nyeste **backend** bus-handoff (Task **5.1** merged **PR #10**) ligger i `.apm/bus/backend-agent/handoff.md`. Nyeste **frontend** bus-handoff (**Task 5.2**, **PR [#11](https://github.com/eskoubar95/ai-business/pull/11)**) ligger i `.apm/bus/frontend-agent/handoff.md`.
 
 ## Key Decisions
 
