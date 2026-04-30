@@ -39,8 +39,12 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NEON_AUTH_BASE_URL: ${{ secrets.NEON_AUTH_BASE_URL }}
           NEON_AUTH_COOKIE_SECRET: ${{ secrets.NEON_AUTH_COOKIE_SECRET }}
+          # MCP credential encryption (required for agents E2E when installing GitHub MCP on an agent).
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          # Optional: enables `tests/approvals.spec.ts`; if unset that spec stays skipped.
+          E2E_SETUP_SECRET: ${{ secrets.E2E_SETUP_SECRET }}
           GRILL_ME_E2E_MOCK: "1"
         run: npm run test:e2e
 

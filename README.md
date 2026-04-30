@@ -42,6 +42,8 @@ Workflow: `[.github/workflows/e2e.yml](.github/workflows/e2e.yml)`.
 | ---------------------------------------- | -------------------------------------------------------------------------------------- |
 | Smoke (`/`, sign-in)                     | Always runs on PRs and pushes to `main`.                                               |
 | Full Grill-Me (`tests/grill-me.spec.ts`) | Runs when **all** repository secrets below are set; otherwise that spec stays skipped. |
+| Agents (`tests/agents.spec.ts`)          | Needs **`ENCRYPTION_KEY`** (64 hex chars) so MCP install Server Actions can encrypt credentials; without it the MCP badge assertion fails. |
+| Approvals (`tests/approvals.spec.ts`)    | **Optional:** set **`E2E_SETUP_SECRET`**; if missing, that spec is skipped.            |
 
 
 Configure **Settings → Secrets and variables → Actions** (repository secrets):
@@ -52,8 +54,10 @@ Configure **Settings → Secrets and variables → Actions** (repository secrets
 | `DATABASE_URL`            | Neon pooled URL — required for `createBusiness` / Grill-Me persistence in E2E. |
 | `NEON_AUTH_BASE_URL`      | Neon Auth configuration URL (same as local `.env`).                            |
 | `NEON_AUTH_COOKIE_SECRET` | 32+ character cookie signing secret (same as local).                           |
+| `ENCRYPTION_KEY`          | Exactly **64 hex characters** (same as local `.env` / `openssl rand -hex 32`). **Required** for agents E2E (MCP install). |
 | `E2E_EMAIL`               | Test user email that can sign in via Neon Auth UI.                             |
 | `E2E_PASSWORD`            | Matching password for `E2E_EMAIL`.                                             |
+| `E2E_SETUP_SECRET`        | Shared secret for `/api/e2e/seed-approval` — **optional**; enables approvals E2E. |
 
 
 Use a dedicated Neon branch or disposable credentials for CI; never reuse production secrets.
