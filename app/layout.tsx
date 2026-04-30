@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import { NeonAuthUIProvider } from "@neondatabase/auth/react";
+import { ThemeProvider } from "next-themes";
 
 import "./globals.css";
 
 import { NavShell } from "./components/nav-shell";
+import { Toaster } from "@/components/ui/sonner";
 import { authClient } from "@/lib/auth/client";
 
 export const metadata: Metadata = {
@@ -25,9 +27,12 @@ export default async function RootLayout({
       className={`${GeistSans.variable} ${GeistMono.variable}`}
     >
       <body className={`${GeistSans.className} min-h-svh antialiased`}>
-        <NeonAuthUIProvider authClient={authClient}>
-          <NavShell>{children}</NavShell>
-        </NeonAuthUIProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <NeonAuthUIProvider authClient={authClient}>
+            <NavShell>{children}</NavShell>
+            <Toaster />
+          </NeonAuthUIProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

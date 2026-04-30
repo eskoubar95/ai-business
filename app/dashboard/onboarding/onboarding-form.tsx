@@ -1,8 +1,10 @@
 "use client";
 
-import { createBusiness } from "@/lib/grill-me/actions";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
+import { createBusiness } from "@/lib/grill-me/actions";
 
 export default function OnboardingForm() {
   const router = useRouter();
@@ -46,14 +48,9 @@ export default function OnboardingForm() {
           />
         </label>
         {error ? <p className="text-destructive text-sm">{error}</p> : null}
-        <button
-          type="submit"
-          data-testid="onboarding-submit"
-          disabled={pending}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
-        >
+        <Button type="submit" data-testid="onboarding-submit" disabled={pending}>
           Continue to Grill-Me
-        </button>
+        </Button>
       </form>
     </main>
   );

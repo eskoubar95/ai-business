@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { BusinessSelector } from "@/components/business-selector";
 import { AgentCard } from "@/components/agents/agent-card";
+import { Button } from "@/components/ui/button";
 import { getAgentsByBusiness } from "@/lib/agents/actions";
 import { getMcpCredentialsMeta } from "@/lib/mcp/actions";
 import { getSkillsByAgent } from "@/lib/skills/actions";
@@ -37,32 +39,14 @@ export default async function AgentsDashboardPage({
             Manage roster, skills, and MCP installs per business.
           </p>
         </div>
-        <Link
-          href={`/dashboard/agents/new?businessId=${encodeURIComponent(businessId)}`}
-          data-testid="agents-new"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex rounded-md px-4 py-2 text-sm font-medium"
-        >
-          New agent
-        </Link>
+        <Button asChild data-testid="agents-new">
+          <Link href={`/dashboard/agents/new?businessId=${encodeURIComponent(businessId)}`}>
+            New agent
+          </Link>
+        </Button>
       </div>
 
-      <nav aria-label="Business scope" className="text-muted-foreground flex flex-wrap gap-2 text-sm">
-        <span className="font-medium text-foreground">Business:</span>
-        {businesses.map((b) => (
-          <Link
-            key={b.id}
-            href={`/dashboard/agents?businessId=${encodeURIComponent(b.id)}`}
-            className={
-              b.id === businessId
-                ? "text-foreground font-semibold underline"
-                : "hover:text-foreground underline-offset-4 hover:underline"
-            }
-            data-testid={`agents-business-${b.id}`}
-          >
-            {b.name}
-          </Link>
-        ))}
-      </nav>
+      <BusinessSelector businesses={businesses} currentBusinessId={businessId} />
 
       <section data-testid="agents-roster" className="flex flex-col gap-3">
         {rows.length === 0 ? (

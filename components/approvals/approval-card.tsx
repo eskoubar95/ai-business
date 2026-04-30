@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useOptimistic, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import { Button } from "@/components/ui/button";
 import { approveArtifact, rejectArtifact } from "@/lib/approvals/actions";
 
 export type SerializablePendingApproval = {
@@ -83,24 +84,25 @@ export function ApprovalCard(props: {
           data-testid={`approval-comment-${a.id}`}
         />
         <div className="flex flex-wrap gap-2">
-          <button
+          <Button
             type="submit"
+            size="sm"
             disabled={pending}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-50"
             data-testid={`approval-approve-${a.id}`}
             formAction={(fd) => run("approve", fd)}
           >
             Approve
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
+            size="sm"
+            variant="destructive"
             disabled={pending}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-50"
             data-testid={`approval-reject-${a.id}`}
             formAction={(fd) => run("reject", fd)}
           >
             Reject
-          </button>
+          </Button>
         </div>
       </form>
     </article>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BusinessSelector } from "@/components/business-selector";
 import { ApprovalCard } from "@/components/approvals/approval-card";
 import { listPendingApprovalsForBusiness } from "@/lib/approvals/queries";
 import { loadUserBusinesses, resolveBusinessIdParam } from "@/lib/dashboard/business-scope";
@@ -35,23 +36,7 @@ export default async function ApprovalsPage({
         </div>
       </div>
 
-      <nav aria-label="Business scope" className="text-muted-foreground flex flex-wrap gap-2 text-sm">
-        <span className="font-medium text-foreground">Business:</span>
-        {businesses.map((b) => (
-          <Link
-            key={b.id}
-            href={`/dashboard/approvals?businessId=${encodeURIComponent(b.id)}`}
-            className={
-              b.id === businessId
-                ? "text-foreground font-semibold underline"
-                : "hover:text-foreground underline-offset-4 hover:underline"
-            }
-            data-testid={`approvals-business-${b.id}`}
-          >
-            {b.name}
-          </Link>
-        ))}
-      </nav>
+      <BusinessSelector businesses={businesses} currentBusinessId={businessId} />
 
       <section data-testid="approvals-queue" className="flex flex-col gap-3">
         {serialized.length === 0 ? (

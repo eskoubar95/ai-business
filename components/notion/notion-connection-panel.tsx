@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 
+import { Button } from "@/components/ui/button";
 import { saveMcpCredential } from "@/lib/mcp/actions";
 import { MCP_TYPE_CONFIGS } from "@/lib/mcp/config";
 import { runNotionSyncForBusiness } from "@/lib/notion/dashboard-actions";
@@ -152,24 +153,23 @@ export function NotionConnectionPanel({ businessId, agents }: Props) {
       {syncMsg ? <p className="text-muted-foreground text-sm">{syncMsg}</p> : null}
 
       <div className="flex flex-wrap gap-2">
-        <button
+        <Button
           type="button"
           disabled={pending}
           onClick={saveCredentials}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
           data-testid="notion-save"
         >
           Save credentials
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="secondary"
           disabled={pending}
           onClick={runSync}
-          className="bg-secondary text-secondary-foreground rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
           data-testid="notion-sync-now"
         >
           Sync tasks now
-        </button>
+        </Button>
       </div>
     </section>
   );

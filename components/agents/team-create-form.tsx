@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 
 import { addTeamMember, createTeam } from "@/lib/teams/actions";
 import type { agents } from "@/db/schema";
+import { Button } from "@/components/ui/button";
 
 type Peer = Pick<typeof agents.$inferSelect, "id" | "name">;
 
@@ -149,15 +150,14 @@ export function TeamCreateForm({
         </p>
       ) : null}
 
-      <button
+      <Button
         type="button"
         data-testid="team-create-submit"
         disabled={pending || agentOptions.length < 3}
-        className="bg-primary text-primary-foreground hover:bg-primary/90 w-fit rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
         onClick={submit}
       >
         Create team
-      </button>
+      </Button>
       {agentOptions.length < 3 ? (
         <p className="text-muted-foreground text-xs">
           Create at least three agents before forming a team with a lead plus two members.

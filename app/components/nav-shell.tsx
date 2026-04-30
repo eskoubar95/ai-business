@@ -3,6 +3,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth/server";
 import { countPendingApprovalsForUser } from "@/lib/approvals/queries";
 
+import { NavLinks } from "./nav-links";
 import { NavShellAuth } from "./nav-shell-auth";
 
 export async function NavShell({ children }: { children: React.ReactNode }) {
@@ -18,43 +19,7 @@ export async function NavShell({ children }: { children: React.ReactNode }) {
           <Link href="/" className="text-lg font-semibold tracking-tight">
             AI Business
           </Link>
-          <nav
-            aria-label="Primary"
-            className="text-muted-foreground flex flex-wrap gap-4 text-sm"
-          >
-            <Link href="/dashboard" className="hover:text-foreground transition-colors">
-              Dashboard
-            </Link>
-            <Link href="/dashboard/agents" className="hover:text-foreground transition-colors">
-              Agents
-            </Link>
-            <Link href="/dashboard/teams" className="hover:text-foreground transition-colors">
-              Teams
-            </Link>
-            <Link href="/dashboard/approvals" className="hover:text-foreground transition-colors">
-              Approvals
-              {pending > 0 ? (
-                <span
-                  data-testid="nav-approvals-pending-count"
-                  className="bg-primary text-primary-foreground ml-1 inline-flex min-w-[1.25rem] justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none"
-                >
-                  {pending > 99 ? "99+" : pending}
-                </span>
-              ) : null}
-            </Link>
-            <Link href="/dashboard/notion" className="hover:text-foreground transition-colors">
-              Notion
-            </Link>
-            <Link href="/dashboard/webhooks" className="hover:text-foreground transition-colors">
-              Webhooks
-            </Link>
-            <Link
-              href="/dashboard/onboarding"
-              className="hover:text-foreground transition-colors"
-            >
-              New business
-            </Link>
-          </nav>
+          <NavLinks pendingApprovalsCount={pending} />
         </div>
         <NavShellAuth />
       </header>
