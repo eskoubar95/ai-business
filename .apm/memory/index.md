@@ -19,8 +19,8 @@ updated: 2026-04-30 (Phase 2 lukket på `main`: Task 5.2 merged **PR [#11](https
 | 3.2 — Tasks Frontend          | `.apm/memory/stage-03/task-03-02.log.md` | ✅ Merged (**[PR #7](https://github.com/eskoubar95/ai-business/pull/7)** → `main` @ d57be19); `.apm/bus/frontend-agent/handoff.md` |
 | 4.1 — Skills + Webhooks + MCP | `.apm/memory/stage-04/task-04-01.log.md` | ✅ Merged ([**PR #8**](https://github.com/eskoubar95/ai-business/pull/8) → `main` @ `fbe25fc`); `.apm/bus/backend-agent/handoff.md` |
 | 4.2 — Skills + MCP UI         | `.apm/memory/stage-04/task-04-02.log.md` | ✅ Merged ([**PR #9**](https://github.com/eskoubar95/ai-business/pull/9) → `main` @ `995d820`); `.apm/bus/frontend-agent/handoff.md` |
-| 5.1 — Archetypes + Grill-Me   | `.apm/memory/stage-05/task-05-01.log.md` | 🔄 [**PR #10**](https://github.com/eskoubar95/ai-business/pull/10) åben (`phase2/stage5-backend`); merge til `main` afventer |
-| 5.2 — UI Polish               | `.apm/memory/stage-05/task-05-02.log.md` | 🔄 [**PR #11**](https://github.com/eskoubar95/ai-business/pull/11) åben (`phase2/stage5-frontend`) — merge til `main` afventer |
+| 5.1 — Archetypes + Grill-Me   | `.apm/memory/stage-05/task-05-01.log.md` | ✅ Merged (**[PR #10](https://github.com/eskoubar95/ai-business/pull/10)** → `main` @ `4f3821b`); `.apm/bus/backend-agent/handoff.md` |
+| 5.2 — UI Polish               | `.apm/memory/stage-05/task-05-02.log.md` | ✅ Merged (**[PR #11](https://github.com/eskoubar95/ai-business/pull/11)** → `main` @ `92b92c3`); `.apm/bus/frontend-agent/handoff.md` |
 
 
 ## Recovered Worker handoffs (Task 1.1 / 1.2)
