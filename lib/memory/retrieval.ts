@@ -1,6 +1,8 @@
 import { getDb } from "@/db/index";
-import { agentSkills, agents, memory } from "@/db/schema";
+import { agentDocuments, agentSkills, agents, memory } from "@/db/schema";
 import { and, desc, eq, isNull, or } from "drizzle-orm";
+
+const SKILL_MD_PATH = "SKILL.md";
 
 /**
  * Returns latest memory blocks for a business, optionally scoped to agent + business-wide rows.
@@ -44,16 +46,26 @@ export async function assembleAgentContext(agentId: string, taskType: string): P
     columns: {
       name: true,
       role: true,
-      instructions: true,
       businessId: true,
     },
   });
 
   if (!agent) throw new Error("Agent not found");
 
+  const soulDoc = await db.query.agentDocuments.findFirst({
+    where: and(eq(agentDocuments.agentId, agentId), eq(agentDocuments.slug, "soul")),
+    columns: { content: true },
+  });
+
   const links = await db.query.agentSkills.findMany({
     where: eq(agentSkills.agentId, agentId),
-    with: { skill: true },
+    with: {
+      skill: {
+        with: {
+          files: true,
+        },
+      },
+    },
   });
 
   const sorted = links
@@ -61,14 +73,20 @@ export async function assembleAgentContext(agentId: string, taskType: string): P
     .filter((s): s is NonNullable<typeof s> => s !== null && s !== undefined)
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const skillsMd = sorted.map((s) => `## Skill: ${s.name}\n${s.markdown}`).join("\n\n");
+  const skillsMd = sorted
+    .map((s) => {
+      const md =
+        s.files?.find((f) => f.path === SKILL_MD_PATH)?.content ?? "";
+      return `## Skill: ${s.name}\n${md}`;
+    })
+    .join("\n\n");
 
   const memMd = await retrieveMemory(agent.businessId, agentId, 5);
 
   const parts: string[] = [
     `# Agent: ${agent.name} (${agent.role})`,
     "## Instructions",
-    agent.instructions,
+    soulDoc?.content ?? "",
   ];
   if (skillsMd) {
     parts.push("## Attached skills", skillsMd);

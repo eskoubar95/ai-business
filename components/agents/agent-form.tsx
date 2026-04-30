@@ -4,8 +4,10 @@ import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import type { AgentWithInstructions } from "@/lib/agents/actions";
 import { createAgent, deleteAgent, updateAgent } from "@/lib/agents/actions";
 import type { agents } from "@/db/schema";
+import { Button } from "@/components/ui/button";
 
 import { MarkdownEditorField } from "./markdown-editor-field";
 
@@ -20,7 +22,7 @@ type Props =
   | {
       mode: "edit";
       businessId: string;
-      agent: typeof agents.$inferSelect;
+      agent: AgentWithInstructions;
       peerAgents: Peer[];
       children?: ReactNode;
     };
@@ -161,25 +163,24 @@ export function AgentForm(props: Props) {
       ) : null}
 
       <div className="flex flex-wrap gap-3">
-        <button
+        <Button
           type="button"
           data-testid="agent-save"
           disabled={pending}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
           onClick={submit}
         >
           {props.mode === "create" ? "Create agent" : "Save changes"}
-        </button>
+        </Button>
         {props.mode === "edit" ? (
-          <button
+          <Button
             type="button"
             data-testid="agent-delete"
+            variant="destructive"
             disabled={pending}
-            className="text-destructive border-destructive hover:bg-destructive/10 rounded-md border px-4 py-2 text-sm font-medium disabled:opacity-50"
             onClick={remove}
           >
             Delete
-          </button>
+          </Button>
         ) : null}
       </div>
 

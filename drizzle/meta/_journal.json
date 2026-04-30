@@ -22,6 +22,20 @@
       "when": 1777506906208,
       "tag": "0002_brainy_rogue",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777533268397,
+      "tag": "0003_harsh_turbo",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777534000000,
+      "tag": "0004_phase2_drop_legacy_columns",
+      "breakpoints": true
     }
   ]
 }
