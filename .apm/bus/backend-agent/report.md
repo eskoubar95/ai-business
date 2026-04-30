@@ -1,6 +1,6 @@
 # Backend Agent — Task 3.1 report
 
-**Branch:** `phase2/stage3-backend` · **`main`** ikke opdateret endnu — åbn PR når CI er grøn.
+**Branch:** `phase2/stage3-backend` · **PR [#6](https://github.com/eskoubar95/ai-business/pull/6)** (merge til **`main`** når CI/review OK).
 
 **Summary:** Server Actions til **tasks CRUD** (`createTask`, `updateTask`, `updateTaskStatus`, `deleteTask`, `getTasksByBusiness` som træ, `getTasksByAgent`), **task logs** (`appendTaskLog`, `getTaskLogs`), og **@-mention orchestration**: `mention-trigger.ts` matcher agenter på handle pr. business og logger `mention_trigger`-events til `orchestration_events`. `task-tree.ts` håndterer sletteorden (børn før parent). **`lib/tasks/__tests__`** (10 tests) + `lib/tasks/README.md`.
 
