@@ -4,7 +4,7 @@
 **Stage:** Næste dispatch er **Task 4.2** (Skills UI + MCP library + webhook config).  
 **Worker:** Frontend Agent  
 
-**Status:** Task **4.1** (backend) er **leveret på branch `phase2/stage4-backend`** — Manager bør merge til `main` (eller rebase frontend-branch derfra) inden/under **4.2**. Tracker: se [`.apm/tracker.md`](../../tracker.md). Backend-handoff: [`.apm/bus/backend-agent/handoff.md`](../backend-agent/handoff.md).
+**Status:** Task **4.1** (backend) har **PR [#8](https://github.com/eskoubar95/ai-business/pull/8)** fra `phase2/stage4-backend` → merge til **`main`** før/ved **4.2**. Tracker: [`.apm/tracker.md`](../../tracker.md).
 
 ## Where to find work
 

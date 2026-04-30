@@ -1,6 +1,6 @@
 # Backend Agent — Task 4.1 report
 
-**Branch:** `phase2/stage4-backend` — **afventer merge** til `main` via PR (bekræft working tree er committed).
+**Branch:** `phase2/stage4-backend` — **PR [#8](https://github.com/eskoubar95/ai-business/pull/8)** → **`main`** (afventer merge efter CI).
 
 **Summary:** Skills multi-fil + GitHub (`lib/skills/file-actions.ts`), webhook-modtagelse (`app/api/webhooks/[businessId]/receive/route.ts`) med HMAC + idempotens, MCP refaktor til business-scoped actions + grant/revoke. Dashboard/MCP-Notion-kald opdateret. Vitest + `next build` grønt.
 

@@ -6,14 +6,15 @@ task: "4.1 — Skills file tree + Webhook endpoint + MCP credential migration"
 phase: 2
 stage: 4
 branch: phase2/stage4-backend
-status: ready_for_review
-handoff_version: 2
+status: pr_open
+pr_number: 8
+handoff_version: 3
 
 # Worker Handoff — Backend Agent → Manager / downstream
 
 ## Summary
 
-Task **4.1** er implementeret på **`phase2/stage4-backend`**: multi-fil skills (`file-actions.ts` + GitHub-install), inkommende webhook-route med HMAC og idempotens, samt MCP-actions på **businessId** med grant/revoke og `getMcpCredentialsByBusiness` / `getMcpCredentialsForAgent`. Mindre UI-tilpasninger (McpInstaller, Notion-panel, dashboard-imports) for at bruge den nye API. Tests og build er kørt grønt i sidste validering — **commit og åbn PR** hvis der stadig er ændringer i working tree.
+Task **4.1** er på **`phase2/stage4-backend`** med **PR [#8](https://github.com/eskoubar95/ai-business/pull/8)** → **`main`** (squash-merge når CI er grøn). Multi-fil skills, webhook receive (HMAC + idempotency), MCP business-actions + dashboard/McpInstaller/Notion tilpasninger. **Alle ændringer committed og pushet.**
 
 ## Authoritative artifacts
 
@@ -22,6 +23,7 @@ Task **4.1** er implementeret på **`phase2/stage4-backend`**: multi-fil skills 
 | Task definition | `.apm/plan.md` — Stage **4**, Task **4.1** |
 | Task log        | `.apm/memory/stage-04/task-04-01.log.md`   |
 | Worker report   | `.apm/bus/backend-agent/report.md`         |
+| Pull request    | https://github.com/eskoubar95/ai-business/pull/8 |
 
 ## Deliverables checklist (Worker-verified)
 
@@ -37,7 +39,7 @@ Task **4.1** er implementeret på **`phase2/stage4-backend`**: multi-fil skills 
 
 ## Manager actions (næste)
 
-1. **PR** fra `phase2/stage4-backend` → `main`; merge når grøn.
+1. **PR [#8](https://github.com/eskoubar95/ai-business/pull/8):** Review og merge til `main` når CI er grøn.
 2. **Frontend:** Dispatch **Task 4.2** på **`phase2/stage4-frontend`** (Skills UI, MCP library, webhook-info) — se `.apm/bus/frontend-agent/task.md` og `.apm/plan.md`.
 
 ## Downstream notes (Frontend Task 4.2)
