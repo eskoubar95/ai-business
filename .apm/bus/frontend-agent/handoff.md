@@ -8,14 +8,14 @@ stage: 4
 branch: phase2/stage4-frontend
 status: branch_ready_pr_pending
 pr_number: null
-handoff_version: 5
-commit_tip: d5ee3a0
+handoff_version: 6
+feature_commit: 7be6822
 
 # Worker Handoff — Frontend Agent (Task **4.2** på gren)
 
 ## Summary
 
-Task **4.2** er **implementeret** på **`phase2/stage4-frontend`** (feature `7be6822`, gren-tip **`d5ee3a0`** inkl. APM-handoff): `/dashboard/skills` (ZIP/map/GitHub, agent-tilknytning), Settings med MCP-bibliotek + webhook-endpoint/antal leverancer, nav-link Skills. Afventer **PR mod `main`** og merge.
+Task **4.2** er **implementeret** på **`phase2/stage4-frontend`**; sidste **feature**-commit for leverancen er **`7be6822`** (evt. efterfølgende `chore(apm)` på samme gren). `/dashboard/skills`, Settings MCP/webhook, nav Skills — jf. task log. Afventer **PR mod `main`** og merge.
 
 ## Authoritative artifacts
 
@@ -24,7 +24,7 @@ Task **4.2** er **implementeret** på **`phase2/stage4-frontend`** (feature `7be
 | Task definition | `.apm/plan.md` — Stage **4**, Task **4.2**                           |
 | Task log        | `.apm/memory/stage-04/task-04-02.log.md`                             |
 | Worker report   | `.apm/bus/frontend-agent/report.md`                                   |
-| Gren-tip        | **`phase2/stage4-frontend`** @ **`d5ee3a0`** (feature `7be6822`)      |
+| Gren / feature | **`phase2/stage4-frontend`** — feature **`7be6822`**                      |
 
 ## Manager actions (næste)
 
