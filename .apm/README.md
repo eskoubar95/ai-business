@@ -1,29 +1,21 @@
 # APM workspace (`.apm/`)
 
-Artefacts til **Planner/Manager**: spec, plan, tracker, memory og Worker **bus**.
+Artefacts til **Planner**, **Manager** og **Workers** (spec, plan, tracker, memory, Task Bus).
 
 | Path | Rolle |
 |------|--------|
-| `spec.md` | Produkt/overblik fra Planner (**baseline** fra `cursor/apm-planning-phase`; detaljeret Phase 2-teknik se `docs/phase-2-architecture-spec.md`). |
-| `plan.md` | Planner work breakdown (**Phase 1**-struktur); ** aktiv Phase 2** følger `tracker.md` + architecture-spec ovenfor. |
-| `tracker.md` | Aktuel opgaveliste / stage-status (jf. `.apm/bus/*` og PR-landinger). |
-| `memory/` | Task logs og indeks pr. sprint/stage. |
-| `bus/<worker>/` | `task.md`, `report.md`, `handoff.md` pr. Worker. |
+| `spec.md` | **Phase 2** Planner-spec (kopled fra `docs/phase-2-*` april 2026). |
+| `plan.md` | **Phase 2**APM-plan — 10 tasks over 5 stages (detaljeret task copy). |
+| `tracker.md` | Sandhed om **hvor langt du er nu** (status efter merges på `main`). |
+| `memory/` | Task logs (`stage-NN/`), memory index; **recoverede** Worker-handoffs til Task 1.1 + 1.2 under **`memory/handoffs/worker-recovered/`**. |
+| `bus/<worker>/` | `task.md`, `report.md`, `handoff.md` — seneste handoff for backend på bus efter Task 2.1. |
 
-## Synk fra Planner-gren (`cursor/apm-planning-phase`)
+## Hvorfor filerne forsvant tidligere
 
-Planner-output opdateres typisk kun på **`cursor/apm-planning-phase`**. Lokalt tracking-gren er **`cursor/apm-planning-phase`** ↔ `origin/cursor/apm-planning-phase`.
+Commit **`490232d`** flyttede aktiv `.apm/` til **`archives/phase-one/`** og fjernede de levende Planner-filer på `main`. Phase 2-øvelsen kørte derefter mest som **iklædt men ikke tilbageført** ændringer + senere blev **Tracker** committet igen ved `73c8451`, mens **fuld Phase 2 `plan.md`/`spec.md`** først nu er **genskabt** fra Cursor **agent transcripts** (samme tekst som i Planner/Manager-chatten).
 
-```bash
-git fetch origin cursor/apm-planning-phase
-git branch -u origin/cursor/apm-planning-phase cursor/apm-planning-phase
-```
+**Genskabelses-script:** `node scripts/recover-apm-phase2-from-transcript.mjs` — se `scripts/README.md`.
 
-For at kopiere Planner-filer til **`main`** uden merge af app-kode (tilpas før commit ved konflikt med jeres edits):
+## Ikke bland sammen med `cursor/apm-planning-phase`
 
-```bash
-git checkout main
-git checkout origin/cursor/apm-planning-phase -- .apm/spec.md .apm/plan.md .apm/metadata.json .apm/memory/index.md
-```
-
-Fjern eller ret **callout-blokken** øverst i `plan.md` efter kopiering, hvis Planner har overskrevet den.
+Den git-gren holder et **ældre** Phase 1-lignende `.apm/plan.md`/`spec.md`. Overskriv **ikke** dine Phase 2-filer fra den gren uden tjek — brug **`recover-apm-phase2-from-transcript.mjs`** eller ret manuelt efter `$USER/.cursor/projects/.../agent-transcripts/`.

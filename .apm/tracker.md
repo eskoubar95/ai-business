@@ -30,7 +30,7 @@ completed_at:
 | ---- | --------------------------------------------------- | -------------- | ------------------------ | -------------- | ---------------------------------------- |
 | 1.1  | Schema Migrations + Data Migration                  | Backend Agent  | `phase2/stage1-backend`  | ✅ Done         | `.apm/memory/stage-01/task-01-01.log.md` |
 | 1.2  | P0 UX Fixes + Settings Scaffold                     | Frontend Agent | `phase2/stage1-frontend` | ✅ Done         | `.apm/memory/stage-01/task-01-02.log.md` |
-| 2.1  | Cursor SDK + runHeartbeat + user_settings           | Backend Agent  | `main` (PR **#4**)       | ✅ Done          | `.apm/memory/stage-02/task-02-01.log.md` |
+| 2.1  | Cursor SDK + runHeartbeat + user_settings           | Backend Agent  | `main` (PR **#4**)       | ✅ Done         | `.apm/memory/stage-02/task-02-01.log.md` |
 | 2.2  | Agent Config Tabs + Run Heartbeat UI + Settings     | Frontend Agent | `phase2/stage2-frontend` | 🔲 Not Started | —                                        |
 | 3.1  | Tasks CRUD + task_logs + @mention trigger           | Backend Agent  | `phase2/stage3-backend`  | 🔲 Not Started | —                                        |
 | 3.2  | Tasks UI + log feed + dashboard integration         | Frontend Agent | `phase2/stage3-frontend` | 🔲 Not Started | —                                        |
