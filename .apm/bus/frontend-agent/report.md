@@ -1,14 +1,15 @@
 ---
 agent: frontend-agent
-status: idle_await_backend_5_1
+status: blocked_until_backend_5_1_merge
 phase: 2
 stage_next: 5
+task_next: "5.2"
 last_completed_task: "4.2"
 last_merge: "PR #9 @ 995d820"
-backend_on_main: "4.1"
-manager_check: 2026-04-30
+backend_5_1_branch: "phase2/stage5-backend @ 709c545"
+manager_note: "Dispatch Task tool med fuld task.md når main har 5.1"
 ---
 
-**Task 4.2** er **merged** til **`main`** — **[PR #9](https://github.com/eskoubar95/ai-business/pull/9)** (`995d820`). Log: `.apm/memory/stage-04/task-04-02.log.md`.
+**Task 4.2** er merged til **`main`** — **[PR #9](https://github.com/eskoubar95/ai-business/pull/9)**. Log: `.apm/memory/stage-04/task-04-02.log.md`.
 
-**Næste frontend-opgave:** **Task 5.2** (Stage 5) — **start ikke** før **Backend Task 5.1** er **merged til `main`**; se `.apm/bus/frontend-agent/task.md`.
+**Backend 5.1** er klar til PR fra **`phase2/stage5-backend`** (**`709c545`**). **Task 5.2** startes **efter** den PR er merged til **`main`** — se `.apm/bus/frontend-agent/task.md` og `.apm/bus/frontend-agent/handoff.md`.
