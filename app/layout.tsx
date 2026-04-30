@@ -6,7 +6,8 @@ import { ThemeProvider } from "next-themes";
 
 import "./globals.css";
 
-import { NavShell } from "./components/nav-shell";
+import { AppShell } from "./components/app-shell";
+import { AppProgressBar } from "./components/app-progress";
 import { Toaster } from "@/components/ui/sonner";
 import { authClient } from "@/lib/auth/client";
 
@@ -27,9 +28,10 @@ export default async function RootLayout({
       className={`${GeistSans.variable} ${GeistMono.variable}`}
     >
       <body className={`${GeistSans.className} min-h-svh antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <NeonAuthUIProvider authClient={authClient}>
-            <NavShell>{children}</NavShell>
+            <AppProgressBar />
+            <AppShell>{children}</AppShell>
             <Toaster />
           </NeonAuthUIProvider>
         </ThemeProvider>
