@@ -9,5 +9,6 @@ export const config = {
     "/account/:path*",
     "/dashboard/:path*",
     "/api/protected/:path*",
+    "/api/grill-me/:path*",
   ],
 };

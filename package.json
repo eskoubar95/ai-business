@@ -16,6 +16,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@cursor/sdk": "^1.0.10",
     "@neondatabase/auth": "^0.3.0-beta",
     "@neondatabase/serverless": "^1.0.0",
     "@tailwindcss/postcss": "^4.2.4",
@@ -40,7 +41,6 @@
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^4.4.0",
     "@vitest/ui": "^3.2.0",
-    "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.0",
     "eslint": "^9.25.0",
     "eslint-config-next": "^15.3.0",

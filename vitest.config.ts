@@ -6,7 +6,12 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: "node",
-    include: ["lib/**/*.test.ts", "lib/**/*.spec.ts"],
+    include: [
+      "lib/**/*.test.ts",
+      "lib/**/*.spec.ts",
+      "app/**/*.test.ts",
+      "app/**/*.spec.ts",
+    ],
     passWithNoTests: true,
   },
   resolve: {

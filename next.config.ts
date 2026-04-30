@@ -5,6 +5,8 @@ import path from "node:path";
 const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname),
+  /** Prevent bundling Cursor SDK (dynamic graph pulls .d.ts.map into webpack). */
+  serverExternalPackages: ["@cursor/sdk"],
 };
 
 export default nextConfig;
