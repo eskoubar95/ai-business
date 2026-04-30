@@ -1,11 +1,9 @@
-# Backend Agent — Task 3.1 report
+# Backend Agent — Task 3.1 report (closed)
 
-**Branch:** `phase2/stage3-backend` · **PR [#6](https://github.com/eskoubar95/ai-business/pull/6)** (merge til **`main`** når CI/review OK).
+**Merged:** `main` — **PR [#6](https://github.com/eskoubar95/ai-business/pull/6)** (squash, merge til `main`).
 
-**Summary:** Server Actions til **tasks CRUD** (`createTask`, `updateTask`, `updateTaskStatus`, `deleteTask`, `getTasksByBusiness` som træ, `getTasksByAgent`), **task logs** (`appendTaskLog`, `getTaskLogs`), og **@-mention orchestration**: `mention-trigger.ts` matcher agenter på handle pr. business og logger `mention_trigger`-events til `orchestration_events`. `task-tree.ts` håndterer sletteorden (børn før parent). **`lib/tasks/__tests__`** (10 tests) + `lib/tasks/README.md`.
-
-**Validation:** `npm test -- --run lib/tasks` groen på branch (Worker); Worker-log nævner fuld suite + lint + build groen — **bekræft før merge.**
-
-**Manual smoke:** Ikke mod live DB i Worker-session (jf. Task Log).
+**Summary:** Server Actions til **tasks CRUD** (`createTask`, `updateTask`, `updateTaskStatus`, `deleteTask`, `getTasksByBusiness` som træ, `getTasksByAgent`), **task logs** (`appendTaskLog`, `getTaskLogs`), **@-mention orchestration** (`mention-trigger.ts`), `task-tree.ts` til sletteorden. **`lib/tasks/__tests__`** + `lib/tasks/README.md`.
 
 **log_path:** `.apm/memory/stage-03/task-03-01.log.md`
+
+**Næste backend-arbejde:** Task **4.1** (efter Frontend **3.2** ifølge plan).

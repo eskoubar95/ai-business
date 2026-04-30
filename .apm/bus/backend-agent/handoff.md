@@ -6,15 +6,15 @@ task: "3.1 — Tasks CRUD + task_logs + @mention trigger"
 phase: 2
 stage: 3
 branch: phase2/stage3-backend
-status: branch_ready
+status: merged_main
 handoff_version: 1
-commit_tip: 5de7416
+commit_tip: 51cbc67
 
 # Worker Handoff — Backend Agent → Manager / downstream
 
 ## Summary
 
-Task **3.1** er implementeret på `**phase2/stage3-backend`**: tasks-domænet med CRUD, hierarkisk liste (`getTasksByBusiness` som træ), sikker subtræ-sletning, task logs og automatisk `**mention_trigger`** i `orchestration_events` ved menneskeskabte loglinjer med `@handle`.
+Task **3.1** er **merged** til **`main`** (**PR [#6](https://github.com/eskoubar95/ai-business/pull/6)**, squash). Tasks-domæne: CRUD, hierarkisk liste (`getTasksByBusiness` som træ), sikker subtræ-sletning, task logs og automatisk `mention_trigger` i `orchestration_events` ved menneskeskabte loglinjer med `@handle`.
 
 ## Authoritative artifacts
 
@@ -41,11 +41,10 @@ Task **3.1** er implementeret på `**phase2/stage3-backend`**: tasks-domænet me
 
 Manuel smoke mod Neon er **ikke** kørt i Worker-session (jf. Task Log).
 
-## Manager actions
+## Manager actions (**efter merge** — udført)
 
-1. **PR:** Åbn og merge `**phase2/stage3-backend`** → `**main`** når CI/review er OK.
-2. **Tracker:** Verificér at `.apm/tracker.md` matcher merge-status (Task **3.1** Done forbliver korrekt).
-3. **Dispatch:** Efter merge — **Frontend Agent** til Task **3.2** på `**phase2/stage3-frontend`** (fra opdateret `main` eller merge af backend ind i frontend-gren).
+1. ✅ **PR #6** merged til `main`.
+2. **Frontend:** Checkout `main`, opret **`phase2/stage3-frontend`**, følg **Task 3.2** i `.apm/bus/frontend-agent/task.md`.
 
 ## Downstream notes (Frontend Task 3.2)
 
@@ -55,4 +54,4 @@ Manuel smoke mod Neon er **ikke** kørt i Worker-session (jf. Task Log).
 
 ## Integration
 
-Hvis `**main**` flytter før merge: rebase eller merge `main` ind i `**phase2/stage3-backend**` og kør validation gate igen.
+Næste backend-enhed (**Task 4.1**) starter fra **`phase2/stage4-backend`** efter at **Task 3.2** er merged.
