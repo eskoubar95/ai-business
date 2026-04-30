@@ -1,6 +1,7 @@
 ---
 
 ## agent: manager
+
 outgoing: 1
 incoming: 2
 handoff: 1
@@ -39,13 +40,13 @@ Coordinated **Stage 4** through Task **4.2** review, CI/E2E stabilization, PR hy
 ### Dispatch patterns
 
 - Workers spawned with **Task** tool (background) per `AGENTS.md`; reports via `**/apm-5-check-reports`**.
-- User prefers `**gh**` for GitHub when MCP token account differs from repo owner.
+- User prefers `**gh`** for GitHub when MCP token account differs from repo owner.
 
 ## Working Notes
 
 - **User language:** Danish in chat; commits/docs often English per repo rules.
-- **CI failures addressed:** (1) missing `**ENCRYPTION_KEY`** secret → MCP save 500 in E2E; (2) Neon HTTP → `**No transactions support**` → `**createTeam**` refactored without `db.transaction`; (3) Playwright strict mode → **org-chart**-scoped `getByText` for agent names on team page.
-- **Git:** `**origin/main` was far behind local `main`** earlier in the project; after squash, `**git reset --hard origin/main**` was used to align — warn future Managers if divergence reappears.
-- **Stash:** `**stash@{0}`** may still exist — *apm: local tracker WIP before sync* — user should `**stash show` / `drop*`* after tracker reconciled.
+- **CI failures addressed:** (1) missing `**ENCRYPTION_KEY`** secret → MCP save 500 in E2E; (2) Neon HTTP → `**No transactions support`** → `**createTeam**` refactored without `db.transaction`; (3) Playwright strict mode → **org-chart**-scoped `getByText` for agent names on team page.
+- **Git:** `**origin/main` was far behind local `main`** earlier in the project; after squash, `**git reset --hard origin/main`** was used to align — warn future Managers if divergence reappears.
+- **Stash:** `**stash@{0}`** may still exist — *apm: local tracker WIP before sync* — user should `**stash show` / `drop`** after tracker reconciled.
 - **Spec / Plan:** No new Stage beyond **4** in the excerpt read; next planning work may be **Stage summary / Spec update** or **new Stage** per Planner — confirm with `**.apm/plan.md`** and User.
 
