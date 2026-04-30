@@ -2,12 +2,8 @@
 
 import { assertUserOwnsAgent } from "@/lib/agents/actions";
 import { getDb } from "@/db/index";
-import { mcpCredentials } from "@/db/schema";
-import {
-  decryptCredential as decryptCredentialCrypto,
-  encryptCredential as encryptCredentialCrypto,
-  type McpEncryptedPayload,
-} from "@/lib/mcp/encryption";
+import { agentMcpAccess, mcpCredentials } from "@/db/schema";
+import { encryptCredential as encryptCredentialCrypto } from "@/lib/mcp/encryption";
 import { asc, eq } from "drizzle-orm";
 
 export async function saveMcpCredential(
@@ -17,27 +13,41 @@ export async function saveMcpCredential(
 ): Promise<void> {
   const nm = mcpName.trim();
   if (!nm) throw new Error("MCP name is required");
-  await assertUserOwnsAgent(agentId);
+  const { businessId } = await assertUserOwnsAgent(agentId);
 
   const { ivBase64, encryptedPayload } = encryptCredentialCrypto(payloadObject);
   const db = getDb();
 
-  await db
+  // Neon HTTP driver does not support db.transaction(); run steps sequentially.
+  const rows = await db
     .insert(mcpCredentials)
     .values({
-      agentId,
+      businessId,
       mcpName: nm,
       encryptedPayload,
       iv: ivBase64,
     })
     .onConflictDoUpdate({
-      target: [mcpCredentials.agentId, mcpCredentials.mcpName],
+      target: [mcpCredentials.businessId, mcpCredentials.mcpName],
       set: {
         encryptedPayload,
         iv: ivBase64,
         updatedAt: new Date(),
       },
-    });
+    })
+    .returning({ id: mcpCredentials.id });
+
+  const cred = rows[0];
+  if (!cred) throw new Error("Failed to save MCP credential");
+
+  await db
+    .insert(agentMcpAccess)
+    .values({
+      businessId,
+      agentId,
+      mcpCredentialId: cred.id,
+    })
+    .onConflictDoNothing();
 }
 
 export async function getMcpCredentialsMeta(agentId: string) {
@@ -49,38 +59,20 @@ export async function getMcpCredentialsMeta(agentId: string) {
       mcpName: mcpCredentials.mcpName,
       createdAt: mcpCredentials.createdAt,
     })
-    .from(mcpCredentials)
-    .where(eq(mcpCredentials.agentId, agentId))
+    .from(agentMcpAccess)
+    .innerJoin(mcpCredentials, eq(agentMcpAccess.mcpCredentialId, mcpCredentials.id))
+    .where(eq(agentMcpAccess.agentId, agentId))
     .orderBy(asc(mcpCredentials.mcpName));
 }
 
 export async function deleteMcpCredential(id: string): Promise<void> {
   const db = getDb();
-  const row = await db.query.mcpCredentials.findFirst({
-    where: eq(mcpCredentials.id, id),
+  const link = await db.query.agentMcpAccess.findFirst({
+    where: eq(agentMcpAccess.mcpCredentialId, id),
     columns: { agentId: true },
   });
-  if (!row) throw new Error("Credential not found");
-  await assertUserOwnsAgent(row.agentId);
+  if (!link) throw new Error("Credential not found");
+  await assertUserOwnsAgent(link.agentId);
 
   await db.delete(mcpCredentials).where(eq(mcpCredentials.id, id));
-}
-
-/** Decrypt MCP payload for trusted server workflows only; never expose to client code. */
-export async function getMcpCredentialDecrypted(id: string): Promise<Record<string, unknown>> {
-  const db = getDb();
-  const row = await db.query.mcpCredentials.findFirst({
-    where: eq(mcpCredentials.id, id),
-    columns: {
-      iv: true,
-      encryptedPayload: true,
-      agentId: true,
-    },
-  });
-  if (!row) throw new Error("Credential not found");
-
-  await assertUserOwnsAgent(row.agentId);
-
-  const payload = row.encryptedPayload as McpEncryptedPayload;
-  return decryptCredentialCrypto(row.iv, payload);
 }

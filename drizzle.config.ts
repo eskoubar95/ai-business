@@ -12,6 +12,6 @@ export default defineConfig({
   dialect: "postgresql",
   dbCredentials: {
     /** Optional direct Neon URL when pooled `DATABASE_URL` fails for Drizzle CLI; see `.cursor/rules/database-architecture.mdc`. */
-    url: (process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL)!,
+    url: (process.env.DATABASE_DIRECT_URL?.trim() || process.env.DATABASE_URL?.trim())!,
   },
 });
