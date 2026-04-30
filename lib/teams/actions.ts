@@ -38,25 +38,30 @@ export async function createTeam(params: {
     throw new Error("Lead agent must belong to this business");
   }
 
-  const createdTeam = await db.transaction(async (tx) => {
-    const [teamRow] = await tx
-      .insert(teams)
-      .values({
-        businessId,
-        name: nm,
-        leadAgentId,
-      })
-      .returning();
-    if (!teamRow) throw new Error("Failed to create team");
-    await tx.insert(teamMembers).values({
+  // Neon HTTP driver (`drizzle-orm/neon-http`) does not support `db.transaction()`.
+  const [teamRow] = await db
+    .insert(teams)
+    .values({
+      businessId,
+      name: nm,
+      leadAgentId,
+    })
+    .returning();
+
+  if (!teamRow) throw new Error("Failed to create team");
+
+  try {
+    await db.insert(teamMembers).values({
       teamId: teamRow.id,
       agentId: leadAgentId,
       sortOrder: 0,
     });
-    return teamRow;
-  });
+  } catch (err) {
+    await db.delete(teams).where(eq(teams.id, teamRow.id));
+    throw err;
+  }
 
-  return createdTeam;
+  return teamRow;
 }
 
 export async function addTeamMember(teamId: string, agentId: string): Promise<void> {
