@@ -10,10 +10,8 @@
 
 | What | Where |
 |------|--------|
-| Canonical **Task 3.2** tekst | [`.apm/plan.md`](../plan.md) — Stage **3**, Task **3.2** |
-| Index af Phase 2 tasks       | samme Plan-fil (`plan.md`), evt. shards via `scripts/split-phase2-plan-tasks.mjs` lokalt |
-| Source of truth | [`.apm/plan.md`](../../plan.md) |
-| Tracker / merge truth | [`.apm/tracker.md`](../../tracker.md) |
+| Canonical **Task 3.2** tekst | [`.apm/plan.md`](../../plan.md) — Stage **3**, Task **3.2** |
+| Source of truth / tracker | `.apm/plan.md` og [`.apm/tracker.md`](../../tracker.md) (ovenfor som reference) |
 
 When **Task 3.2** is dispatched, this file should be overwritten with the full task prompt. **Task Log:** `.apm/memory/stage-03/task-03-02.log.md` · **Report:** `.apm/bus/frontend-agent/report.md`
 

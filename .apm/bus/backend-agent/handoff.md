@@ -14,7 +14,7 @@ commit_tip: 5de7416
 
 ## Summary
 
-Task **3.1** er implementeret på `**phase2/stage3-backend`**: tasks-domænet med CRUD, hierarkisk liste (`getTasksByBusiness` som træ), sikker subtræ-sletning, task logs og automatisk `**mention_trigger**` i `orchestration_events` ved menneskeskabte loglinjer med `@handle`.
+Task **3.1** er implementeret på `**phase2/stage3-backend`**: tasks-domænet med CRUD, hierarkisk liste (`getTasksByBusiness` som træ), sikker subtræ-sletning, task logs og automatisk `**mention_trigger`** i `orchestration_events` ved menneskeskabte loglinjer med `@handle`.
 
 ## Authoritative artifacts
 
@@ -30,7 +30,7 @@ Task **3.1** er implementeret på `**phase2/stage3-backend`**: tasks-domænet me
 ## Deliverables checklist (Worker-verified)
 
 - `**lib/tasks/actions.ts`** — `createTask`, `updateTask`, `updateTaskStatus`, `deleteTask`, `getTasksByBusiness`, `getTasksByAgent` (`"use server"`)
-- `**lib/tasks/log-actions.ts**` — `appendTaskLog`, `getTaskLogs`; human logs → `parseAndTriggerMentions`
+- `**lib/tasks/log-actions.ts`** — `appendTaskLog`, `getTaskLogs`; human logs → `parseAndTriggerMentions`
 - `**lib/tasks/mention-trigger.ts**` — `@`-handles, case-insensitive agent-navn pr. business, `logEvent` med `type: mention_trigger`, `status: pending`
 - `**lib/tasks/task-tree.ts**` — subtree + sletterækkefølge (børn før forælder)
 - **Tests:** `lib/tasks/__tests__/*.test.ts` (10 tests)
@@ -43,13 +43,13 @@ Manuel smoke mod Neon er **ikke** kørt i Worker-session (jf. Task Log).
 
 ## Manager actions
 
-1. **PR:** Åbn og merge `**phase2/stage3-backend`** → `**main**` når CI/review er OK.
+1. **PR:** Åbn og merge `**phase2/stage3-backend`** → `**main`** når CI/review er OK.
 2. **Tracker:** Verificér at `.apm/tracker.md` matcher merge-status (Task **3.1** Done forbliver korrekt).
 3. **Dispatch:** Efter merge — **Frontend Agent** til Task **3.2** på `**phase2/stage3-frontend`** (fra opdateret `main` eller merge af backend ind i frontend-gren).
 
 ## Downstream notes (Frontend Task 3.2)
 
-1. Importer kun `**@/lib/tasks/actions**` og `**@/lib/tasks/log-actions**` fra Server Components / Server Actions — ingen direkte DB i Client Components.
+1. Importer kun `**@/lib/tasks/actions`** og `**@/lib/tasks/log-actions**` fra Server Components / Server Actions — ingen direkte DB i Client Components.
 2. `getTasksByBusiness(businessId)` returnerer `**TaskTreeNode[]**` (rod-noder med rekursive `**children**`).
 3. `appendTaskLog(taskId, content, authorType, authorId)` — brug `authorType: "human"` og session-bruger-id som `authorId` for kommentarer fra UI; mention-triggers kører automatisk for human.
 
