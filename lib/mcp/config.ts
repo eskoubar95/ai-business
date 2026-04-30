@@ -25,6 +25,7 @@ export const MCP_TYPE_CONFIGS: readonly McpTypeConfig[] = [
     fields: [
       { name: "token", label: "Integration token", type: "password" },
       { name: "workspaceId", label: "Workspace ID", type: "string" },
+      { name: "tasksDatabaseId", label: "Tasks data source ID", type: "string" },
     ],
   },
   {

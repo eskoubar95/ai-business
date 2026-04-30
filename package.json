@@ -21,6 +21,7 @@
     "@cursor/sdk": "^1.0.10",
     "@neondatabase/auth": "^0.3.0-beta",
     "@neondatabase/serverless": "^1.0.0",
+    "@notionhq/client": "^5.20.0",
     "@tailwindcss/postcss": "^4.2.4",
     "@uiw/react-md-editor": "^4.1.0",
     "ai": "^5.0.104",
