@@ -1,7 +1,7 @@
 ---
 
 ## phase: 2
-updated: 2026-04-30 (5.1 på `main` PR #10 @ 4f3821b; 5.2 **PR [#11](https://github.com/eskoubar95/ai-business/pull/11)** åben fra `phase2/stage5-frontend`)
+updated: 2026-04-30 (Phase 2 lukket på `main`: Task 5.2 merged **PR [#11](https://github.com/eskoubar95/ai-business/pull/11)** @ `92b92c3`; Task 5.1 **PR [#10](https://github.com/eskoubar95/ai-business/pull/10)** @ `4f3821b`)
 
 # Phase 2 Memory Index
 
@@ -30,7 +30,7 @@ Genskabt fra Cursor **agent transcripts** (2026-04-30) eftersom filerne aldrig b
 - `.apm/memory/handoffs/worker-recovered/backend-agent-task-1.1-handoff.md`
 - `.apm/memory/handoffs/worker-recovered/frontend-agent-task-1.2-handoff.md`
 
-Nyeste **backend** bus-handoff (Task **5.1** merged **PR #10**) ligger i `.apm/bus/backend-agent/handoff.md`. Nyeste **frontend** bus-handoff (**Task 5.2**, **PR [#11](https://github.com/eskoubar95/ai-business/pull/11)**) ligger i `.apm/bus/frontend-agent/handoff.md`.
+Nyeste **backend** bus-handoff (Task **5.1**) ligger i `.apm/bus/backend-agent/handoff.md`. Nyeste **frontend** bus-handoff (Task **5.2**) ligger i `.apm/bus/frontend-agent/handoff.md` — **Phase 2** er lukket på **`main`**.
 
 ## Key Decisions
 

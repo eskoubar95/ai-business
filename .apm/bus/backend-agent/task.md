@@ -13,7 +13,7 @@
 
 1. ~~PR til `main`~~ — lavet (**PR [#10](https://github.com/eskoubar95/ai-business/pull/10)**).
 2. **Deploy/dev:** **`npm run db:seed`** for at upserte archetype-tekster efter behov (idempotent).
-3. **Frontend Task 5.2** — **leveret** på **`phase2/stage5-frontend`** (`acc2e27`); **afventer PR** til **`main`** (`.apm/bus/frontend-agent/handoff.md`). Ingen yderligere Backend-work for Stage 5.
+3. **Frontend Task 5.2** — **merged** til **`main`** (**[PR #11](https://github.com/eskoubar95/ai-business/pull/11)** @ `92b92c3`). Ingen yderligere Backend-work for Phase 2 Stage 5 før ny plan.
 
 ---
 

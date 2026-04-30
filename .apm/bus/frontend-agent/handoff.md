@@ -3,37 +3,36 @@ worker: frontend-agent
 task: "5.2 — Brand color + UI polish + empty states + business dashboard"
 phase: 2
 stage: 5
-branch: phase2/stage5-frontend
-status: pr_open
+branch: main
+status: merged
 pr_number: 11
+merge_commit: 92b92c3
 commit_tip: acc2e27
-handoff_version: 10
+handoff_version: 11
 backend_on_main_commit: 4f3821b
 ---
 
-# Worker Handoff — Frontend Agent (Task **5.2** leveret)
+# Worker Handoff — Frontend Agent (Task **5.2** merged)
 
 ## Summary
 
-**Task 5.2** er **implementeret** på **`phase2/stage5-frontend`** (tip **`acc2e27`**). **[PR #11](https://github.com/eskoubar95/ai-business/pull/11)** mod **`main`** er åben — afvent CI / merge. Task log: **`.apm/memory/stage-05/task-05-02.log.md`**.
+**Task 5.2** er **merged** til **`main`** via **[PR #11](https://github.com/eskoubar95/ai-business/pull/11)** — squash-tip **`92b92c3`**. Feature-baseline forbliver dokumenteret som **`acc2e27`**. Log: `.apm/memory/stage-05/task-05-02.log.md`.
 
 ## Authoritative artifacts
 
-| Artifact        | Path |
-| --------------- | ---- |
+| Artifact       | Path |
+| -------------- | ---- |
 | Task definition | `.apm/plan.md` — Stage **5**, Task **5.2** |
-| Task log        | `.apm/memory/stage-05/task-05-02.log.md` |
-| Worker report   | `.apm/bus/frontend-agent/report.md` |
-| Dispatch (idle) | `.apm/bus/frontend-agent/task.md` |
+| Task log       | `.apm/memory/stage-05/task-05-02.log.md` |
+| Worker report  | `.apm/bus/frontend-agent/report.md` |
+| Task bus       | `.apm/bus/frontend-agent/task.md` (arkiv/reference indtil Phase 3) |
 
 ## Manager actions
 
-1. **Åbn PR** fra **`phase2/stage5-frontend`** → **`main`** (titler/beskrivelse: Phase 2 Task 5.2 — dashboard polish, empty states, Grill-Me two-path UI).
-2. **Før merge:** kør **`npm test`**, **`npm run lint`**, **`npm run build`** på PR; ved behov **`npm run test:e2e`** (kræver `E2E_EMAIL` / `E2E_PASSWORD` — onboarding-flow er ændret).
-3. **Efter merge:** opdater **`.apm/tracker.md`** hvis PR-nummer skal ind i task-tabellen; sync ** buses**; **Phase 2** er komplet på **`main`** når denne PR er merged.
-4. **Næste arbejde:** Ingen yderligere **Phase 2** Frontend-task i planen — **Planner** definerer **Phase 3** / næste dispatch i nye `task.md`-filer.
+1. ~~PR #11~~ — merged.
+2. **Phase 2:** Komplet på **`main`** (**10/10** tasks jf. tracker).
+3. **Planner:** Definér **Phase 3** og nye **`task.md` / Worker-dispatchfiler**.
 
-## API-kontrakt (allerede på `main` fra 5.1)
+## API (5.1 + 5.2 på `main`)
 
 - **`POST /api/grill-me/ui`** — valgfri **`businessType`**: `existing` \| `new`.
-- UI sender **`businessType`** fra onboarding + Grill-Me-side (query + chat body) jf. implementering i **`acc2e27`**.
