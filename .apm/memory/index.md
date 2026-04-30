@@ -30,7 +30,7 @@ Genskabt fra Cursor **agent transcripts** (2026-04-30) eftersom filerne aldrig b
 - `.apm/memory/handoffs/worker-recovered/backend-agent-task-1.1-handoff.md`
 - `.apm/memory/handoffs/worker-recovered/frontend-agent-task-1.2-handoff.md`
 
-Nyeste backend bus-handoff (Task **2.1**) ligger stadig i `.apm/bus/backend-agent/handoff.md`.
+Nyeste **backend** bus-handoff (Task **3.1**) ligger i `.apm/bus/backend-agent/handoff.md`. Nyeste **frontend** bus-handoff (Task **3.2**, PR **#7**) ligger i `.apm/bus/frontend-agent/handoff.md`.
 
 ## Key Decisions
 
