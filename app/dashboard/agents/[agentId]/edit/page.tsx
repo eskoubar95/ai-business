@@ -5,7 +5,7 @@ import { DocumentEditor } from "@/components/agents/document-editor";
 import { RunHeartbeatButton } from "@/components/agents/run-heartbeat-button";
 import { getAgentsByBusiness } from "@/lib/agents/actions";
 import { getAgentDocuments } from "@/lib/agents/document-actions";
-import { getMcpCredentialsMeta } from "@/lib/mcp/actions";
+import { getMcpCredentialsForAgent } from "@/lib/mcp/actions";
 import { getSkillsByAgent, listSkillsByBusiness } from "@/lib/skills/actions";
 import { resolveBusinessIdParam } from "@/lib/dashboard/business-scope";
 
@@ -33,7 +33,7 @@ export default async function EditAgentPage({
   const [attached, library, mcpMeta, agentDocs] = await Promise.all([
     getSkillsByAgent(agentId),
     listSkillsByBusiness(businessId),
-    getMcpCredentialsMeta(agentId),
+    getMcpCredentialsForAgent(agentId),
     getAgentDocuments(agentId),
   ]);
 
@@ -65,7 +65,7 @@ export default async function EditAgentPage({
           attached={attached}
           library={library}
         />
-        <McpInstaller agentId={agentId} meta={mcpMeta} />
+        <McpInstaller businessId={businessId} agentId={agentId} meta={mcpMeta} />
       </AgentForm>
     </div>
   );

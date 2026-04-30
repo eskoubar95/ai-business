@@ -1,7 +1,7 @@
 ---
 
 ## phase: 2
-updated: 2026-04-30 (Task 3.2 merged PR #7 → `main` @ d57be19)
+updated: 2026-04-30 (Task 4.1 på branch phase2/stage4-backend — PR til main)
 
 # Phase 2 Memory Index
 
@@ -17,7 +17,7 @@ updated: 2026-04-30 (Task 3.2 merged PR #7 → `main` @ d57be19)
 | 2.2 — Agent Config UI         | `.apm/memory/stage-02/task-02-02.log.md` | ✅ Merged (**PR #5** → `main`); handoff `.apm/bus/frontend-agent/handoff.md`                                                                 |
 | 3.1 — Tasks Backend           | `.apm/memory/stage-03/task-03-01.log.md` | ✅ Merged (**PR [#6](https://github.com/eskoubar95/ai-business/pull/6)** → `main`); `.apm/bus/backend-agent/handoff.md` |
 | 3.2 — Tasks Frontend          | `.apm/memory/stage-03/task-03-02.log.md` | ✅ Merged (**[PR #7](https://github.com/eskoubar95/ai-business/pull/7)** → `main` @ d57be19); `.apm/bus/frontend-agent/handoff.md` |
-| 4.1 — Skills + Webhooks + MCP | `.apm/memory/stage-04/task-04-01.log.md` | Not created yet                                                                                                                             |
+| 4.1 — Skills + Webhooks + MCP | `.apm/memory/stage-04/task-04-01.log.md` | 🔄 **PR til `main` afventer** (`phase2/stage4-backend`); rapport `.apm/bus/backend-agent/report.md`                                           |
 | 4.2 — Skills + MCP UI         | `.apm/memory/stage-04/task-04-02.log.md` | Not created yet                                                                                                                             |
 | 5.1 — Archetypes + Grill-Me   | `.apm/memory/stage-05/task-05-01.log.md` | Not created yet                                                                                                                             |
 | 5.2 — UI Polish               | `.apm/memory/stage-05/task-05-02.log.md` | Not created yet                                                                                                                             |

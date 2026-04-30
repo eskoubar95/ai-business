@@ -1,9 +1,9 @@
-# Backend Agent — Task 3.1 report (closed)
+# Backend Agent — Task 4.1 report
 
-**Merged:** `main` — **PR [#6](https://github.com/eskoubar95/ai-business/pull/6)** (squash, merge til `main`).
+**Branch:** `phase2/stage4-backend` — **afventer merge** til `main` via PR (bekræft working tree er committed).
 
-**Summary:** Server Actions til **tasks CRUD** (`createTask`, `updateTask`, `updateTaskStatus`, `deleteTask`, `getTasksByBusiness` som træ, `getTasksByAgent`), **task logs** (`appendTaskLog`, `getTaskLogs`), **@-mention orchestration** (`mention-trigger.ts`), `task-tree.ts` til sletteorden. **`lib/tasks/__tests__`** + `lib/tasks/README.md`.
+**Summary:** Skills multi-fil + GitHub (`lib/skills/file-actions.ts`), webhook-modtagelse (`app/api/webhooks/[businessId]/receive/route.ts`) med HMAC + idempotens, MCP refaktor til business-scoped actions + grant/revoke. Dashboard/MCP-Notion-kald opdateret. Vitest + `next build` grønt.
 
-**log_path:** `.apm/memory/stage-03/task-03-01.log.md`
+**log_path:** `.apm/memory/stage-04/task-04-01.log.md`
 
-**Næste backend-arbejde:** Task **4.1** — **3.2** er merged (**PR #7**); start fra **`phase2/stage4-backend`** (jf. `.apm/plan.md`).
+**Næste backend-arbejde:** Task **5.1** på **`phase2/stage5-backend`** efter **Task 4.2** (frontend) er merged.

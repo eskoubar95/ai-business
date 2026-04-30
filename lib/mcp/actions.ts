@@ -1,24 +1,26 @@
 "use server";
 
 import { assertUserOwnsAgent } from "@/lib/agents/actions";
+import { assertUserBusinessAccess } from "@/lib/grill-me/access";
 import { getDb } from "@/db/index";
 import { agentMcpAccess, mcpCredentials } from "@/db/schema";
 import { encryptCredential as encryptCredentialCrypto } from "@/lib/mcp/encryption";
-import { asc, eq } from "drizzle-orm";
+import { requireSessionUserId } from "@/lib/roster/session";
+import { and, asc, eq } from "drizzle-orm";
 
 export async function saveMcpCredential(
-  agentId: string,
+  businessId: string,
   mcpName: string,
   payloadObject: Record<string, unknown>,
-): Promise<void> {
+): Promise<{ id: string }> {
   const nm = mcpName.trim();
   if (!nm) throw new Error("MCP name is required");
-  const { businessId } = await assertUserOwnsAgent(agentId);
+  const userId = await requireSessionUserId();
+  await assertUserBusinessAccess(userId, businessId);
 
   const { ivBase64, encryptedPayload } = encryptCredentialCrypto(payloadObject);
   const db = getDb();
 
-  // Neon HTTP driver does not support db.transaction(); run steps sequentially.
   const rows = await db
     .insert(mcpCredentials)
     .values({
@@ -39,6 +41,20 @@ export async function saveMcpCredential(
 
   const cred = rows[0];
   if (!cred) throw new Error("Failed to save MCP credential");
+  return { id: cred.id };
+}
+
+export async function grantMcpAccessToAgent(
+  agentId: string,
+  mcpCredentialId: string,
+): Promise<void> {
+  const { businessId } = await assertUserOwnsAgent(agentId);
+  const db = getDb();
+  const cred = await db.query.mcpCredentials.findFirst({
+    where: and(eq(mcpCredentials.id, mcpCredentialId), eq(mcpCredentials.businessId, businessId)),
+    columns: { id: true },
+  });
+  if (!cred) throw new Error("Credential not found");
 
   await db
     .insert(agentMcpAccess)
@@ -50,7 +66,39 @@ export async function saveMcpCredential(
     .onConflictDoNothing();
 }
 
-export async function getMcpCredentialsMeta(agentId: string) {
+export async function revokeMcpAccessFromAgent(
+  agentId: string,
+  mcpCredentialId: string,
+): Promise<void> {
+  const { businessId } = await assertUserOwnsAgent(agentId);
+  const db = getDb();
+  await db
+    .delete(agentMcpAccess)
+    .where(
+      and(
+        eq(agentMcpAccess.agentId, agentId),
+        eq(agentMcpAccess.mcpCredentialId, mcpCredentialId),
+        eq(agentMcpAccess.businessId, businessId),
+      ),
+    );
+}
+
+export async function getMcpCredentialsByBusiness(businessId: string) {
+  const userId = await requireSessionUserId();
+  await assertUserBusinessAccess(userId, businessId);
+  const db = getDb();
+  return db
+    .select({
+      id: mcpCredentials.id,
+      mcpName: mcpCredentials.mcpName,
+      createdAt: mcpCredentials.createdAt,
+    })
+    .from(mcpCredentials)
+    .where(eq(mcpCredentials.businessId, businessId))
+    .orderBy(asc(mcpCredentials.mcpName));
+}
+
+export async function getMcpCredentialsForAgent(agentId: string) {
   await assertUserOwnsAgent(agentId);
   const db = getDb();
   return db
@@ -66,13 +114,14 @@ export async function getMcpCredentialsMeta(agentId: string) {
 }
 
 export async function deleteMcpCredential(id: string): Promise<void> {
+  const userId = await requireSessionUserId();
   const db = getDb();
-  const link = await db.query.agentMcpAccess.findFirst({
-    where: eq(agentMcpAccess.mcpCredentialId, id),
-    columns: { agentId: true },
+  const row = await db.query.mcpCredentials.findFirst({
+    where: eq(mcpCredentials.id, id),
+    columns: { businessId: true },
   });
-  if (!link) throw new Error("Credential not found");
-  await assertUserOwnsAgent(link.agentId);
+  if (!row) throw new Error("Credential not found");
+  await assertUserBusinessAccess(userId, row.businessId);
 
   await db.delete(mcpCredentials).where(eq(mcpCredentials.id, id));
 }

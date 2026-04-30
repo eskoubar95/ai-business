@@ -1,4 +1,4 @@
-/** Field metadata for MCP credential UI (matches JSON keys encrypted by `saveMcpCredential`). */
+/** Field metadata for MCP credential UI (matches JSON keys encrypted by `saveMcpCredential(businessId, …)`). */
 export type McpFieldDef =
   | { name: string; label: string; type: "string" }
   | { name: string; label: string; type: "password" }

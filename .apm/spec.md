@@ -1,10 +1,10 @@
 ---
-phase: 2
+
+## phase: 2
 date: 2026-04-30
 sources:
   - docs/phase-2-architecture-spec.md
   - docs/phase-2-ui-ux-review.md
----
 
 # Phase 2 Specification — AI Business Platform
 
@@ -17,16 +17,19 @@ This spec is derived from two source documents produced on 2026-04-30:
 
 Phase 1 delivered (all merged to `main`):
 
-| Area | Key files |
-|------|-----------|
-| Schema | `db/schema.ts` — businesses, user_businesses, memory, agents, skills, agent_skills, teams, team_members, mcp_credentials, orchestration_events, webhook_deliveries, approvals, grill_me_sessions |
-| Auth | `lib/auth/server.ts`, `middleware.ts`, Neon Auth |
-| Grill-Me | `lib/grill-me/`, `app/api/grill-me/ui/route.ts`, `app/dashboard/grill-me/` |
-| Agents/MCP/Teams | `lib/agents/`, `lib/skills/`, `lib/mcp/`, `lib/teams/`, `app/dashboard/agents/`, `app/dashboard/teams/` |
-| Orchestration | `lib/webhooks/`, `lib/notion/`, `lib/approvals/`, `lib/orchestration/`, `app/dashboard/approvals/` |
-| E2E | `tests/*.spec.ts`, `.github/workflows/e2e.yml` |
+
+| Area             | Key files                                                                                                                                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Schema           | `db/schema.ts` — businesses, user_businesses, memory, agents, skills, agent_skills, teams, team_members, mcp_credentials, orchestration_events, webhook_deliveries, approvals, grill_me_sessions |
+| Auth             | `lib/auth/server.ts`, `middleware.ts`, Neon Auth                                                                                                                                                 |
+| Grill-Me         | `lib/grill-me/`, `app/api/grill-me/ui/route.ts`, `app/dashboard/grill-me/`                                                                                                                       |
+| Agents/MCP/Teams | `lib/agents/`, `lib/skills/`, `lib/mcp/`, `lib/teams/`, `app/dashboard/agents/`, `app/dashboard/teams/`                                                                                          |
+| Orchestration    | `lib/webhooks/`, `lib/notion/`, `lib/approvals/`, `lib/orchestration/`, `app/dashboard/approvals/`                                                                                               |
+| E2E              | `tests/*.spec.ts`, `.github/workflows/e2e.yml`                                                                                                                                                   |
+
 
 **Known gaps from Phase 1 review:**
+
 - `agents.instructions` column exists and is used — Phase 2 migrates this to `agent_documents` table.
 - `skills.markdown` column exists — Phase 2 migrates to `skill_files` table.
 - `mcp_credentials.agent_id` FK — Phase 2 moves to `business_id` with agent opt-in junction.
@@ -37,19 +40,21 @@ Phase 1 delivered (all merged to `main`):
 
 ### Database Changes (11 tables)
 
-| Table | Action | Key change |
-|-------|--------|------------|
-| `businesses` | Add columns | `description`, `github_repo_url`, `local_path` |
-| `user_settings` | New | Cursor API key (AES-encrypted) per user |
-| `agents` | Add + remove column | Add `archetype_id`, remove `instructions` |
-| `agent_documents` | New | File tree: soul/tools/heartbeat per agent |
-| `agent_archetypes` | New | Platform presets with soul/tools/heartbeat addenda |
-| `tasks` | New | Business-level with hierarchy + status enum |
-| `task_logs` | New | Activity feed per task (agent + human) |
-| `skill_files` | New | File tree per skill (replaces `skills.markdown`) |
-| `skills` | Remove column | Remove `markdown` |
-| `mcp_credentials` | Change FK | From `agent_id` to `business_id` |
-| `agent_mcp_access` | New | Junction: agent ↔ mcp opt-in |
+
+| Table              | Action              | Key change                                         |
+| ------------------ | ------------------- | -------------------------------------------------- |
+| `businesses`       | Add columns         | `description`, `github_repo_url`, `local_path`     |
+| `user_settings`    | New                 | Cursor API key (AES-encrypted) per user            |
+| `agents`           | Add + remove column | Add `archetype_id`, remove `instructions`          |
+| `agent_documents`  | New                 | File tree: soul/tools/heartbeat per agent          |
+| `agent_archetypes` | New                 | Platform presets with soul/tools/heartbeat addenda |
+| `tasks`            | New                 | Business-level with hierarchy + status enum        |
+| `task_logs`        | New                 | Activity feed per task (agent + human)             |
+| `skill_files`      | New                 | File tree per skill (replaces `skills.markdown`)   |
+| `skills`           | Remove column       | Remove `markdown`                                  |
+| `mcp_credentials`  | Change FK           | From `agent_id` to `business_id`                   |
+| `agent_mcp_access` | New                 | Junction: agent ↔ mcp opt-in                       |
+
 
 ### Functional Areas
 
