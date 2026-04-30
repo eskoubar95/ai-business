@@ -36,7 +36,7 @@ completed_at:
 | 3.2  | Tasks UI + log feed + dashboard integration         | Frontend Agent | `main` (PR **[#7](https://github.com/eskoubar95/ai-business/pull/7)**) | ✅ Done         | `.apm/memory/stage-03/task-03-02.log.md` |
 | 4.1  | Skills file tree + Webhook endpoint + MCP migration | Backend Agent  | `main` (PR **[#8](https://github.com/eskoubar95/ai-business/pull/8)**) | ✅ Done         | `.apm/memory/stage-04/task-04-01.log.md` |
 | 4.2  | Skills UI + MCP library UI + Webhook config         | Frontend Agent | `main` (PR **[#9](https://github.com/eskoubar95/ai-business/pull/9)**) | ✅ Done         | `.apm/memory/stage-04/task-04-02.log.md` |
-| 5.1  | Archetypes seeding + Grill-Me two-path              | Backend Agent  | `phase2/stage5-backend` (**PR [#10](https://github.com/eskoubar95/ai-business/pull/10)**) | ✅ Done         | `.apm/memory/stage-05/task-05-01.log.md` |
+| 5.1  | Archetypes seeding + Grill-Me two-path              | Backend Agent  | `main` (PR **[#10](https://github.com/eskoubar95/ai-business/pull/10)**)                   | ✅ Done         | `.apm/memory/stage-05/task-05-01.log.md` |
 | 5.2  | Brand color + UI polish + empty states              | Frontend Agent | `phase2/stage5-frontend`                                               | 🔲 Not Started | —                                        |
 
 

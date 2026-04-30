@@ -5,9 +5,9 @@
 **Task:** **5.2 — Brand color + UI polish + empty states + business dashboard**  
 **Worker:** Frontend Agent  
 
-**Status:** **DISPATCH NÅR** Backend **5.1** er **merged til `main`**. Backend leverance ligger på PR-gren **`phase2/stage5-backend`** (commit **`709c545`**) indtil merge.
+**Status:** **READY TO DISPATCH** — Backend **5.1** er **merged til `main`** (**[PR #10](https://github.com/eskoubar95/ai-business/pull/10)** @ `4f3821b`).
 
-**Branch:** Opret **`phase2/stage5-frontend`** fra **`main`** **efter** **5.1** merge.
+**Branch:** Opret **`phase2/stage5-frontend`** fra **`main`** (seneste **`main`** efter merge).
 
 ---
 
