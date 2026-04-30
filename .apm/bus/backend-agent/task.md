@@ -5,7 +5,7 @@
 **Task:** **5.1 — Archetypes seeding + Grill-Me two-path onboarding**  
 **Worker:** Backend Agent  
 
-**Branch:** `phase2/stage5-backend` fra **`main`** (ingen merge af frontend-4.2 påkrævet for denne opgave).
+**Branch:** `phase2/stage5-backend` fra **`main`** (Frontend **4.2** er allerede på **`main`**).
 
 ---
 

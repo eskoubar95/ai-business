@@ -5,7 +5,7 @@
 **Task:** **5.2 — Brand color + UI polish + empty states + business dashboard**  
 **Worker:** Frontend Agent  
 
-**Status:** **BLOCKER** — start først når **Backend Task 5.1** er **merged til `main`** (Grill-Me two-path API + archetypes). **Task 4.2** bør også være merged til `main` så du rebaser/cutter **`phase2/stage5-frontend`** fra et komplet Stage 4 `main`.
+**Status:** **BLOCKER** — start først når **Backend Task 5.1** er **merged til `main`** (Grill-Me two-path API + archetypes). **Task 4.2** er på **`main`** (**PR [#9](https://github.com/eskoubar95/ai-business/pull/9)**); opret **`phase2/stage5-frontend`** fra **`main`** efter **5.1** merge.
 
 **Branch:** `phase2/stage5-frontend` fra **`main`** efter **5.1** merge.
 
