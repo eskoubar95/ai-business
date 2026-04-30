@@ -6,14 +6,21 @@ title: AI Business Platform
 
 ## Task Tracking
 
+**Stage 2:**
+
+| Task | Status | Agent | Branch |
+| ---- | ------ | ----- | ------ |
+| 2.1 | Active | backend-agent | grill-me-backend |
+| 2.2 | Waiting: 2.1 | frontend-agent | |
+
 **Stage 1:** Complete
 
 ## Worker Tracking
 
 | Agent | Instance | Notes |
 | ----- | -------- | ----- |
-| backend-agent | 1 | Task 1.1 merged to `main`; idle until Stage 2 dispatch |
-| frontend-agent | 1 | Task 1.2 merged earlier; idle until Stage 2 dispatch |
+| backend-agent | 1 | Dispatched Task 2.1 on `grill-me-backend` |
+| frontend-agent | 1 | Idle until 2.1 completes |
 
 ## Version Control
 
@@ -23,6 +30,6 @@ title: AI Business Platform
 
 ## Working Notes
 
-- **Stage 1** integration is on **`main`** (Drizzle schema + migrations, Docker, Vitest, Neon Auth placeholders, UI shell, Playwright smoke, unified middleware).
-- **Follow-up before Stage 2 or release (environment):** With real `DATABASE_URL`, run `npm run db:migrate` on a fresh Neon DB; confirm Neon Auth session semantics with a live `NEON_AUTH_BASE_URL` (Worker log: placeholder URL yielded 502/connection errors, not 401).
-- `schema-auth-infra` feature branch removed after merge; remote push remains manual.
+- **Stage 1** integration is on **`main`**. Outstanding env smoke: `npm run db:migrate` + live Neon Auth URL when credentials exist.
+- **Stage 2.1** uses branch **`grill-me-backend`** (no worktree); implement Grill-Me backend + Cursor SDK on this branch, merge to `main` after review.
+- If `.apm/worktrees/schema-auth-infra` still exists on disk (Windows lock), remove it manually and run `git worktree prune` / `git branch -d schema-auth-infra` when the folder is free.
