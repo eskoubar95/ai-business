@@ -22,3 +22,12 @@ Stage 1 completed with parallel backend (`schema-auth-infra`) and frontend (`ui-
 
 - `task-01-01.log.md`
 - `task-01-02.log.md`
+
+### Stage 2 - Grill-Me Vertical Slice
+
+Backend (2.1) delivered Cursor SDK wrapper, `createBusiness` / `startGrillMeTurn`, soul persistence, `GET /api/grill-me/stream`, Vitest. Frontend (2.2) delivered onboarding, dashboard business list, chat with **Vercel AI SDK UI** (`POST /api/grill-me/ui`), soul preview via `getBusinessSoulMemory`, Geist fonts, Playwright `grill-me.spec.ts`, and `.github/workflows/e2e.yml` with `GRILL_ME_E2E_MOCK` for deterministic Cursor output in CI. Merged to `main`. Worker's procedural reminder: Workers commit only; merge/push is Manager/repo owner (`AGENTS.md`).
+
+**Task Logs:**
+
+- `task-02-01.log.md`
+- `task-02-02.log.md`
