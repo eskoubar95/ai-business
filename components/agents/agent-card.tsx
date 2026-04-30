@@ -20,7 +20,7 @@ export function AgentCard(props: {
   return (
     <li>
       <Link
-        href={`/dashboard/agents/${a.id}/edit?businessId=${encodeURIComponent(businessId)}`}
+        href={`/dashboard/agents/${a.id}?businessId=${encodeURIComponent(businessId)}`}
         data-testid={`agent-card-${a.id}`}
         className="border-border hover:bg-muted/40 flex flex-col gap-2 rounded-lg border p-4"
       >
