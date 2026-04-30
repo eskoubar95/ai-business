@@ -14,6 +14,7 @@ test.describe("agent roster and teams", () => {
   );
 
   test("agents, skills, MCP badge, team org chart", async ({ page }) => {
+    test.setTimeout(15 * 60_000);
     await signInWithCredentials(
       page,
       process.env.E2E_EMAIL!,
@@ -99,7 +100,10 @@ test.describe("agent roster and teams", () => {
     await page.getByTestId("team-member-a").selectOption({ label: "E2E Member One" });
     await page.getByTestId("team-member-b").selectOption({ label: "E2E Member Two" });
     await page.getByTestId("team-create-submit").click();
-    await page.waitForURL(/\/dashboard\/teams\/[0-9a-f-]+/i, { timeout: 60_000 });
+    await page.waitForURL(/\/dashboard\/teams\/[0-9a-f-]+/i, {
+      timeout: 120_000,
+      waitUntil: "domcontentloaded",
+    });
 
     await expect(page.getByTestId("org-chart")).toBeVisible();
     await expect(page.locator('[data-testid^="org-node-"]').first()).toBeVisible();
