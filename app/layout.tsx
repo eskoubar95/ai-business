@@ -1,4 +1,10 @@
 import type { Metadata } from "next";
+import { NeonAuthUIProvider } from "@neondatabase/auth/react";
+
+import "./globals.css";
+
+import { NavShell } from "./components/nav-shell";
+import { authClient } from "@/lib/auth/client";
 
 export const metadata: Metadata = {
   title: "AI Business",
@@ -11,8 +17,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className="min-h-svh antialiased">
+        <NeonAuthUIProvider authClient={authClient}>
+          <NavShell>{children}</NavShell>
+        </NeonAuthUIProvider>
+      </body>
     </html>
   );
 }

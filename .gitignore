@@ -16,5 +16,10 @@ npm-debug.log*
 # typescript
 *.tsbuildinfo
 
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+
 # apm parallel worktrees (local only)
 .apm/worktrees/
