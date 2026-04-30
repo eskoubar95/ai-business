@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { BusinessSelector } from "@/components/business-selector";
 import { ApprovalCard } from "@/components/approvals/approval-card";
+import { PageEmptyState } from "@/components/page-empty-state";
+import { Button } from "@/components/ui/button";
 import { listPendingApprovalsForBusiness } from "@/lib/approvals/queries";
 import { loadUserBusinesses, resolveBusinessIdParam } from "@/lib/dashboard/business-scope";
 
@@ -40,9 +42,17 @@ export default async function ApprovalsPage({
 
       <section data-testid="approvals-queue" className="flex flex-col gap-3">
         {serialized.length === 0 ? (
-          <p className="text-muted-foreground text-sm" data-testid="approvals-empty">
-            Queue is empty — nothing awaiting approval.
-          </p>
+          <PageEmptyState
+            title="Nothing waiting for approval"
+            description="When agents pause for a human gate, pending items land here so you can approve, reject, or add a comment. The queue stays empty while everything is auto-approved or idle."
+            testId="approvals-empty"
+          >
+            <Button variant="outline" asChild>
+              <Link href={`/dashboard/tasks?businessId=${encodeURIComponent(businessId)}`}>
+                View tasks
+              </Link>
+            </Button>
+          </PageEmptyState>
         ) : (
           <ul className="flex flex-col gap-4">
             {serialized.map((item) => (

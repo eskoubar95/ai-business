@@ -13,7 +13,6 @@ const links = [
   { href: "/dashboard/settings", label: "Settings" },
   { href: "/dashboard/notion", label: "Notion" },
   { href: "/dashboard/webhooks", label: "Webhooks" },
-  { href: "/dashboard/onboarding", label: "New business" },
 ] as const;
 
 export function NavLinks({ pendingApprovalsCount = 0 }: { pendingApprovalsCount?: number }) {

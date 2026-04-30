@@ -24,14 +24,16 @@ test.describe("grill-me flow", () => {
     );
 
     await page.goto("/dashboard/onboarding");
-    await expect(page.getByTestId("onboarding-business-name")).toBeVisible({
+    await expect(page.getByTestId("onboarding-path-existing")).toBeVisible({
       timeout: 30_000,
     });
+    await page.getByTestId("onboarding-path-existing").click();
+    await expect(page.getByTestId("onboarding-business-name")).toBeVisible();
 
     const name = `E2E Biz ${Date.now()}`;
     await page.getByTestId("onboarding-business-name").fill(name);
     await page.getByTestId("onboarding-submit").click();
-    await page.waitForURL(/\/dashboard\/grill-me\/[0-9a-f-]+$/i, {
+    await page.waitForURL(/\/dashboard\/grill-me\/[0-9a-f-]+/i, {
       timeout: 60_000,
     });
 

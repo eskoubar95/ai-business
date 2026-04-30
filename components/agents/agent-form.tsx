@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import type { AgentWithInstructions } from "@/lib/agents/actions";
@@ -70,6 +71,7 @@ export function AgentForm(props: Props) {
             instructions,
             reportsToAgentId: reportsToAgentId || null,
           });
+          toast.success("Agent created.");
           router.push(
             `/dashboard/agents/${created.id}/edit?businessId=${encodeURIComponent(props.businessId)}`,
           );
@@ -82,6 +84,7 @@ export function AgentForm(props: Props) {
           ...(showInstructions ? { instructions } : {}),
           reportsToAgentId: reportsToAgentId || null,
         });
+        toast.success("Agent saved.");
         router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Save failed");

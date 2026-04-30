@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 
 import { addTeamMember, createTeam } from "@/lib/teams/actions";
 import type { agents } from "@/db/schema";
@@ -59,6 +60,7 @@ export function TeamCreateForm({
         });
         await addTeamMember(team.id, memberA);
         await addTeamMember(team.id, memberB);
+        toast.success("Team created.");
         router.push(
           `/dashboard/teams/${team.id}?businessId=${encodeURIComponent(businessId)}`,
         );

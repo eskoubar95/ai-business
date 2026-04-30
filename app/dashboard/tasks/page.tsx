@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { BusinessSelector } from "@/components/business-selector";
+import { PageEmptyState } from "@/components/page-empty-state";
 import { Button } from "@/components/ui/button";
 import { TaskStatusBoard } from "@/components/tasks/task-status-board";
 import { loadUserBusinesses, resolveBusinessIdParam } from "@/lib/dashboard/business-scope";
@@ -64,6 +65,20 @@ export default async function TasksDashboardPage({
       </div>
 
       <BusinessSelector businesses={businesses} currentBusinessId={businessId} />
+
+      {flat.length === 0 ? (
+        <PageEmptyState
+          title="No tasks yet for this business"
+          description="Tasks track orchestration work from backlog through done: assign agents or teams, move columns as work progresses, and log updates for the whole team. Start with one task to see the board in action."
+          testId="tasks-empty"
+        >
+          <Button asChild data-testid="tasks-empty-cta">
+            <Link href={`/dashboard/tasks/new?businessId=${encodeURIComponent(businessId)}`}>
+              Create first task
+            </Link>
+          </Button>
+        </PageEmptyState>
+      ) : null}
 
       <TaskStatusBoard
         grouped={grouped}

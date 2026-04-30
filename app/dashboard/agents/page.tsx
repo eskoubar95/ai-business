@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { BusinessSelector } from "@/components/business-selector";
 import { AgentCard } from "@/components/agents/agent-card";
+import { PageEmptyState } from "@/components/page-empty-state";
 import { Button } from "@/components/ui/button";
 import { getAgentsByBusiness } from "@/lib/agents/actions";
 import { getMcpCredentialsForAgent } from "@/lib/mcp/actions";
@@ -50,13 +51,16 @@ export default async function AgentsDashboardPage({
 
       <section data-testid="agents-roster" className="flex flex-col gap-3">
         {rows.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            No agents yet.{" "}
-            <Link href={`/dashboard/agents/new?businessId=${businessId}`} className="text-primary underline">
-              Create one
-            </Link>
-            .
-          </p>
+          <PageEmptyState
+            title="No agents in this business yet"
+            description="Agents are the roster entries Cursor and webhooks orchestrate: each has a role, instructions, skills, and MCP tools. Create your first agent to start delegating work and running heartbeats."
+          >
+            <Button asChild data-testid="agents-empty-cta">
+              <Link href={`/dashboard/agents/new?businessId=${encodeURIComponent(businessId)}`}>
+                Create agent
+              </Link>
+            </Button>
+          </PageEmptyState>
         ) : (
           <ul className="grid gap-3 md:grid-cols-2">
             {rows.map(({ agent: a, skillCount, mcpCount }) => (
