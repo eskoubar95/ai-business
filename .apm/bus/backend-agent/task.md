@@ -4,7 +4,7 @@
 **Stage:** Backend Task **3.1** lukket på branch; næste numbered backend-opgave er **4.1** (Skills + Webhooks + MCP).  
 **Worker:** Backend Agent  
 
-**Status:** Task **3.1** er **merged** til **`main`** (**PR #6**). Ingen aktiv bus-opgave her før **Task 4.1** dispatch (efter **3.2** frontend).
+**Status:** Task **3.1** er **merged** til **`main`** (**PR #6**). **Task 3.2** er **merged** (**PR #7**). **Task 4.1** kan starte på **`phase2/stage4-backend`** (upstream oprettet fra `main`).
 
 ## Where to find work
 
