@@ -41,6 +41,8 @@ Exact list — *re-run `git log main..approval-notion-ui` if `main` advances:*
 2. `0397489` — `fix: align MCP server actions and Playwright config with Next build`
 3. `bd0ecaf` — `feat(dashboard): approvals queue, Notion sync, webhooks log, agent status`
 4. `1db5a1a` — `chore(apm): tracker after Task 4.2 review`
+5. `557983f` — `docs(apm): PR title and body for approval-notion-ui (Task 4.2)`
+6. `3798313` — `docs(apm): PR title by capability, not task number`
 
 ### Scope map
 
@@ -58,8 +60,7 @@ Exact list — *re-run `git log main..approval-notion-ui` if `main` advances:*
 
 ### Stats (vs `main` at last export)
 
-- **Files:** 36 changed (`git diff --stat main..approval-notion-ui`)
-- **Approximate:** +1267 / −68 lines (including APM log/report/tracker and `.env.example`)
+- **Files / lines:** run `git diff --stat main..approval-notion-ui` before merge (includes doc-only commits after the original dashboard export).
 
 ### Validation
 
