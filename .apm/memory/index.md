@@ -31,3 +31,11 @@ Backend (2.1) delivered Cursor SDK wrapper, `createBusiness` / `startGrillMeTurn
 
 - `task-02-01.log.md`
 - `task-02-02.log.md`
+
+### Stage 3 — Agent roster (progress)
+
+**3.1 (backend)** merged to `main`: agent/skill/MCP/team server actions, AES-GCM encryption, `lib/mcp/config.ts`, memory retrieval + `assembleAgentContext`, Vitest. **3.2 (frontend)** in flight — roster UI, org chart, MCP installer, teams UI, Playwright.
+
+**Task Logs (3.x):**
+
+- `task-03-01.log.md`
