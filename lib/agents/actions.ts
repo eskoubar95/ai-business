@@ -201,6 +201,18 @@ export async function deleteAgent(agentId: string): Promise<void> {
   await db.delete(agents).where(eq(agents.id, agentId));
 }
 
+export async function listAgentSummariesByBusiness(
+  businessId: string,
+): Promise<{ id: string; name: string }[]> {
+  await ensureBusinessMembership(businessId);
+  const db = getDb();
+  return db
+    .select({ id: agents.id, name: agents.name })
+    .from(agents)
+    .where(eq(agents.businessId, businessId))
+    .orderBy(asc(agents.name));
+}
+
 export async function getAgentsByBusiness(businessId: string): Promise<AgentWithInstructions[]> {
   await ensureBusinessMembership(businessId);
   const db = getDb();

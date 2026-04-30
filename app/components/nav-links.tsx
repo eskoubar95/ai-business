@@ -8,6 +8,7 @@ const links = [
   { href: "/dashboard/agents", label: "Agents" },
   { href: "/dashboard/teams", label: "Teams" },
   { href: "/dashboard/tasks", label: "Tasks" },
+  { href: "/dashboard/skills", label: "Skills" },
   { href: "/dashboard/approvals", label: "Approvals" },
   { href: "/dashboard/settings", label: "Settings" },
   { href: "/dashboard/notion", label: "Notion" },

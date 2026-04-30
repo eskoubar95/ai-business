@@ -5,5 +5,6 @@ Business-scoped UI under `/dashboard/*`. Pages use `resolveBusinessIdParam` from
 | Path | Purpose |
 |------|---------|
 | `approvals/` | Pending approval queue + `[approvalId]` detail |
+| `skills/` | Skills library: ZIP/folder/GitHub install, agent assignment |
 | `notion/` | Notion MCP credential form per agent + recent sync table |
 | `webhooks/` | `webhook_deliveries` log for the selected business |

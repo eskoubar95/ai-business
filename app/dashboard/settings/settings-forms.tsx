@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
+import { McpLibrary } from "@/components/mcp/mcp-library";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -13,6 +15,8 @@ import {
 } from "@/components/ui/select";
 import type { SettingsBusinessRow } from "@/lib/settings/actions";
 import { saveBusinessSettings, saveUserSettings } from "@/lib/settings/actions";
+import type { SettingsIntegrationsPanel } from "@/lib/settings/integrations-panel";
+import { loadSettingsIntegrationsPanel } from "@/lib/settings/integrations-panel";
 
 export function SettingsForms({
   businesses,
@@ -30,6 +34,8 @@ export function SettingsForms({
   const [businessId, setBusinessId] = useState(initialBusinessId ?? "");
   const [accountPending, startAccountSave] = useTransition();
   const [businessPending, startBusinessSave] = useTransition();
+  const [integrations, setIntegrations] = useState<SettingsIntegrationsPanel | null>(null);
+  const [integrationsLoading, setIntegrationsLoading] = useState(() => Boolean(initialBusinessId));
 
   useEffect(() => {
     const b = businesses.find((x) => x.id === businessId);
@@ -38,6 +44,28 @@ export function SettingsForms({
     setGithubRepoUrl(b.githubRepoUrl ?? "");
     setDescription(b.description ?? "");
   }, [businessId, businesses]);
+
+  useEffect(() => {
+    if (!businessId) {
+      setIntegrations(null);
+      return;
+    }
+    let cancelled = false;
+    setIntegrationsLoading(true);
+    loadSettingsIntegrationsPanel(businessId)
+      .then((data) => {
+        if (!cancelled) setIntegrations(data);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Could not load integrations.");
+      })
+      .finally(() => {
+        if (!cancelled) setIntegrationsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [businessId]);
 
   async function onSaveAccount(e: React.FormEvent) {
     e.preventDefault();
@@ -81,7 +109,7 @@ export function SettingsForms({
   }
 
   return (
-    <div className="flex max-w-xl flex-col gap-10">
+    <div className="flex max-w-3xl flex-col gap-10">
       <section className="flex flex-col gap-4">
         <div>
           <h2 className="text-lg font-medium">Account</h2>
@@ -179,6 +207,56 @@ export function SettingsForms({
           </Button>
         </form>
       </section>
+
+      {businessId ? (
+        <section className="flex flex-col gap-4 border-t pt-10">
+          <div>
+            <h2 className="text-lg font-medium">Inbound webhooks</h2>
+            <p className="text-muted-foreground text-sm">
+              POST JSON to this URL with headers{" "}
+              <span className="font-mono text-xs">X-Idempotency-Key</span>,{" "}
+              <span className="font-mono text-xs">X-Webhook-Signature</span> (HMAC-SHA256 hex).
+              Uses server secret{" "}
+              <span className="font-mono text-xs">WEBHOOK_SECRET</span>.
+            </p>
+          </div>
+          {integrationsLoading ? (
+            <p className="text-muted-foreground text-sm">Loading webhook info…</p>
+          ) : integrations ? (
+            <>
+              <code
+                className="border-border bg-muted/40 block break-all rounded-md border p-3 text-xs"
+                data-testid="settings-webhook-endpoint"
+              >
+                {integrations.webhookEndpoint}
+              </code>
+              <p className="text-muted-foreground text-sm">
+                Recorded deliveries for this business:{" "}
+                <span className="text-foreground font-medium">
+                  {integrations.webhookDeliveryCount}
+                </span>
+                .{" "}
+                <Link
+                  href={`/dashboard/webhooks?businessId=${encodeURIComponent(businessId)}`}
+                  className="text-primary underline"
+                >
+                  Open delivery log
+                </Link>
+              </p>
+            </>
+          ) : (
+            <p className="text-muted-foreground text-sm">Could not load webhook summary.</p>
+          )}
+        </section>
+      ) : null}
+
+      {businessId && integrations && !integrationsLoading ? (
+        <McpLibrary
+          businessId={businessId}
+          board={integrations.mcpBoard}
+          onChanged={() => loadSettingsIntegrationsPanel(businessId).then(setIntegrations)}
+        />
+      ) : null}
     </div>
   );
 }
