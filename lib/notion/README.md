@@ -5,6 +5,7 @@ Business-scoped Notion API access via MCP credentials (integration token + optio
 ## Files
 
 - **`client.ts`** — `getNotionClient(businessId)` and `resolveNotionForBusiness(businessId)` (returns `{ client, tasksDatabaseId? }`). Resolves the first `mcp_credentials` row for `mcp_name = 'notion'` joined to an agent in the business; requires an authenticated user with membership in that business.
+- **`dashboard-actions.ts`** (`"use server"`) — `runNotionSyncForBusiness(businessId)` wraps `syncNotionTasks` with membership checks for the dashboard.
 - **`parser.ts`** — `parseAgentMentions(commentText)` extracts `!agent-slug` mentions and trailing message text.
 - **`sync.ts`** — `syncNotionTasks(businessId)` uses credential payload key `tasksDatabaseId` as the Notion **`data_source_id`** for `client.dataSources.query` (Notion API version shipped with `@notionhq/client`), then logs one `notion.sync.tasks` orchestration event with page summaries. `writeBackToNotion(businessId, pageId, properties)` calls `pages.update` and logs `notion.writeback`.
 

@@ -8,4 +8,4 @@ Shared server utilities for dashboard routes that need **business scope** (tenan
 
 ## Usage
 
-Agent roster and team pages call `resolveBusinessIdParam(searchParams.businessId, "/dashboard/agents")` (or `"/dashboard/teams"`) so URLs always carry an authorized `businessId`. Omitting `businessId` is supported: the server picks the user’s first business.
+Agent roster, teams, approvals, Notion, and webhooks pages call `resolveBusinessIdParam(searchParams.businessId, "<scoped-path>")` so URLs carry an authorized `businessId`. Omitting `businessId` is supported: the server picks the user’s first business.

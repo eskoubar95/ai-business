@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AgentCard } from "@/components/agents/agent-card";
 import { getAgentsByBusiness } from "@/lib/agents/actions";
 import { getMcpCredentialsMeta } from "@/lib/mcp/actions";
 import { getSkillsByAgent } from "@/lib/skills/actions";
@@ -75,37 +76,18 @@ export default async function AgentsDashboardPage({
         ) : (
           <ul className="grid gap-3 md:grid-cols-2">
             {rows.map(({ agent: a, skillCount, mcpCount }) => (
-              <li key={a.id}>
-                <Link
-                  href={`/dashboard/agents/${a.id}/edit?businessId=${encodeURIComponent(businessId)}`}
-                  data-testid={`agent-card-${a.id}`}
-                  className="border-border hover:bg-muted/40 flex flex-col gap-2 rounded-lg border p-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-medium">{a.name}</span>
-                    <span
-                      data-testid={`agent-status-${a.id}`}
-                      className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs uppercase"
-                    >
-                      idle
-                    </span>
-                  </div>
-                  <p className="text-muted-foreground text-sm">{a.role}</p>
-                  <div className="text-muted-foreground flex gap-3 text-xs">
-                    <span data-testid={`agent-skills-count-${a.id}`}>{skillCount} skills</span>
-                    <span data-testid={`agent-mcp-count-${a.id}`}>{mcpCount} MCP</span>
-                  </div>
-                </Link>
-              </li>
+              <AgentCard
+                key={a.id}
+                agent={{ id: a.id, name: a.name, role: a.role }}
+                businessId={businessId}
+                skillCount={skillCount}
+                mcpCount={mcpCount}
+              />
             ))}
           </ul>
         )}
       </section>
 
-      <p className="text-muted-foreground text-xs">
-        Live agent status (working / awaiting approval) ships with orchestration — cards show a static{" "}
-        <strong>idle</strong> badge for now.
-      </p>
     </div>
   );
 }

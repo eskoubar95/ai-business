@@ -25,10 +25,18 @@ export async function loadUserBusinesses(): Promise<{ id: string; name: string }
   return rows;
 }
 
+/** Dashboard routes that scope state with `?businessId=`. */
+export type DashboardScopedPath =
+  | "/dashboard/agents"
+  | "/dashboard/teams"
+  | "/dashboard/approvals"
+  | "/dashboard/notion"
+  | "/dashboard/webhooks";
+
 /** Ensures `businessId` belongs to the session user; otherwise redirects with first business or onboarding. */
 export async function resolveBusinessIdParam(
   businessIdParam: string | undefined,
-  redirectBasePath: "/dashboard/agents" | "/dashboard/teams",
+  redirectBasePath: DashboardScopedPath,
 ): Promise<string> {
   const rows = await loadUserBusinesses();
   if (rows.length === 0) {

@@ -6,6 +6,7 @@ Server-side helpers for verifying incoming webhooks and recording idempotent del
 
 - **`hmac.ts`** — `signPayload` / `verifySignature` using HMAC-SHA256 and `crypto.timingSafeEqual` (compare hex digests).
 - **`engine.ts`** — `deliverWebhook(type, businessId, payload, idempotencyKey, options?)` records a delivery row, runs optional `process`, and marks `delivered` or `failed`. Duplicate keys with status `delivered` or `pending` are skipped. For tests, pass a custom `adapter` implementing `WebhookDeliveryAdapter`.
+- **`deliveries-queries.ts`** — Lists recent `webhook_deliveries` rows per business for the dashboard log (authorized reads).
 
 ## Configuration
 
