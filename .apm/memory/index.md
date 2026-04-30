@@ -7,7 +7,7 @@ updated: 2026-04-30 (Task 2.2 merged via PR #5; memory index synced)
 
 ## Task Logs
 
-All **numbered Phase 2 task bodies** are mirrored from `plan.md` under [tasks/from-plan/](`../tasks/README.md`) (`npm run apm:tasks-from-plan`).
+**Task bodies:** canonical copy i [`.apm/plan.md`](../plan.md). Lokalt kan du evt. shard’e til `.apm/tasks/from-plan/` med `node scripts/split-phase2-plan-tasks.mjs`, hvis scriptet findes i dit worktree.
 
 | Task                          | Log File                                 | Status                                                                                                                                      |
 | ----------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |

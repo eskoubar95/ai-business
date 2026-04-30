@@ -10,11 +10,11 @@
 
 | What | Where |
 |------|--------|
-| Canonical **Task 3.2** text (from Plan) | [`.apm/tasks/from-plan/3.2-tasks-ui-log-feed-dashboard-integration-frontend.md`](../../tasks/from-plan/3.2-tasks-ui-log-feed-dashboard-integration-frontend.md) |
-| Index of **all Phase 2 tasks** | [`.apm/tasks/README.md`](../../tasks/README.md) |
+| Canonical **Task 3.2** tekst | [`.apm/plan.md`](../plan.md) — Stage **3**, Task **3.2** |
+| Index af Phase 2 tasks       | samme Plan-fil (`plan.md`), evt. shards via `scripts/split-phase2-plan-tasks.mjs` lokalt |
 | Source of truth | [`.apm/plan.md`](../../plan.md) |
 | Tracker / merge truth | [`.apm/tracker.md`](../../tracker.md) |
 
 When **Task 3.2** is dispatched, this file should be overwritten with the full task prompt. **Task Log:** `.apm/memory/stage-03/task-03-02.log.md` · **Report:** `.apm/bus/frontend-agent/report.md`
 
-Optional snapshots from Cursor transcript recovery: `.apm/archives/phase-two/transcript-writes/` (see that folder’s `README.md`).
+Optional transcripts: stash eller `.apm/archives/phase-two/transcript-writes/` hvis du har kopieret dem lokalt.
