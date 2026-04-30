@@ -10,13 +10,14 @@ commit_tip: null
 handoff_version: 8
 backend_branch: phase2/stage5-backend
 backend_commit_tip: 709c545
+backend_pr_number: 10
 ---
 
 # Worker Handoff — Frontend Agent (næste: Task **5.2**)
 
 ## Summary
 
-**Task 4.2** er **merged** til **`main`** (**[PR #9](https://github.com/eskoubar95/ai-business/pull/9)**). **Backend Task 5.1** er **leveret** på **`phase2/stage5-backend`** (**`709c545`**) og afventer **PR til `main`**.
+**Task 4.2** er **merged** til **`main`** (**[PR #9](https://github.com/eskoubar95/ai-business/pull/9)**). **Backend Task 5.1** har åben **[PR #10](https://github.com/eskoubar95/ai-business/pull/10)** fra **`phase2/stage5-backend`** (**`709c545`**).
 
 **Task 5.2** skal **ikke** påbegyndes før **`main`** indeholder merge af **5.1** — derefter opret **`phase2/stage5-frontend`** fra **`main`**.
 
