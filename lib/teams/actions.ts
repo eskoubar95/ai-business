@@ -5,7 +5,7 @@ import { assertUserOwnsAgent } from "@/lib/agents/actions";
 import { getDb } from "@/db/index";
 import { teamMembers, teams } from "@/db/schema";
 import { requireSessionUserId } from "@/lib/roster/session";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 async function requireTeamAccess(teamId: string): Promise<{
   team: typeof teams.$inferSelect;
@@ -105,6 +105,20 @@ export async function setTeamLead(teamId: string, leadAgentId: string): Promise<
       updatedAt: new Date(),
     })
     .where(eq(teams.id, teamId));
+}
+
+export async function listTeamsByBusiness(businessId: string) {
+  const userId = await requireSessionUserId();
+  await assertUserBusinessAccess(userId, businessId);
+  const db = getDb();
+  return db.query.teams.findMany({
+    where: eq(teams.businessId, businessId),
+    orderBy: [asc(teams.name)],
+    with: {
+      leadAgent: true,
+      members: true,
+    },
+  });
 }
 
 export async function getTeamWithMembers(teamId: string) {

@@ -105,6 +105,15 @@ export async function detachSkillFromAgent(agentId: string, skillId: string): Pr
   );
 }
 
+export async function listSkillsByBusiness(businessId: string) {
+  await ensureBusinessMembership(businessId);
+  const db = getDb();
+  return db.query.skills.findMany({
+    where: eq(skills.businessId, businessId),
+    orderBy: [asc(skills.name)],
+  });
+}
+
 export async function getSkillsByAgent(agentId: string) {
   const { businessId } = await assertUserOwnsAgent(agentId);
   const db = getDb();

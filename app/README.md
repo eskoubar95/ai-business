@@ -11,6 +11,12 @@ Route-driven UI for the AI Business Platform Next.js app.
 | `/auth/[path]`                     | Neon Auth UI (`AuthView`) — `sign-in`, `sign-up`, `forgot-password`, etc.                                         |
 | `/account/[path]`                  | Neon Auth account UI (`AccountView`) — `settings`, `security`.                                                    |
 | `/dashboard`                       | Lists businesses the user belongs to; links to Grill-Me per business.                                             |
+| `/dashboard/agents`                | Agent roster for a `businessId` query param (defaults to the user’s first business); cards show static **idle** badge, skill/MCP counts; links to edit and **New agent**. |
+| `/dashboard/agents/new`            | Create agent (name, role, markdown instructions, optional reports-to).                                             |
+| `/dashboard/agents/[agentId]/edit` | Edit agent; skill manager, MCP installer (encrypted server-side save only).                                       |
+| `/dashboard/teams`                   | Teams for selected `businessId`; member counts and lead name.                                                      |
+| `/dashboard/teams/new`             | Create team with lead plus **two** additional members (requires ≥3 agents).                                        |
+| `/dashboard/teams/[teamId]`        | Team detail: org chart from `reportsToAgentId`, member list, lead highlighted.                                      |
 | `/dashboard/onboarding`            | Create business (`createBusiness`) → redirect to Grill-Me chat.                                                   |
 | `/dashboard/grill-me/[businessId]` | Grill-Me chat — **Vercel AI SDK UI** (`useChat`) + streaming `POST /api/grill-me/ui` wrapping `startGrillMeTurn`. |
 | `/api/grill-me/ui`                 | UI message stream for Grill-Me (AI SDK data stream protocol).                                                     |
@@ -44,6 +50,7 @@ Grill-Me uses `[useChat](https://ai-sdk.dev/docs/ai-sdk-ui/chatbot)` from `@ai-s
 - End-to-end: `npm run test:e2e` (starts dev server via Playwright when none is running).
 - Playwright starts the dev server with `**GRILL_ME_E2E_MOCK=1`** by default so Grill-Me turns use deterministic assistant output without the Cursor CLI (override with `GRILL_ME_E2E_MOCK=0` if needed).
 - **`tests/grill-me.spec.ts`** runs only when **`E2E_EMAIL`** and **`E2E_PASSWORD`** are set (see `.env.example`); requires a working **`DATABASE_URL`** for `createBusiness` / sessions.
+- **`tests/agents.spec.ts`** uses the same auth + DB: onboarding → agents/skills/MCP/teams flow with `data-testid` selectors.
 - **GitHub Actions:** add repository secrets `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`, `E2E_EMAIL`, `E2E_PASSWORD` so CI runs the full Grill-Me flow (see repo root `README.md`).
 
 Environment variables for Neon Auth are documented in the repository `.env.example`.
