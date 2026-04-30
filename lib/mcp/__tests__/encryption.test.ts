@@ -24,6 +24,14 @@ describe("MCP AES-256-GCM", () => {
     expect(() => loadEncryptionKeyFromEnv()).toThrow(/64 hex/);
   });
 
+  it("accepts 64-hex key with surrounding whitespace or quotes", () => {
+    process.env.ENCRYPTION_KEY = `  ${testKeyHex}  `;
+    expect(loadEncryptionKeyFromEnv().length).toBe(32);
+
+    process.env.ENCRYPTION_KEY = `"${testKeyHex}"`;
+    expect(loadEncryptionKeyFromEnv().length).toBe(32);
+  });
+
   it("round-trips a JSON payload", () => {
     process.env.ENCRYPTION_KEY = testKeyHex;
     const original = { notion: { token: "abc", workspace: "ws" } };

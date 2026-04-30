@@ -6,6 +6,8 @@ const hasAuth =
   !!process.env.E2E_EMAIL?.trim() && !!process.env.E2E_PASSWORD?.trim();
 
 test.describe("agent roster and teams", () => {
+  test.describe.configure({ timeout: 15 * 60_000 });
+
   test.skip(
     !hasAuth,
     "Set E2E_EMAIL and E2E_PASSWORD to run authenticated roster E2E.",
@@ -32,7 +34,7 @@ test.describe("agent roster and teams", () => {
     await page.getByTestId("onboarding-business-name").fill(bizName);
     await page.getByTestId("onboarding-submit").click();
     await page.waitForURL(/\/dashboard\/grill-me\/[0-9a-f-]+$/i, {
-      timeout: 60_000,
+      timeout: 120_000,
     });
 
     const grillUrl = page.url();

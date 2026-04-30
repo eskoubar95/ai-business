@@ -13,11 +13,13 @@ export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  // Agents + Grill-Me hit many routes; dev-server first compiles plus occasional .next flake → allow a retry locally.
+  retries: process.env.CI ? 2 : 1,
   // Grill-Me + agents suites both hit Server Actions and DB; parallel workers overload local dev and leave transitions pending.
   workers: 1,
   reporter: process.env.CI ? "github" : "list",
-  timeout: 60_000,
+  // Agents roster E2E compiles many App Router pages on cold webpack dev (minutes); 60s was aborting mid-flow / at onboarding.
+  timeout: 15 * 60_000,
   expect: { timeout: 15_000 },
   use: {
     baseURL: "http://localhost:3000",

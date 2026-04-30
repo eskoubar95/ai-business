@@ -40,3 +40,11 @@ Backend (2.1) delivered Cursor SDK wrapper, `createBusiness` / `startGrillMeTurn
 
 - `task-03-01.log.md`
 - `task-03-02.log.md`
+
+### Stage 4 — Orchestration (in progress)
+
+**4.1 (backend)** merged to `main`: webhook HMAC + idempotent `deliverWebhook`, Notion client/sync/parser (`dataSources.query`, `tasksDatabaseId` on MCP config), approvals Server Actions, `logEvent` / `getAgentStatus` on `orchestration_events`, Vitest + READMEs. **4.2 (frontend)** active — approvals/Notion/webhook UI and `getAgentStatus` on agent cards.
+
+**Task Logs (4.x):**
+
+- `task-04-01.log.md`

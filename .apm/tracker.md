@@ -16,15 +16,15 @@ title: AI Business Platform
 
 | Task | Status | Agent | Branch |
 | ---- | ------ | ----- | ------ |
-| 4.1 | Active | backend-agent | orchestration-backend |
-| 4.2 | Waiting | frontend-agent | — (after 4.1) |
+| 4.1 | Done | backend-agent | merged → `main` |
+| 4.2 | Active | frontend-agent | approval-notion-ui |
 
 ## Worker Tracking
 
 | Agent | Instance | Notes |
 | ----- | -------- | ----- |
-| backend-agent | 1 | Task 4.1 on `orchestration-backend` |
-| frontend-agent | 1 | Idle; Task 4.2 after 4.1 merges |
+| backend-agent | 1 | Task 4.1 merged to `main`; idle |
+| frontend-agent | 1 | Task 4.2 on `approval-notion-ui` |
 
 ## Version Control
 

@@ -6,13 +6,27 @@ export type McpEncryptedPayload = {
   tag: string;
 };
 
+function normalizeEncryptionKeyHex(raw: string): string {
+  let s = raw.trim();
+  if (
+    (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith("'") && s.endsWith("'"))
+  ) {
+    s = s.slice(1, -1).trim();
+  }
+  return s;
+}
+
 export function loadEncryptionKeyFromEnv(): Buffer {
-  const hex = process.env.ENCRYPTION_KEY;
-  if (!hex?.trim()) {
+  const raw = process.env.ENCRYPTION_KEY;
+  if (!raw?.trim()) {
     throw new Error("ENCRYPTION_KEY is not set");
   }
+  const hex = normalizeEncryptionKeyHex(raw);
   if (!/^[\da-fA-F]{64}$/.test(hex)) {
-    throw new Error("ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes AES-256 key)");
+    throw new Error(
+      `ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes). After trimming, length is ${hex.length}. Use: openssl rand -hex 32`,
+    );
   }
   return Buffer.from(hex, "hex");
 }
