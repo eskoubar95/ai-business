@@ -4,10 +4,10 @@ import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { Button } from "@/components/ui/button";
 import type { AgentWithInstructions } from "@/lib/agents/actions";
 import { createAgent, deleteAgent, updateAgent } from "@/lib/agents/actions";
 import type { agents } from "@/db/schema";
-import { Button } from "@/components/ui/button";
 
 import { MarkdownEditorField } from "./markdown-editor-field";
 
@@ -163,19 +163,14 @@ export function AgentForm(props: Props) {
       ) : null}
 
       <div className="flex flex-wrap gap-3">
-        <Button
-          type="button"
-          data-testid="agent-save"
-          disabled={pending}
-          onClick={submit}
-        >
+        <Button type="button" data-testid="agent-save" disabled={pending} onClick={submit}>
           {props.mode === "create" ? "Create agent" : "Save changes"}
         </Button>
         {props.mode === "edit" ? (
           <Button
             type="button"
-            data-testid="agent-delete"
             variant="destructive"
+            data-testid="agent-delete"
             disabled={pending}
             onClick={remove}
           >

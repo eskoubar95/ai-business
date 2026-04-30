@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth/server";
 import { getDb } from "@/db/index";
 import { businesses, userBusinesses } from "@/db/schema";
@@ -18,6 +19,7 @@ export default async function DashboardPage() {
     .select({
       id: businesses.id,
       name: businesses.name,
+      createdAt: businesses.createdAt,
     })
     .from(userBusinesses)
     .innerJoin(businesses, eq(userBusinesses.businessId, businesses.id))
@@ -35,13 +37,9 @@ export default async function DashboardPage() {
             </span>
           </p>
         </div>
-        <Link
-          href="/dashboard/onboarding"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex rounded-md px-4 py-2 text-sm font-medium"
-          data-testid="dashboard-new-business"
-        >
-          Start new business
-        </Link>
+        <Button asChild data-testid="dashboard-new-business">
+          <Link href="/dashboard/onboarding">Start new business</Link>
+        </Button>
       </div>
 
       <section className="flex flex-col gap-3">
@@ -59,11 +57,18 @@ export default async function DashboardPage() {
             {rows.map((b) => (
               <li key={b.id}>
                 <Link
-                  href={`/dashboard/grill-me/${b.id}`}
-                  className="border-border hover:bg-muted/50 block rounded-lg border px-4 py-3 text-sm font-medium"
+                  href={`/dashboard/agents?businessId=${encodeURIComponent(b.id)}`}
+                  className="border-border hover:bg-muted/50 hover:border-primary/30 block rounded-lg border px-4 py-3 text-sm font-medium transition-colors"
                   data-testid={`dashboard-business-${b.id}`}
                 >
-                  {b.name}
+                  <span className="text-foreground block font-medium">{b.name}</span>
+                  <span className="text-muted-foreground mt-1 block text-xs font-normal">
+                    Since{" "}
+                    {new Date(b.createdAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </span>
                 </Link>
               </li>
             ))}

@@ -8,6 +8,18 @@ import { and, asc, eq } from "drizzle-orm";
 
 import { validateReportsToForBusiness } from "./reports-cycle";
 
+/** Columns persisted on `agents` (no legacy `instructions` column; soul is in `agent_documents`). */
+const agentsPublicColumns = {
+  id: true,
+  businessId: true,
+  archetypeId: true,
+  name: true,
+  role: true,
+  reportsToAgentId: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
 /** Agent row with soul markdown exposed as `instructions` for existing UI contracts. */
 export type AgentWithInstructions = typeof agents.$inferSelect & {
   instructions: string;
@@ -157,6 +169,7 @@ export async function updateAgent(
   } else {
     updated = await db.query.agents.findFirst({
       where: eq(agents.id, agentId),
+      columns: agentsPublicColumns,
     });
   }
 
@@ -194,6 +207,7 @@ export async function getAgentsByBusiness(businessId: string): Promise<AgentWith
   const rows = await db.query.agents.findMany({
     where: eq(agents.businessId, businessId),
     orderBy: [asc(agents.name)],
+    columns: agentsPublicColumns,
     with: {
       documents: {
         where: eq(agentDocuments.slug, "soul"),
