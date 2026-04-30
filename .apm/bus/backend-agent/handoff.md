@@ -1,58 +1,58 @@
-# Backend Agent — Worker handoff (Task **2.1**)
-
-**Outgoing:** Backend Agent after **Task 2.1**  
-**Audience:** Manager (next `apm-2-initiate-manager` / Frontend dispatch)  
-**Date:** 2026-04-30
-
 ---
 
-## VC truth
+## worker: backend-agent
 
-- **`main`** at **`ea84f6c`** — `feat(heartbeat): Cursor SDK runHeartbeat and encrypted user Cursor API key (Task 2.1) (#4)`.
-- PR **#4** merged; fjern-branch **`phase2/stage2-backend`** slettet på origin (som forventet efter squash/merge workflow).
+task: "3.1 — Tasks CRUD + task_logs + @mention trigger"
+phase: 2
+stage: 3
+branch: phase2/stage3-backend
+status: branch_ready
+handoff_version: 1
+commit_tip: 5de7416
 
----
+# Worker Handoff — Backend Agent → Manager / downstream
 
-## Completed (past tense)
+## Summary
 
-- **`@cursor/sdk`** integreret; **`runHeartbeat(agentId)`** i `lib/heartbeat/actions.ts` (local `cwd` fra `businesses.local_path`; model **`composer-2`**).
-- Prompt: **`buildHeartbeatPrompt`** i `lib/heartbeat/prompt-builder.ts` (+ **`formatHeartbeatPrompt`** til Vitest).
-- **User settings:** **`saveUserSettings`** / **`saveBusinessSettings`** i `lib/settings/actions.ts`; decryptet nøgle i **`lib/settings/cursor-api-key.ts`** (**ikke** Server Actions-modul → ikke client-RPC for rå API key).
-- **Orkestrering:** insert **`orchestration_events`** med `type: heartbeat_run`, payload tokens/model/duration (succeeded/failed).
-- **Tests:** `lib/heartbeat/__tests__/*`, `lib/settings/__tests__/actions-settings.test.ts`.
-- **Dok:** `lib/heartbeat/README.md`, `.env.example`-note om Cursor key via **`user_settings`**, ikke global env.
+Task **3.1** er implementeret på `**phase2/stage3-backend`**: tasks-domænet med CRUD, hierarkisk liste (`getTasksByBusiness` som træ), sikker subtræ-sletning, task logs og automatisk `**mention_trigger`** i `orchestration_events` ved menneskeskabte loglinjer med `@handle`.
 
-**Task Log:** `.apm/memory/stage-02/task-02-01.log.md`  
-**Report (kort):** `.apm/bus/backend-agent/report.md`
+## Authoritative artifacts
 
----
 
-## Frontend Task **2.2** — dependencies unlocked
+| Artifact        | Path                                       |
+| --------------- | ------------------------------------------ |
+| Task definition | `.apm/plan.md` — Stage **3**, Task **3.1** |
+| Task log        | `.apm/memory/stage-03/task-03-01.log.md`   |
+| Worker report   | `.apm/bus/backend-agent/report.md`         |
+| Domain README   | `lib/tasks/README.md`                      |
 
-Kaldbare Server Actions fra **`"use server"`**-filer (kun de der **skal** kaldes fra UI):
 
-| Behov UI | Moduleksport |
-|---------|----------------|
-| Kør heartbeat | `runHeartbeat` fra `@/lib/heartbeat/actions` |
-| Gem Cursor API key | `saveUserSettings` fra `@/lib/settings/actions` |
-| Gem business-path / repo / beskrivelse | `saveBusinessSettings` fra `@/lib/settings/actions` |
+## Deliverables checklist (Worker-verified)
 
-**Ikke** eksponér **`getUserCursorApiKeyDecrypted`** til klient — brug kun server-side eller tilføj separat **`configured: boolean`**-metadata action i frontend-task hvis nødvendigt.
+- `**lib/tasks/actions.ts`** — `createTask`, `updateTask`, `updateTaskStatus`, `deleteTask`, `getTasksByBusiness`, `getTasksByAgent` (`"use server"`)
+- `**lib/tasks/log-actions.ts`** — `appendTaskLog`, `getTaskLogs`; human logs → `parseAndTriggerMentions`
+- `**lib/tasks/mention-trigger.ts**` — `@`-handles, case-insensitive agent-navn pr. business, `logEvent` med `type: mention_trigger`, `status: pending`
+- `**lib/tasks/task-tree.ts**` — subtree + sletterækkefølge (børn før forælder)
+- **Tests:** `lib/tasks/__tests__/*.test.ts` (10 tests)
 
-**Ikke på plads fra 2.1 (stadig Task 2.2 backend-del ifølge plan):** `getAgentDocuments` / `updateAgentDocument` i `lib/agents/document-actions.ts` — opret eller udvid backend hvis Frontend Worker kræver det før UI kan gemme Soul/Tools/Heartbeat faner.
+## Validation gate (Worker-reported — re-run before merge)
 
-**Forudsætninger i UI før `runHeartbeat`:** bruger har gemt API key i Settings; business har **ikke-tom** `local_path`.
+`npm test -- lib/tasks`, `npm test`, `npm run lint`, `npm run build` — **Green** på branch tip (bekræfter Manager før merge).
 
----
+Manuel smoke mod Neon er **ikke** kørt i Worker-session (jf. Task Log).
 
-## Manager follow-ups
+## Manager actions
 
-1. Dispatch **Frontend Agent** til **Task 2.2** på gren **`phase2/stage2-frontend`** fra **`main`**.
-2. Bekræft **`.apm/tracker.md`**: Task 2.1 = merged; Stage 2 forbliver **1/2** indtil 2.2 leveres.
-3. Ryd evt. **stashes** lokalt hvis team er færdig med phase2 WIP (valgfrit).
+1. **PR:** Åbn og merge `**phase2/stage3-backend`** → `**main`** når CI/review er OK.
+2. **Tracker:** Verificér at `.apm/tracker.md` matcher merge-status (Task **3.1** Done forbliver korrekt).
+3. **Dispatch:** Efter merge — **Frontend Agent** til Task **3.2** på `**phase2/stage3-frontend`** (fra opdateret `main` eller merge af backend ind i frontend-gren).
 
----
+## Downstream notes (Frontend Task 3.2)
 
-## Idle state
+1. Importer kun `**@/lib/tasks/actions`** og `**@/lib/tasks/log-actions**` fra Server Components / Server Actions — ingen direkte DB i Client Components.
+2. `getTasksByBusiness(businessId)` returnerer `**TaskTreeNode[]**` (rod-noder med rekursive `**children**`).
+3. `appendTaskLog(taskId, content, authorType, authorId)` — brug `authorType: "human"` og session-bruger-id som `authorId` for kommentarer fra UI; mention-triggers kører automatisk for human.
 
-Backend Agent **idle** indtil næste Task Bus-dispatch (fx **3.1** eller midlertidig 2.2-supplement).
+## Integration
+
+Hvis `**main**` flytter før merge: rebase eller merge `main` ind i `**phase2/stage3-backend**` og kør validation gate igen.
