@@ -17,6 +17,12 @@ export function NavShell({ children }: { children: React.ReactNode }) {
             <Link href="/dashboard" className="hover:text-foreground transition-colors">
               Dashboard
             </Link>
+            <Link
+              href="/dashboard/onboarding"
+              className="hover:text-foreground transition-colors"
+            >
+              New business
+            </Link>
           </nav>
         </div>
         <NavShellAuth />

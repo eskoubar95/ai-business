@@ -4,9 +4,35 @@ import type { SDKAssistantMessage } from "@cursor/sdk";
 /** Default Runner; replaced in tests via `setRunCursorAgentImpl`. */
 let runImpl = defaultRunCursorAgent;
 
+/** Deterministic Grill-Me replies when `GRILL_ME_E2E_MOCK=1` (Playwright webServer). */
+function userTurnCountFromGrillPrompt(prompt: string): number {
+  let count = 0;
+  for (const line of prompt.split("\n")) {
+    if (line.startsWith("user: ")) count++;
+  }
+  return count;
+}
+
+async function grillMeE2eMock(prompt: string): Promise<AsyncIterable<string>> {
+  async function* stream(): AsyncIterable<string> {
+    const n = userTurnCountFromGrillPrompt(prompt);
+    const lastUser =
+      prompt.match(/(?:^|\n)user: ([^\n]*)$/m)?.[1]?.trim() ?? "";
+    if (n >= 3) {
+      yield `Understood after ${n} turns.\n\n[[GRILL_ME_COMPLETE]]\n\n# Soul file\n\n- Last note: ${lastUser}`;
+    } else {
+      yield `Assistant reply ${n}: thanks for «${lastUser}».`;
+    }
+  }
+  return stream();
+}
+
 async function defaultRunCursorAgent(
   prompt: string,
 ): Promise<AsyncIterable<string>> {
+  if (process.env.GRILL_ME_E2E_MOCK === "1") {
+    return grillMeE2eMock(prompt);
+  }
   const agent = await Agent.create({
     model: { id: "composer-2" },
     local: { cwd: process.cwd() },

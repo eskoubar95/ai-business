@@ -15,10 +15,6 @@ import {
 import { runCursorAgent } from "@/lib/cursor/agent";
 import { desc, eq, max, sql } from "drizzle-orm";
 
-export { GRILL_ME_COMPLETE_MARKER } from "@/lib/grill-me/markers";
-export { stripCompletionMarkers } from "@/lib/grill-me/markers";
-export { extractAndStoreSoulFile } from "@/lib/grill-me/soul-memory";
-
 function buildGrillPrompt(
   transcript: { role: "user" | "assistant"; content: string }[],
   latestUserMessage: string,

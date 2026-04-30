@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
 import { NeonAuthUIProvider } from "@neondatabase/auth/react";
 
 import "./globals.css";
@@ -17,8 +19,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="min-h-svh antialiased">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${GeistSans.variable} ${GeistMono.variable}`}
+    >
+      <body className={`${GeistSans.className} min-h-svh antialiased`}>
         <NeonAuthUIProvider authClient={authClient}>
           <NavShell>{children}</NavShell>
         </NeonAuthUIProvider>

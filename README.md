@@ -33,7 +33,34 @@ Database scripts:
 | `npm run db:studio`   | Open Drizzle Studio                     |
 
 
-Initial schema: `[db/schema.ts](db/schema.ts)` includes a starter `**businesses**` table; SQL is under `[drizzle/](drizzle/)`.
+## CI: Playwright E2E (GitHub Actions)
+
+Workflow: `[.github/workflows/e2e.yml](.github/workflows/e2e.yml)`.
+
+
+| Behavior                                 | When                                                                                   |
+| ---------------------------------------- | -------------------------------------------------------------------------------------- |
+| Smoke (`/`, sign-in)                     | Always runs on PRs and pushes to `main`.                                               |
+| Full Grill-Me (`tests/grill-me.spec.ts`) | Runs when **all** repository secrets below are set; otherwise that spec stays skipped. |
+
+
+Configure **Settings → Secrets and variables → Actions** (repository secrets):
+
+
+| Secret                    | Purpose                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------ |
+| `DATABASE_URL`            | Neon pooled URL — required for `createBusiness` / Grill-Me persistence in E2E. |
+| `NEON_AUTH_BASE_URL`      | Neon Auth configuration URL (same as local `.env`).                            |
+| `NEON_AUTH_COOKIE_SECRET` | 32+ character cookie signing secret (same as local).                           |
+| `E2E_EMAIL`               | Test user email that can sign in via Neon Auth UI.                             |
+| `E2E_PASSWORD`            | Matching password for `E2E_EMAIL`.                                             |
+
+
+Use a dedicated Neon branch or disposable credentials for CI; never reuse production secrets.
+
+Ensure the database pointed at by `DATABASE_URL` has migrations applied (`npm run db:migrate` against that branch) before expecting Grill-Me E2E to pass.
+
+Initial schema: `[db/schema.ts](db/schema.ts)` includes a starter `**businesses`** table; SQL is under `[drizzle/](drizzle/)`.
 
 ## One-time: APM init (already done in this repo)
 

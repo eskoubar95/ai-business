@@ -10,6 +10,7 @@
 - **Production builds:** `next build` can require `NEON_AUTH_BASE_URL` and `NEON_AUTH_COOKIE_SECRET` to be set during route analysis for Neon Auth routes—document in CI as the Worker noted.
 - **Local dev / port 3000:** Run **at most one** Next process bound to `:3000`, started from the **repository root** (e.g. `npm run dev`). A stray `next start` or `next dev` left running from an old git worktree (e.g. a former `schema-auth-infra` checkout) can still answer on 3000 and surface **misleading Neon Auth errors** while the app you think you are using is another tree. Stop orphan processes before debugging auth.
 - **Stage 1 — DB / Auth smoke:** `DATABASE_URL` / Neon Auth are configured in this environment; run `npm run db:migrate` from repo root after schema changes. Verify session behaviour against the real Neon Auth URL (not `build.invalid` placeholders).
+- **Grill-Me UI (Stage 2.2):** The chat uses **Vercel AI SDK UI** — `@ai-sdk/react` (`useChat`, `DefaultChatTransport`) and the **`ai`** package (`createUIMessageStream`, `createUIMessageStreamResponse`). The dedicated route is **`POST /api/grill-me/ui`**, which calls **`startGrillMeTurn` once** per user message and streams the returned **`assistantReply`** as incremental text deltas (no second Cursor invocation). Legacy **`GET /api/grill-me/stream`** remains for the earlier SSE design; new UI should prefer **`/api/grill-me/ui`**. Shadcn/Tailwind and “Vercel-style” chat primitives stay as configured in-repo.
 
 ## Stage Summaries
 

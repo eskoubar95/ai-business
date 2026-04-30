@@ -22,12 +22,25 @@ export default defineConfig({
     stdout: "pipe",
     stderr: "pipe",
     env: {
+      // Merge CI/local secrets into the dev server (DATABASE_URL + E2E_* are required
+      // for full Grill-Me E2E; smoke tests omit DB).
+      ...(process.env.DATABASE_URL && {
+        DATABASE_URL: process.env.DATABASE_URL,
+      }),
+      ...(process.env.DATABASE_DIRECT_URL && {
+        DATABASE_DIRECT_URL: process.env.DATABASE_DIRECT_URL,
+      }),
+      ...(process.env.E2E_EMAIL && { E2E_EMAIL: process.env.E2E_EMAIL }),
+      ...(process.env.E2E_PASSWORD && {
+        E2E_PASSWORD: process.env.E2E_PASSWORD,
+      }),
       NEON_AUTH_BASE_URL:
         process.env.NEON_AUTH_BASE_URL ??
         "https://placeholder.invalid/neondb/auth",
       NEON_AUTH_COOKIE_SECRET:
         process.env.NEON_AUTH_COOKIE_SECRET ??
         "01234567890123456789012345678901",
+      GRILL_ME_E2E_MOCK: process.env.GRILL_ME_E2E_MOCK ?? "1",
     },
   },
 });
