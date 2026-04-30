@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { signInWithCredentials } from "./e2e-sign-in";
+
 const hasAuth =
   !!process.env.E2E_EMAIL?.trim() && !!process.env.E2E_PASSWORD?.trim();
 
@@ -10,13 +12,11 @@ test.describe("agent roster and teams", () => {
   );
 
   test("agents, skills, MCP badge, team org chart", async ({ page }) => {
-    await page.goto("/auth/sign-in");
-    await page.locator('input[type="email"]').first().fill(process.env.E2E_EMAIL!);
-    await page
-      .locator('input[type="password"]')
-      .first()
-      .fill(process.env.E2E_PASSWORD!);
-    await page.getByRole("button", { name: /sign\s*in/i }).click();
+    await signInWithCredentials(
+      page,
+      process.env.E2E_EMAIL!,
+      process.env.E2E_PASSWORD!,
+    );
     await page.waitForFunction(
       () => !window.location.pathname.includes("/auth/sign-in"),
       undefined,

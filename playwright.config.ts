@@ -1,11 +1,21 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { config as loadEnv } from "dotenv";
 import { defineConfig, devices } from "@playwright/test";
+
+// Same precedence as Drizzle/Next: `.env` then `.env.local` (so `npm run test:e2e` sees DATABASE_URL + Neon Auth).
+loadEnv({ path: resolve(process.cwd(), ".env") });
+if (existsSync(resolve(process.cwd(), ".env.local"))) {
+  loadEnv({ path: resolve(process.cwd(), ".env.local"), override: true });
+}
 
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // Grill-Me + agents suites both hit Server Actions and DB; parallel workers overload local dev and leave transitions pending.
+  workers: 1,
   reporter: process.env.CI ? "github" : "list",
   timeout: 60_000,
   expect: { timeout: 15_000 },
@@ -15,31 +25,16 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "npm run dev",
+    // Webpack dev avoids Turbopack + Server Actions quirks in automated browser tests.
+    command: "npm run dev:e2e",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     stdout: "pipe",
     stderr: "pipe",
+    // Inherits full `process.env` (including values loaded above). Only set E2E-specific defaults.
+    // Never inject fake Neon Auth here: it overrides Next.js reading `.env.local` and breaks Server Actions.
     env: {
-      // Merge CI/local secrets into the dev server (DATABASE_URL + E2E_* are required
-      // for full Grill-Me E2E; smoke tests omit DB).
-      ...(process.env.DATABASE_URL && {
-        DATABASE_URL: process.env.DATABASE_URL,
-      }),
-      ...(process.env.DATABASE_DIRECT_URL && {
-        DATABASE_DIRECT_URL: process.env.DATABASE_DIRECT_URL,
-      }),
-      ...(process.env.E2E_EMAIL && { E2E_EMAIL: process.env.E2E_EMAIL }),
-      ...(process.env.E2E_PASSWORD && {
-        E2E_PASSWORD: process.env.E2E_PASSWORD,
-      }),
-      NEON_AUTH_BASE_URL:
-        process.env.NEON_AUTH_BASE_URL ??
-        "https://placeholder.invalid/neondb/auth",
-      NEON_AUTH_COOKIE_SECRET:
-        process.env.NEON_AUTH_COOKIE_SECRET ??
-        "01234567890123456789012345678901",
       GRILL_ME_E2E_MOCK: process.env.GRILL_ME_E2E_MOCK ?? "1",
     },
   },
