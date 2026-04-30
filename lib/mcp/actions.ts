@@ -10,8 +10,6 @@ import {
 } from "@/lib/mcp/encryption";
 import { asc, eq } from "drizzle-orm";
 
-export type { McpEncryptedPayload };
-
 export async function saveMcpCredential(
   agentId: string,
   mcpName: string,

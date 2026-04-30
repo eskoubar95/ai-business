@@ -33,9 +33,8 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     // First `next dev` compile on a cold machine/repo often exceeds 2 minutes.
     timeout: 300_000,
-    // Locally: stream Next compile logs so the run does not look "stuck" after worker env lines.
-    stdout: process.env.CI ? "pipe" : "inherit",
-    stderr: process.env.CI ? "pipe" : "inherit",
+    stdout: "pipe",
+    stderr: "pipe",
     // Inherits full `process.env` (including values loaded above). Only set E2E-specific defaults.
     // Never inject fake Neon Auth here: it overrides Next.js reading `.env.local` and breaks Server Actions.
     env: {
