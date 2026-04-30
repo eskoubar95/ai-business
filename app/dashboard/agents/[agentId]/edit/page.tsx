@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { DocumentEditor } from "@/components/agents/document-editor";
+import { RunHeartbeatButton } from "@/components/agents/run-heartbeat-button";
 import { getAgentsByBusiness } from "@/lib/agents/actions";
+import { getAgentDocuments } from "@/lib/agents/document-actions";
 import { getMcpCredentialsMeta } from "@/lib/mcp/actions";
 import { getSkillsByAgent, listSkillsByBusiness } from "@/lib/skills/actions";
 import { resolveBusinessIdParam } from "@/lib/dashboard/business-scope";
@@ -27,10 +30,11 @@ export default async function EditAgentPage({
   const agent = peers.find((a) => a.id === agentId);
   if (!agent) notFound();
 
-  const [attached, library, mcpMeta] = await Promise.all([
+  const [attached, library, mcpMeta, agentDocs] = await Promise.all([
     getSkillsByAgent(agentId),
     listSkillsByBusiness(businessId),
     getMcpCredentialsMeta(agentId),
+    getAgentDocuments(agentId),
   ]);
 
   return (
@@ -43,8 +47,18 @@ export default async function EditAgentPage({
           ← Agents
         </Link>
       </div>
-      <h1 className="text-2xl font-semibold tracking-tight">Edit agent</h1>
-      <AgentForm mode="edit" businessId={businessId} agent={agent} peerAgents={peers}>
+      <div className="flex flex-wrap items-center gap-4">
+        <h1 className="text-2xl font-semibold tracking-tight">Edit agent</h1>
+        <RunHeartbeatButton agentId={agentId} />
+      </div>
+      <AgentForm
+        mode="edit"
+        businessId={businessId}
+        agent={agent}
+        peerAgents={peers}
+        showInstructions={false}
+      >
+        <DocumentEditor agentId={agentId} initialDocs={agentDocs} />
         <SkillManager
           agentId={agentId}
           businessId={businessId}
