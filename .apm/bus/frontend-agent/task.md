@@ -4,7 +4,7 @@
 **Stage:** Næste dispatch er **Task 4.2** (Skills UI + MCP library + webhook config).  
 **Worker:** Frontend Agent  
 
-**Status:** Task **4.1** (backend) har **PR [#8](https://github.com/eskoubar95/ai-business/pull/8)** fra `phase2/stage4-backend` → merge til **`main`** før/ved **4.2**. Tracker: [`.apm/tracker.md`](../../tracker.md).
+**Status:** Task **4.1** er **merged** til **`main`** ([PR #8](https://github.com/eskoubar95/ai-business/pull/8)). Erstat idle-filen med den fulde **Task 4.2**‑prompt når Manager dispatcher. Tracker: [`.apm/tracker.md`](../../tracker.md).
 
 ## Where to find work
 
