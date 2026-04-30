@@ -58,10 +58,13 @@ test.describe("agent roster and teams", () => {
     }
 
     await createAgentViaForm("E2E Lead", "Lead");
-    await page.getByTestId("agent-instructions-editor").locator("textarea").fill(
+    await page.getByTestId("agent-doc-editor-soul").fill(
       "Updated lead instructions for E2E.",
     );
-    await page.getByTestId("agent-save").click();
+    await page.getByTestId("agent-doc-save-soul").click();
+    await expect(page.getByRole("status").filter({ hasText: /soul saved/i })).toBeVisible({
+      timeout: 30_000,
+    });
     await expect(page.getByTestId("skill-create-toggle")).toBeVisible({ timeout: 30_000 });
 
     await page.getByTestId("skill-create-toggle").click();

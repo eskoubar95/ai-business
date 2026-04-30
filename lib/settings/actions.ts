@@ -2,10 +2,10 @@
 
 import { assertUserBusinessAccess } from "@/lib/grill-me/access";
 import { getDb } from "@/db/index";
-import { businesses, userSettings } from "@/db/schema";
+import { businesses, userBusinesses, userSettings } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { requireSessionUserId } from "@/lib/roster/session";
 import { encryptCredential } from "@/lib/mcp/encryption";
-import { eq } from "drizzle-orm";
 
 /** Payload field name inside encrypted JSON `{ cursorApiKey: string }`. */
 const CURSOR_KEY_FIELD = "cursorApiKey";
@@ -80,4 +80,42 @@ export async function saveBusinessSettings(
     .where(eq(businesses.id, businessId));
 
   return { success: true };
+}
+
+export type SettingsBusinessRow = {
+  id: string;
+  name: string;
+  localPath: string | null;
+  githubRepoUrl: string | null;
+  description: string | null;
+};
+
+/**
+ * Server-only snapshot for the Settings page: masked key indicator + per-business fields.
+ */
+export async function getSettingsPageState(): Promise<{
+  hasCursorApiKey: boolean;
+  businesses: SettingsBusinessRow[];
+}> {
+  const userId = await requireSessionUserId();
+  const db = getDb();
+  const settings = await db.query.userSettings.findFirst({
+    where: eq(userSettings.userId, userId),
+    columns: { cursorApiKeyEncrypted: true },
+  });
+  const hasCursorApiKey = settings?.cursorApiKeyEncrypted != null;
+
+  const rows = await db
+    .select({
+      id: businesses.id,
+      name: businesses.name,
+      localPath: businesses.localPath,
+      githubRepoUrl: businesses.githubRepoUrl,
+      description: businesses.description,
+    })
+    .from(userBusinesses)
+    .innerJoin(businesses, eq(userBusinesses.businessId, businesses.id))
+    .where(eq(userBusinesses.userId, userId));
+
+  return { hasCursorApiKey, businesses: rows };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -11,16 +11,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { SettingsBusinessRow } from "@/lib/settings/actions";
 import { saveBusinessSettings, saveUserSettings } from "@/lib/settings/actions";
-
-type Business = { id: string; name: string };
 
 export function SettingsForms({
   businesses,
   initialBusinessId,
+  hasCursorApiKey,
 }: {
-  businesses: Business[];
+  businesses: SettingsBusinessRow[];
   initialBusinessId: string | null;
+  hasCursorApiKey: boolean;
 }) {
   const [apiKey, setApiKey] = useState("");
   const [localPath, setLocalPath] = useState("");
@@ -29,6 +30,14 @@ export function SettingsForms({
   const [businessId, setBusinessId] = useState(initialBusinessId ?? "");
   const [accountPending, startAccountSave] = useTransition();
   const [businessPending, startBusinessSave] = useTransition();
+
+  useEffect(() => {
+    const b = businesses.find((x) => x.id === businessId);
+    if (!b) return;
+    setLocalPath(b.localPath ?? "");
+    setGithubRepoUrl(b.githubRepoUrl ?? "");
+    setDescription(b.description ?? "");
+  }, [businessId, businesses]);
 
   async function onSaveAccount(e: React.FormEvent) {
     e.preventDefault();
@@ -80,6 +89,15 @@ export function SettingsForms({
             Cursor API key for local runner integration. API key is encrypted and stored securely.
           </p>
         </div>
+        {hasCursorApiKey ? (
+          <p
+            className="text-muted-foreground text-sm"
+            data-testid="settings-api-key-saved"
+          >
+            A Cursor API key is saved for your account. Enter a new key below to replace it, or
+            clear the field and save to remove the stored key.
+          </p>
+        ) : null}
         <form onSubmit={onSaveAccount} className="flex flex-col gap-4">
           <label className="flex flex-col gap-2 text-sm font-medium">
             Cursor API key
@@ -104,7 +122,7 @@ export function SettingsForms({
         <div>
           <h2 className="text-lg font-medium">Business</h2>
           <p className="text-muted-foreground text-sm">
-            Workspace defaults for the selected tenant (persisted when backend wiring lands).
+            Workspace defaults for the selected tenant.
           </p>
         </div>
         <form onSubmit={onSaveBusiness} className="flex flex-col gap-4">

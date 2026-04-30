@@ -24,6 +24,8 @@ type Props =
       businessId: string;
       agent: AgentWithInstructions;
       peerAgents: Peer[];
+      /** When false, soul/tools/heartbeat are edited elsewhere (e.g. DocumentEditor). */
+      showInstructions?: boolean;
       children?: ReactNode;
     };
 
@@ -48,6 +50,8 @@ export function AgentForm(props: Props) {
   const [reportsToAgentId, setReportsToAgentId] = useState<string | null>(
     props.mode === "edit" ? props.agent.reportsToAgentId : null,
   );
+
+  const showInstructions = props.mode === "edit" ? (props.showInstructions ?? true) : true;
 
   const peers =
     props.mode === "edit"
@@ -75,7 +79,7 @@ export function AgentForm(props: Props) {
         await updateAgent(props.agent.id, {
           name,
           role,
-          instructions,
+          ...(showInstructions ? { instructions } : {}),
           reportsToAgentId: reportsToAgentId || null,
         });
         router.refresh();
@@ -126,14 +130,16 @@ export function AgentForm(props: Props) {
           onChange={(e) => setRole(e.target.value)}
         />
       </div>
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium">Instructions</span>
-        <MarkdownEditorField
-          value={instructions}
-          onChange={setInstructions}
-          data-testid="agent-instructions-editor"
-        />
-      </div>
+      {showInstructions ? (
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-medium">Instructions</span>
+          <MarkdownEditorField
+            value={instructions}
+            onChange={setInstructions}
+            data-testid="agent-instructions-editor"
+          />
+        </div>
+      ) : null}
       <div className="flex flex-col gap-2">
         <label className="text-sm font-medium" htmlFor="agent-reports-to">
           Reports to
@@ -179,7 +185,9 @@ export function AgentForm(props: Props) {
         ) : null}
       </div>
 
-      {props.mode === "edit" ? props.children : null}
+      {props.mode === "edit" && props.children ? (
+        <div className="flex flex-col gap-8">{props.children}</div>
+      ) : null}
     </div>
   );
 }

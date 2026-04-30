@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth/server";
-import { loadUserBusinesses } from "@/lib/dashboard/business-scope";
+import { getSettingsPageState } from "@/lib/settings/actions";
 
 import { SettingsForms } from "./settings-forms";
 
@@ -15,8 +15,9 @@ export default async function SettingsPage({
   const { data: session } = await auth.getSession();
   if (!session?.user?.id) redirect("/auth/sign-in");
 
+  const { hasCursorApiKey, businesses } = await getSettingsPageState();
+
   const sp = await searchParams;
-  const businesses = await loadUserBusinesses();
   const fromQuery =
     typeof sp.businessId === "string" && sp.businessId.length > 0
       ? businesses.find((b) => b.id === sp.businessId)?.id
@@ -31,7 +32,11 @@ export default async function SettingsPage({
           Account credentials and per-business workspace defaults.
         </p>
       </div>
-      <SettingsForms businesses={businesses} initialBusinessId={initialBusinessId} />
+      <SettingsForms
+        businesses={businesses}
+        initialBusinessId={initialBusinessId}
+        hasCursorApiKey={hasCursorApiKey}
+      />
     </div>
   );
 }
