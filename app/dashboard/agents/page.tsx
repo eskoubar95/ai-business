@@ -4,7 +4,7 @@ import { BusinessSelector } from "@/components/business-selector";
 import { AgentCard } from "@/components/agents/agent-card";
 import { Button } from "@/components/ui/button";
 import { getAgentsByBusiness } from "@/lib/agents/actions";
-import { getMcpCredentialsMeta } from "@/lib/mcp/actions";
+import { getMcpCredentialsForAgent } from "@/lib/mcp/actions";
 import { getSkillsByAgent } from "@/lib/skills/actions";
 import { loadUserBusinesses, resolveBusinessIdParam } from "@/lib/dashboard/business-scope";
 
@@ -24,7 +24,7 @@ export default async function AgentsDashboardPage({
     agents.map(async (a) => {
       const [skills, mcps] = await Promise.all([
         getSkillsByAgent(a.id),
-        getMcpCredentialsMeta(a.id),
+        getMcpCredentialsForAgent(a.id),
       ]);
       return { agent: a, skillCount: skills.length, mcpCount: mcps.length };
     }),

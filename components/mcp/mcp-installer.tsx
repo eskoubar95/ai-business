@@ -3,12 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { saveMcpCredential } from "@/lib/mcp/actions";
+import { grantMcpAccessToAgent, saveMcpCredential } from "@/lib/mcp/actions";
 import { listMcpTypeConfigs, type McpTypeConfig } from "@/lib/mcp/config";
 
 type MetaRow = { id: string; mcpName: string };
 
 type Props = {
+  businessId: string;
   agentId: string;
   meta: MetaRow[];
 };
@@ -21,7 +22,7 @@ function emptyPayload(config: McpTypeConfig): Record<string, string> {
   return o;
 }
 
-export function McpInstaller({ agentId, meta }: Props) {
+export function McpInstaller({ businessId, agentId, meta }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +55,8 @@ export function McpInstaller({ agentId, meta }: Props) {
     }
     startTransition(async () => {
       try {
-        await saveMcpCredential(agentId, selected.id, payload);
+        const { id: credId } = await saveMcpCredential(businessId, selected.id, payload);
+        await grantMcpAccessToAgent(agentId, credId);
         setOpen(false);
         router.refresh();
       } catch (e) {

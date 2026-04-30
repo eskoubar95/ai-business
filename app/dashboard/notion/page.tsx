@@ -4,7 +4,7 @@ import { NotionConnectionPanel } from "@/components/notion/notion-connection-pan
 import { NotionSyncTable } from "@/components/notion/notion-sync-table";
 import { getAgentsByBusiness } from "@/lib/agents/actions";
 import { loadUserBusinesses, resolveBusinessIdParam } from "@/lib/dashboard/business-scope";
-import { getMcpCredentialsMeta } from "@/lib/mcp/actions";
+import { getMcpCredentialsForAgent } from "@/lib/mcp/actions";
 import { listRecentNotionSyncEventsForBusiness } from "@/lib/orchestration/notion-sync-queries";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export default async function NotionDashboardPage({
 
   const agentOptions = await Promise.all(
     agents.map(async (a) => {
-      const meta = await getMcpCredentialsMeta(a.id);
+      const meta = await getMcpCredentialsForAgent(a.id);
       return {
         id: a.id,
         name: a.name,

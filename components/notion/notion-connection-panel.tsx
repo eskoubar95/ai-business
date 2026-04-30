@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { saveMcpCredential } from "@/lib/mcp/actions";
+import { grantMcpAccessToAgent, saveMcpCredential } from "@/lib/mcp/actions";
 import { MCP_TYPE_CONFIGS } from "@/lib/mcp/config";
 import { runNotionSyncForBusiness } from "@/lib/notion/dashboard-actions";
 
@@ -56,7 +56,8 @@ export function NotionConnectionPanel({ businessId, agents }: Props) {
     }
     startTransition(async () => {
       try {
-        await saveMcpCredential(agentId, "notion", payload);
+        const { id: credId } = await saveMcpCredential(businessId, "notion", payload);
+        await grantMcpAccessToAgent(agentId, credId);
         router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Save failed");
