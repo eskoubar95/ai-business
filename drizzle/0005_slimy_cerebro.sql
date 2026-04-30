@@ -3,6 +3,7 @@ CREATE UNIQUE INDEX "agents_business_id_id_unique" ON "agents" USING btree ("bus
 CREATE UNIQUE INDEX "teams_business_id_id_unique" ON "teams" USING btree ("business_id","id");--> statement-breakpoint
 CREATE UNIQUE INDEX "mcp_credentials_business_id_id_unique" ON "mcp_credentials" USING btree ("business_id","id");--> statement-breakpoint
 CREATE UNIQUE INDEX "approvals_business_id_id_unique" ON "approvals" USING btree ("business_id","id");--> statement-breakpoint
+CREATE UNIQUE INDEX "tasks_business_id_id_unique" ON "tasks" USING btree ("business_id","id");--> statement-breakpoint
 ALTER TABLE "agent_mcp_access" DROP CONSTRAINT "agent_mcp_access_agent_id_agents_id_fk";--> statement-breakpoint
 ALTER TABLE "agent_mcp_access" DROP CONSTRAINT "agent_mcp_access_mcp_credential_id_mcp_credentials_id_fk";--> statement-breakpoint
 ALTER TABLE "tasks" DROP CONSTRAINT "tasks_team_id_teams_id_fk";--> statement-breakpoint

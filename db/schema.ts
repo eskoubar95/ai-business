@@ -429,6 +429,7 @@ export const tasks = pgTable(
       columns: [t.businessId, t.approvalId],
       foreignColumns: [approvals.businessId, approvals.id],
     }).onDelete("set null"),
+    uniqueIndex("tasks_business_id_id_unique").on(t.businessId, t.id),
     index("tasks_business_id_idx").on(t.businessId),
     index("tasks_agent_id_idx").on(t.agentId),
     index("tasks_team_id_idx").on(t.teamId),
