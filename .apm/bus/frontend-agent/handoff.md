@@ -5,14 +5,14 @@ task: "2.2 — Agent Config Tabs + Run Heartbeat UI + Settings Page"
 phase: 2
 stage: 2
 branch: phase2/stage2-frontend
-status: pr_open
+status: merged_main
 handoff_version: 2
 
 # Worker Handoff — Frontend Agent → Manager / downstream
 
 ## Summary
 
-Task **2.2** is complete on **`phase2/stage2-frontend`** and submitted as **PR #5** (`feat: Task 2.2 — agent document tabs, heartbeat button, settings state`). Agent edit replaces the monolithic instructions field with **Soul / Tools / Heartbeat** tabs backed by `agent_documents`; **Run Heartbeat** is available on the edit page; Settings shows whether a Cursor API key is stored and pre-fills business workspace fields from the database.
+Task **2.2** merged til **`main`** via **PR #5** (squash/merge efter Manager review). See commit history on `main`.
 
 ## Authoritative artifacts
 
