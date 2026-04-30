@@ -1,6 +1,6 @@
 # Pull request specification — `approval-notion-ui` → `main`
 
-**Purpose:** Single source of truth for the GitHub PR that delivers **APM Stage 4, Task 4.2** (*Approval Dashboard & Notion UI*) in the **AI Business Platform** repo. Copy the **Title** and **Description** blocks into GitHub when opening or editing the PR.
+**Purpose:** Single source of truth for the GitHub PR for branch **`approval-notion-ui`** in the **AI Business Platform** repo. The **title** describes what users get, not APM task numbers. Internal numbering (*Plan Task 4.2*, etc.) stays in the description for traceability only. Copy the **Title** and **Description** blocks into GitHub.
 
 **Not the same as:** A separate PR titled “Approval flow UI” on branch `frontend-ui-task` with dozens of `feat(frontend-ui): implement stage N` commits — that workflow and branch name are **not** defined in this repository. This document describes **`approval-notion-ui`** only.
 
@@ -9,10 +9,10 @@
 ## GitHub PR title (use verbatim)
 
 ```text
-feat(dashboard): Task 4.2 — approvals queue, Notion connection, webhooks log, agent status
+feat(dashboard): orchestration oversight — approvals queue, Notion connection, webhooks log, live agent status
 ```
 
-**Naming rationale:** Uses Conventional Commits `feat`, scopes to `dashboard`, and names the four user-facing surfaces plus APM traceability (*Task 4.2*) so the PR list matches `.apm/plan.md` and `.apm/tracker.md`.
+**Naming rationale:** Conventional Commits `feat` + `dashboard`; title names **capabilities** shipped in this PR. Reviewers and history search care *what merged*, not which internal task id it satisfied — put those ids in the PR body under **APM traceability**.
 
 ---
 
@@ -22,7 +22,11 @@ feat(dashboard): Task 4.2 — approvals queue, Notion connection, webhooks log, 
 
 ### Summary
 
-Implements **APM Plan — Task 4.2: Approval Dashboard & Notion UI** (Frontend Agent): dashboard routes and components for **pending approvals**, **Notion MCP connection and sync/status**, **webhook delivery audit**, and **live agent status** on the roster. Adds guarded **E2E** support for approvals (`tests/approvals.spec.ts`, seed API). Includes a small **build fix** for Server Actions (no type re-export from `"use server"` modules) and **Playwright** `webServer` typings so `next build` typecheck passes.
+Adds dashboard routes and UI for **pending approvals** (queue + detail), **Notion MCP connection** with sync/status view, **webhook delivery audit**, and **live agent status** on the roster (badges + nav pending count). Adds guarded **E2E** for approvals (`tests/approvals.spec.ts`, seed API). Includes **build hygiene**: no type re-export from `"use server"` MCP actions, and **Playwright** `webServer` stream types aligned with `next build`.
+
+### APM traceability (internal)
+
+Implemented under **Plan — Task 4.2** (*Approval Dashboard & Notion UI*, Frontend Agent). Tracker / task log: `.apm/tracker.md`, `.apm/memory/stage-04/task-04-02.log.md`. **Do not** mirror task ids in the GitHub PR title — this PR bundles the full vertical slice above.
 
 ### Branches
 
@@ -38,7 +42,7 @@ Exact list — *re-run `git log main..approval-notion-ui` if `main` advances:*
 3. `bd0ecaf` — `feat(dashboard): approvals queue, Notion sync, webhooks log, agent status`
 4. `1db5a1a` — `chore(apm): tracker after Task 4.2 review`
 
-### Scope map (Plan Task 4.2)
+### Scope map
 
 | Plan item | Implementation |
 |-----------|----------------|
