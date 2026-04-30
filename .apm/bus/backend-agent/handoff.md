@@ -1,32 +1,58 @@
-# Backend Agent — Worker handoff (Task **3.1**)
-
-**Audience:** Manager + **Frontend Agent** (Task **3.2**)  
-**Branch:** `phase2/stage3-backend`  
-**Date:** 2026-04-30
-
 ---
+
+## worker: backend-agent
+
+task: "3.1 — Tasks CRUD + task_logs + @mention trigger"
+phase: 2
+stage: 3
+branch: phase2/stage3-backend
+status: branch_ready
+handoff_version: 1
+commit_tip: 5de7416
+
+# Worker Handoff — Backend Agent → Manager / downstream
 
 ## Summary
 
-Tasks-domænet er på plads på backend: CRUD og træ-visning pr. virksomhed, task logs med human-forfatter og mention-parsing til orchestration-events, samt struktureret subtræ-/sletteadfærd. Se **`lib/tasks/README.md`** og **`log_path`** nedenfor.
+Task **3.1** er implementeret på `**phase2/stage3-backend`**: tasks-domænet med CRUD, hierarkisk liste (`getTasksByBusiness` som træ), sikker subtræ-sletning, task logs og automatisk `**mention_trigger**` i `orchestration_events` ved menneskeskabte loglinjer med `@handle`.
 
-**Task Log:** `.apm/memory/stage-03/task-03-01.log.md`
+## Authoritative artifacts
 
----
 
-## Exports til Task 3.2 (Server Actions — `"use server"`)
+| Artifact        | Path                                       |
+| --------------- | ------------------------------------------ |
+| Task definition | `.apm/plan.md` — Stage **3**, Task **3.1** |
+| Task log        | `.apm/memory/stage-03/task-03-01.log.md`   |
+| Worker report   | `.apm/bus/backend-agent/report.md`         |
+| Domain README   | `lib/tasks/README.md`                      |
 
-| Behov | Modul |
-|--------|-----|
-| Opret/opdater/flyt status/slet/oplist | `@/lib/tasks/actions` (`createTask`, `updateTask`, `updateTaskStatus`, `deleteTask`, `getTasksByBusiness`, `getTasksByAgent`) |
-| Tilføj hent logs | `@/lib/tasks/log-actions` (`appendTaskLog`, `getTaskLogs`) |
-| Mention-fortolkning ved humansk log-indhold | allerede koblet på `appendTaskLog` hvor relevant — se **`lib/tasks/mention-trigger.ts`** |
 
-Frontend må **kun** importere eksisterende `"use server"`-filer; udvid ikke ad hoc med rå DB i Client Components.
+## Deliverables checklist (Worker-verified)
 
----
+- `**lib/tasks/actions.ts`** — `createTask`, `updateTask`, `updateTaskStatus`, `deleteTask`, `getTasksByBusiness`, `getTasksByAgent` (`"use server"`)
+- `**lib/tasks/log-actions.ts**` — `appendTaskLog`, `getTaskLogs`; human logs → `parseAndTriggerMentions`
+- `**lib/tasks/mention-trigger.ts**` — `@`-handles, case-insensitive agent-navn pr. business, `logEvent` med `type: mention_trigger`, `status: pending`
+- `**lib/tasks/task-tree.ts**` — subtree + sletterækkefølge (børn før forælder)
+- **Tests:** `lib/tasks/__tests__/*.test.ts` (10 tests)
 
-## Manager-follow-ups
+## Validation gate (Worker-reported — re-run before merge)
 
-1. Åbn/opdater PR fra **`phase2/stage3-backend`** → **`main`**; kør/passér **E2E** som projekt-standard.
-2. Efter merge: dispatch **Frontend** til Task **3.2** på **`phase2/stage3-frontend`**.
+`npm test -- lib/tasks`, `npm test`, `npm run lint`, `npm run build` — **Green** på branch tip (bekræfter Manager før merge).
+
+Manuel smoke mod Neon er **ikke** kørt i Worker-session (jf. Task Log).
+
+## Manager actions
+
+1. **PR:** Åbn og merge `**phase2/stage3-backend`** → `**main**` når CI/review er OK.
+2. **Tracker:** Verificér at `.apm/tracker.md` matcher merge-status (Task **3.1** Done forbliver korrekt).
+3. **Dispatch:** Efter merge — **Frontend Agent** til Task **3.2** på `**phase2/stage3-frontend`** (fra opdateret `main` eller merge af backend ind i frontend-gren).
+
+## Downstream notes (Frontend Task 3.2)
+
+1. Importer kun `**@/lib/tasks/actions**` og `**@/lib/tasks/log-actions**` fra Server Components / Server Actions — ingen direkte DB i Client Components.
+2. `getTasksByBusiness(businessId)` returnerer `**TaskTreeNode[]**` (rod-noder med rekursive `**children**`).
+3. `appendTaskLog(taskId, content, authorType, authorId)` — brug `authorType: "human"` og session-bruger-id som `authorId` for kommentarer fra UI; mention-triggers kører automatisk for human.
+
+## Integration
+
+Hvis `**main**` flytter før merge: rebase eller merge `main` ind i `**phase2/stage3-backend**` og kør validation gate igen.
