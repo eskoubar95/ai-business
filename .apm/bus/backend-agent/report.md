@@ -1,7 +1,14 @@
-# Backend Agent — status
+# Backend Agent — report
 
-**Sidste merged task:** **4.1** på `main` — **PR [#8](https://github.com/eskoubar95/ai-business/pull/8)** (`fbe25fc`).
+**Task:** 5.1 — Archetypes seeding + Grill-Me two-path (Phase 2 / Stage 5 backend)  
+**Branch:** `phase2/stage5-backend` @ **709c545**  
+**Status:** **PR [#10](https://github.com/eskoubar95/ai-business/pull/10)** mod **`main`** — afvent merge / CI.
 
-**Næste:** **Task 5.1** på **`phase2/stage5-backend`** — fuld prompt i [`task.md`](task.md). Frontend **4.2** er merged (**PR [#9](https://github.com/eskoubar95/ai-business/pull/9)**).
+## Summary
 
-**log_path (4.1):** `.apm/memory/stage-04/task-04-01.log.md`
+Leveret idempotent `npm run db:seed` (`db/seeds/archetypes.ts` + addenda i `archetype-rows.ts`), Grill-Me `businessType` (`existing` \| `new`) i `startGrillMeTurn` og `POST /api/grill-me/ui`, samt Vitest for prompts, actions og seed-data. Heartbeat brugte allerede archetype-addendum via DB-relation — ingen kodeændring.
+
+## Næste
+
+- **Manager:** Merge **[PR #10](https://github.com/eskoubar95/ai-business/pull/10)** når CI er grøn; derefter `db:seed` hvor relevant.
+- **Frontend:** Task 5.2 når `main` indeholder 5.1 — two-path UI + `businessType` i chat-kald til API.

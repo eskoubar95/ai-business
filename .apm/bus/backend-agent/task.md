@@ -2,38 +2,40 @@
 
 **Phase:** 2  
 **Stage:** 5  
-**Task:** **5.1 — Archetypes seeding + Grill-Me two-path onboarding**  
+**Task:** **5.1 — Archetypes seeding + Grill-Me two-path onboarding** — **STATUS: leveret på gren**  
 **Worker:** Backend Agent  
 
-**Branch:** `phase2/stage5-backend` fra **`main`** (Frontend **4.2** er allerede på **`main`**).
+**Branch:** `phase2/stage5-backend` @ **`709c545`** (klar til PR → `main`).
 
 ---
 
-## Instruktioner til Worker
+## Manager / reviewer (efter implementering)
 
-1. Læs den kanoniske spec: [`.apm/plan.md`](../plan.md) → **Stage 5**, **Task 5.1** (Implementation + Validation + Output).
-2. Udfør arbejdet på gren **`phase2/stage5-backend`**.
-3. Skriv **Task log:** `.apm/memory/stage-05/task-05-01.log.md` (scope, filer, tests, quality gate).
-4. Skriv **Task report:** `.apm/bus/backend-agent/report.md` (kort summary + næste skridt).
-5. Returnér ét-afsnit summary til Manager.
+1. Gennemgå PR fra `phase2/stage5-backend` mod **`main`**.
+2. Efter merge: overvej **`npm run db:seed`** i deploy/dev for at opdatere `agent_archetypes`-tekster (upsert på slug).
+3. Når **`main`** har 5.1: dispatch **Frontend** Task **5.2** via `.apm/bus/frontend-agent/task.md` + **Task**-værktøjet.
 
-### Leverancer (fra plan)
+---
 
-- `db/seeds/archetypes.ts` — upsert `vertical-fullstack` og `harness-engineer` med fuld indhold fra projekt-spec (soul/tools/heartbeat addenda).
-- `package.json` — script `npm run db:seed` → `tsx db/seeds/archetypes.ts`.
-- `lib/grill-me/actions.ts` — udvid `startGrillMeTurn` med `businessType: 'existing' | 'new'`; forskellig systemprompt path A vs B; samme 6-sektion soul-output format.
-- `lib/heartbeat/prompt-builder.ts` — ved agent med `archetype_id`, hent archetype og append `heartbeat_addendum` efter heartbeat-sektion.
-- **Vitest** for seeds (mock/db efter projekt-mønster), prompt-forskelle, og heartbeat builder hvor muligt.
+## Leverancer (verificeret på grenen)
 
-### Quality gate
+- `db/seeds/archetypes.ts`, `db/seeds/archetype-rows.ts` — upsert launch archetypes.
+- `package.json` — `npm run db:seed` → `tsx db/seeds/archetypes.ts`.
+- `lib/grill-me/grill-prompt.ts`, `lib/grill-me/actions.ts` — `startGrillMeTurn(..., businessType?)`.
+- `app/api/grill-me/ui/route.ts` — valgfri body `businessType`: `existing` | `new`.
+- Vitest: prompt-, actions-, seed-data tests.
+- Heartbeat: eksisterende `prompt-builder` indlæste allerede `heartbeat_addendum` fra archetype — ingen ændring krævet.
 
-`npm test`, `npm run lint`, `npm run build` grønt; ingen secrets; migrations kun hvis schema ændres (5.1 seeds kan være ren TS seed — følg repo-konvention).
+### Quality gate (leveret)
+
+`npm test`, `npm run lint`, `npm run build` grønt. Ingen nye secrets.
 
 ---
 
 ## References
 
 | Resource | Path |
-|----------|------|
-| Tracker | [`.apm/tracker.md`](../tracker.md) |
-| Handoff | [`handoff.md`](./handoff.md) |
+| -------- | ---- |
+| Tracker  | `.apm/tracker.md` |
+| Handoff  | `handoff.md` |
+| Plan     | `.apm/plan.md` Stage 5, Task 5.1 |

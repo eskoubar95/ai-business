@@ -13,6 +13,7 @@ const store = vi.hoisted(() => ({
   }>,
   memoryInserts: [] as Array<Record<string, unknown>>,
   selectPass: 0,
+  lastCursorPrompt: "",
 }));
 
 vi.mock("@/lib/auth/server", () => ({
@@ -24,7 +25,8 @@ vi.mock("@/lib/auth/server", () => ({
 }));
 
 vi.mock("@/lib/cursor/agent", () => ({
-  runCursorAgent: vi.fn(async () => {
+  runCursorAgent: vi.fn(async (prompt: string) => {
+    store.lastCursorPrompt = prompt;
     async function* gen() {
       yield `${GRILL_ME_COMPLETE_MARKER}\n\n# Soul\nHello world`;
     }
@@ -102,6 +104,7 @@ describe("startGrillMeTurn", () => {
     store.grillRows = [];
     store.memoryInserts = [];
     store.selectPass = 0;
+    store.lastCursorPrompt = "";
     vi.clearAllMocks();
   });
 
@@ -132,5 +135,20 @@ describe("startGrillMeTurn", () => {
     expect(typeof mem.content).toBe("string");
     expect((mem.content as string).includes("# Soul")).toBe(true);
     expect((mem.content as string).includes(GRILL_ME_COMPLETE_MARKER)).toBe(false);
+  });
+
+  it("default Grill-Me path uses existing-business system instructions", async () => {
+    const { startGrillMeTurn } = await import("../actions.js");
+    await startGrillMeTurn(businessId, "Hi");
+    expect(store.lastCursorPrompt).toContain("Existing business");
+    expect(store.lastCursorPrompt).not.toContain("New project");
+    expect(store.lastCursorPrompt).toContain("# What We Build");
+  });
+
+  it("passes new-project Grill path when businessType is new", async () => {
+    const { startGrillMeTurn } = await import("../actions.js");
+    await startGrillMeTurn(businessId, "Hi", "new");
+    expect(store.lastCursorPrompt).toContain("New project");
+    expect(store.lastCursorPrompt).not.toContain("Existing business");
   });
 });

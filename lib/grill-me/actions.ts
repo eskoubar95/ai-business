@@ -2,6 +2,10 @@
 
 import { assertUserBusinessAccess } from "@/lib/grill-me/access";
 import {
+  buildGrillPrompt,
+  type GrillBusinessType,
+} from "@/lib/grill-me/grill-prompt";
+import {
   GRILL_ME_COMPLETE_MARKER,
 } from "@/lib/grill-me/markers";
 import { extractAndStoreSoulFile } from "@/lib/grill-me/soul-memory";
@@ -15,21 +19,7 @@ import {
 import { runCursorAgent } from "@/lib/cursor/agent";
 import { desc, eq, max, sql } from "drizzle-orm";
 
-function buildGrillPrompt(
-  transcript: { role: "user" | "assistant"; content: string }[],
-  latestUserMessage: string,
-): string {
-  let t = `# Grill-Me onboarding\nRespond with helpful turns.`;
-  t += `\nWhen the onboarding is complete and the soul/markdown artefact for the business is ready,`;
-  t += ` include the sentinel line "${GRILL_ME_COMPLETE_MARKER}" (exactly once on its own line),`;
-  t += ` then the full markdown document for the soul file below it.\n\n`;
-  t += `## Conversation so far\n`;
-  for (const line of transcript) {
-    t += `${line.role}: ${line.content}\n`;
-  }
-  t += `user: ${latestUserMessage}\n`;
-  return t;
-}
+export type { GrillBusinessType } from "@/lib/grill-me/grill-prompt";
 
 async function collectStream(iterable: AsyncIterable<string>): Promise<string> {
   let out = "";
@@ -68,6 +58,7 @@ export async function createBusiness(name: string): Promise<{ id: string }> {
 export async function startGrillMeTurn(
   businessId: string,
   userMessage: string,
+  businessType: GrillBusinessType = "existing",
 ): Promise<{ assistantReply: string; soulStored: boolean }> {
   const trimmed = userMessage.trim();
   if (!trimmed) throw new Error("Message must not be empty");
@@ -108,7 +99,7 @@ export async function startGrillMeTurn(
       : { role: "assistant" as const, content: row.content },
   );
 
-  const prompt = buildGrillPrompt(transcript, trimmed);
+  const prompt = buildGrillPrompt(transcript, trimmed, businessType);
   const stream = await runCursorAgent(prompt);
   const assistantText = await collectStream(stream);
 

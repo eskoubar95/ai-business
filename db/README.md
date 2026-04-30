@@ -6,6 +6,7 @@ Schema is defined in Drizzle (`schema.ts`). Migrations live under `drizzle/` and
 
 1. **`npm run db:generate`** — Generates SQL under `drizzle/` from `schema.ts`. `drizzle.config.ts` loads `.env` / `.env.local` and chooses **`DATABASE_DIRECT_URL`** (if set), else **`DATABASE_URL`** — see `.cursor/rules/database-architecture.mdc`.
 2. **`npm run db:migrate`** — Applies pending migrations via **`scripts/run-drizzle-migrate.mjs`** (TCP **`postgres`** + Drizzle migrator). Uses **`DATABASE_DIRECT_URL`** when non-empty, otherwise **`DATABASE_URL`**. This path avoids flaky **`drizzle-kit migrate`** with Neon serverless in CI; `drizzle-kit` remains for **`db:generate`** / **`db:studio`**.
+3. **`npm run db:seed`** — Upserts launch **`agent_archetypes`** rows (`vertical-fullstack`, `harness-engineer`) via **`db/seeds/archetypes.ts`** (same URL pick order as **`db:migrate`**). Safe to re-run (slug upsert).
 
 ## Phase 2 migrations (`0003` / `0004`)
 

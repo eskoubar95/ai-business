@@ -1,38 +1,42 @@
 ---
-
-## worker: frontend-agent
-
-task: "4.2 — Skills UI + MCP library UI + Webhook config"
+worker: frontend-agent
+task: "5.2 — Brand color + UI polish + empty states + business dashboard"
 phase: 2
-stage: 4
-branch: main
-status: merged
-pr_number: 9
-merge_commit: 995d820
-handoff_version: 7
-feature_commit: 7be6822
+stage: 5
+branch: phase2/stage5-frontend
+status: blocked_until_main_includes_5_1
+pr_number: null
+commit_tip: null
+handoff_version: 8
+backend_branch: phase2/stage5-backend
+backend_commit_tip: 709c545
+backend_pr_number: 10
+---
 
-# Worker Handoff — Frontend Agent (Task **4.2** merged)
+# Worker Handoff — Frontend Agent (næste: Task **5.2**)
 
 ## Summary
 
-Task **4.2** er **merged** til **`main`** via **[PR #9](https://github.com/eskoubar95/ai-business/pull/9)** — squash-tip **`995d820`**. Feature-baseline forbliver **`7be6822`**; leverance: `/dashboard/skills`, Settings MCP/webhook, nav Skills — jf. `.apm/memory/stage-04/task-04-02.log.md`.
+**Task 4.2** er **merged** til **`main`** (**[PR #9](https://github.com/eskoubar95/ai-business/pull/9)**). **Backend Task 5.1** har åben **[PR #10](https://github.com/eskoubar95/ai-business/pull/10)** fra **`phase2/stage5-backend`** (**`709c545`**).
+
+**Task 5.2** skal **ikke** påbegyndes før **`main`** indeholder merge af **5.1** — derefter opret **`phase2/stage5-frontend`** fra **`main`**.
 
 ## Authoritative artifacts
 
 | Artifact        | Path                                                                 |
 | --------------- | -------------------------------------------------------------------- |
-| Task definition | `.apm/plan.md` — Stage **4**, Task **4.2**                           |
-| Task log        | `.apm/memory/stage-04/task-04-02.log.md`                             |
+| Task definition | `.apm/plan.md` — Stage **5**, Task **5.2**                           |
+| Task log (ny)   | `.apm/memory/stage-05/task-05-02.log.md` (oprettes af Worker)       |
 | Worker report   | `.apm/bus/frontend-agent/report.md`                                 |
-| Merge           | **`main`** @ **`995d820`** (**PR #9**)                               |
+| Dispatch prompt | `.apm/bus/frontend-agent/task.md`                                   |
 
-## Manager actions (næste)
+## Manager actions
 
-1. ~~PR / merge~~ — fuldført.
-2. **Backend:** Dispatcher **Task 5.1** på **`phase2/stage5-backend`** fra **`main`**.
-3. **Frontend:** Dispatcher **Task 5.2** på **`phase2/stage5-frontend`** fra **`main`** **efter** **5.1** er merged.
+1. **Backend:** Åbn og merge PR **`phase2/stage5-backend` → `main`** (Task **5.1**).
+2. **Frontend:** Når **`main`** er opdateret, brug **Task**-værktøjet med **fuld** prompt fra **`.apm/bus/frontend-agent/task.md`** (Worker læser samme fil under `.apm/bus/<id>/`).
+3. Efter **5.2** merge: opdater tracker + handoff; afslut Stage 5 når begge tasks er på **`main`**.
 
-## Downstream
+## API-kontrakt (5.1 på `main`)
 
-**Task 5.2** — `.apm/plan.md` Stage **5**; se `.apm/bus/frontend-agent/task.md` for fuld dispatch-prompt.
+- **`POST /api/grill-me/ui`** accepterer valgfri **`businessType`**: `existing` \| `new` (default `existing`).
+- Onboarding skal vælge sti **før** chat og sende værdien med i request-body sammen med `businessId` og `message`.

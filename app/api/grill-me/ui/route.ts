@@ -3,6 +3,7 @@ import type { UIMessage } from "ai";
 import { auth } from "@/lib/auth/server";
 import { startGrillMeTurn } from "@/lib/grill-me/actions";
 import { assertUserBusinessAccess } from "@/lib/grill-me/access";
+import type { GrillBusinessType } from "@/lib/grill-me/grill-prompt";
 import { textFromUIMessage } from "@/lib/grill-me/ui-messages";
 import {
   createUIMessageStream,
@@ -52,6 +53,23 @@ export async function POST(req: Request) {
     return Response.json({ error: "Empty message" }, { status: 400 });
   }
 
+  let businessType: GrillBusinessType = "existing";
+  if (
+    typeof body === "object" &&
+    body !== null &&
+    "businessType" in body
+  ) {
+    const bt = (body as { businessType: unknown }).businessType;
+    if (bt === "existing" || bt === "new") {
+      businessType = bt;
+    } else if (bt !== undefined && bt !== null && String(bt).trim() !== "") {
+      return Response.json(
+        { error: "businessType must be 'existing' or 'new'" },
+        { status: 400 },
+      );
+    }
+  }
+
   const { data: session } = await auth.getSession();
   const userId = session?.user?.id;
   if (!userId || typeof userId !== "string") {
@@ -70,6 +88,7 @@ export async function POST(req: Request) {
         const { assistantReply } = await startGrillMeTurn(
           businessId,
           userText,
+          businessType,
         );
 
         const messageId = generateId();

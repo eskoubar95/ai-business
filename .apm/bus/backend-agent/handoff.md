@@ -1,39 +1,39 @@
 ---
-
-## worker: backend-agent
-
+worker: backend-agent
 task: "5.1 — Archetypes seeding + Grill-Me two-path onboarding"
 phase: 2
 stage: 5
 branch: phase2/stage5-backend
-status: ready_dispatch
-pr_number: null
-handoff_version: 5
-commit_tip: null
+status: pr_open
+pr_number: 10
+commit_tip: 709c545
+handoff_version: 6
+---
 
-# Worker Handoff — Backend Agent (næste: Task **5.1**)
+# Worker Handoff — Backend Agent (Task **5.1** leveret på gren)
 
 ## Summary
 
-**Task 4.1** er **merged** til **`main`** (**PR [#8](https://github.com/eskoubar95/ai-business/pull/8)**, `fbe25fc`). **Task 5.1** er næste backend-arbejde: archetype seeds, Grill-Me `businessType` existing vs new, heartbeat prompt addendum.
+**Task 5.1** er implementeret på **`phase2/stage5-backend`** (commit **`709c545`**): `npm run db:seed`, Grill-Me `businessType` (`existing` \| `new`) i `startGrillMeTurn` og **`POST /api/grill-me/ui`**, Vitest. Log: `.apm/memory/stage-05/task-05-01.log.md`.
 
-**Plan-afhængighed:** Task **5.1** afhænger af **4.1** (ikke af **4.2**). Gren **`phase2/stage4-frontend`** kan mergeseparat.
+**Næste skridt:** Merge **[PR #10](https://github.com/eskoubar95/ai-business/pull/10)** når CI er grøn.
 
 ## Authoritative artifacts
 
 | Artifact        | Path                                                                 |
 | --------------- | -------------------------------------------------------------------- |
 | Task definition | `.apm/plan.md` — Stage **5**, Task **5.1**                           |
-| Task log (ny)   | `.apm/memory/stage-05/task-05-01.log.md`                             |
+| Task log        | `.apm/memory/stage-05/task-05-01.log.md`                             |
 | Worker report   | `.apm/bus/backend-agent/report.md`                                   |
-| Dispatch prompt | `.apm/bus/backend-agent/task.md`                                     |
+| Dispatch (arkiv) | `.apm/bus/backend-agent/task.md` — leverance beskrevet; ny dispatch first når ny backend-task findes |
 
 ## Manager actions
 
-1. Opret/sync **`phase2/stage5-backend`** fra **`main`**.
-2. Brug **Task**-værktøjet med prompt fra **`task.md`** (fuld Task Prompt til Worker).
-3. Efter merge af **5.1**: kør **frontend Task 5.2** (afhænger af **5.1**).
+1. ~~Åbn PR~~ — **[PR #10](https://github.com/eskoubar95/ai-business/pull/10)** (åben); merge når grøn.
+2. **Efter merge af 5.1:** kør **`npm run db:seed`** i hvert miljø hvor archetype-addenda skal opdateres (idempotent).
+3. **Dispatch Frontend Task 5.2:** når **`main`** har 5.1, brug **Task**-værktøjet med **fuld** prompt fra `.apm/bus/frontend-agent/task.md` (jf. `AGENTS.md`).
+4. Ingen ny backend-dispatch i Stage 5 efter 5.1 medmindre plan udvider scope.
 
 ## Downstream (Frontend **5.2**)
 
-Frontend skal have `startGrillMeTurn`-param for two-path + seeded archetypes til UI og heartbeat-visning. Koordinér merge-rækkefølge: **5.1** → `main` før **5.2** PR.
+Frontend skal sende **`businessType`** til Grill-Me API (`/api/grill-me/ui`) og vise to-path valg i onboarding — se `.apm/plan.md` Task **5.2**. **Start ikke** frontend-arbejde på `main` før **5.1** er merged.
