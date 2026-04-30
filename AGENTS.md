@@ -33,6 +33,7 @@ APM_RULES {
 ## Database Access
 
 - All database queries go through `getDb()` from `db/index.ts`. Never instantiate a separate Neon or Drizzle client.
+- neon: Prefer **pooled** `DATABASE_URL` for the app; if `drizzle-kit migrate` fails with the pooler endpoint, use a **direct** Neon URL via optional **`DATABASE_DIRECT_URL`** for migrations only (see `drizzle.config.ts` + `.cursor/rules/database-architecture.mdc`).
 - All schema changes are made via `drizzle-kit generate` followed by `drizzle-kit migrate`. Never use `db:push` as a primary workflow — it does not produce versioned migration files.
 - All new tables use UUID primary keys (`.primaryKey().defaultRandom()`) and UTC timestamptz for every timestamp column (`.notNull().defaultNow()` with `withTimezone: true`).
 

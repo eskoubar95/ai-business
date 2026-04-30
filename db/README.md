@@ -4,8 +4,8 @@ Schema is defined in Drizzle (`schema.ts`). Migrations live under `drizzle/` and
 
 ## Workflow
 
-1. **`npm run db:generate`** — Generates SQL under `drizzle/` from `schema.ts`. Requires `DATABASE_URL` in the environment (any valid Postgres URL; used by drizzle-kit metadata).
-2. **`npm run db:migrate`** — Applies pending migrations to the database pointed to by `DATABASE_URL` (use Neon pooled URL for app; direct URL if your migration runner requires it).
+1. **`npm run db:generate`** — Generates SQL under `drizzle/` from `schema.ts`. `drizzle.config.ts` loads `.env` / `.env.local` and chooses **`DATABASE_DIRECT_URL`** (if set), else **`DATABASE_URL`** — see `.cursor/rules/database-architecture.mdc`.
+2. **`npm run db:migrate`** — Applies pending migrations against that same resolved URL.
 
 ## Tables (summary)
 
