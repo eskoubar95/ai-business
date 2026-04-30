@@ -2,38 +2,37 @@
 
 ## worker: frontend-agent
 
-task: "3.2 — Tasks UI + log feed + dashboard integration"
+task: "4.2 — Skills UI + MCP library UI + Webhook config"
 phase: 2
-stage: 3
-branch: phase2/stage3-frontend
-status: merged_main
-pr_number: 7
-handoff_version: 4
-commit_tip: d57be19
+stage: 4
+branch: phase2/stage4-frontend
+status: branch_ready_pr_pending
+pr_number: null
+handoff_version: 6
+feature_commit: 7be6822
 
-# Worker Handoff — Frontend Agent (Task **3.2** lukket)
+# Worker Handoff — Frontend Agent (Task **4.2** på gren)
 
 ## Summary
 
-Task **3.2** er **merged** til **`main`** via **PR [#7](https://github.com/eskoubar95/ai-business/pull/7)** (squash, merge commit **`d57be19`**). Tasks-board, oprettelse, detail med log/kommentar (`appendTaskLog`), dashboard-tællinger.
+Task **4.2** er **implementeret** på **`phase2/stage4-frontend`**; sidste **feature**-commit for leverancen er **`7be6822`** (evt. efterfølgende `chore(apm)` på samme gren). `/dashboard/skills`, Settings MCP/webhook, nav Skills — jf. task log. Afventer **PR mod `main`** og merge.
 
 ## Authoritative artifacts
 
 | Artifact        | Path                                                                 |
 | --------------- | -------------------------------------------------------------------- |
-| Task definition | `.apm/plan.md` — Stage **3**, Task **3.2**                           |
-| Task log        | `.apm/memory/stage-03/task-03-02.log.md`                             |
+| Task definition | `.apm/plan.md` — Stage **4**, Task **4.2**                           |
+| Task log        | `.apm/memory/stage-04/task-04-02.log.md`                             |
 | Worker report   | `.apm/bus/frontend-agent/report.md`                                   |
-| Merge           | **`main`** @ `d57be19` — PR **#7**                                   |
+| Gren / feature | **`phase2/stage4-frontend`** — feature **`7be6822`**                      |
 
-(Leverencer som i tidligere handoff-version; se git-historik for **PR #7** eller `task-03-02.log.md`.)
+## Manager actions (næste)
 
-## Manager actions (**efter merge** — udført)
-
-1. ✅ PR **#7** merged til `main`.
-2. **Backend:** Start **Task 4.1** på **`phase2/stage4-backend`** fra **`main`**.
-3. **Frontend:** Efter **4.1** — dispatch **Task 4.2** på **`phase2/stage4-frontend`** (idle bus i `.apm/bus/frontend-agent/task.md`).
+1. **Åbn PR** fra **`phase2/stage4-frontend`** → **`main`**; CI + review; **merge** når grøn.
+2. Efter merge: opdater tracker PR-link / `main` commit-tip som ved tidligere tasks.
+3. **Backend:** Dispatcher **Task 5.1** på **`phase2/stage5-backend`** fra **`main`** (afhænger kun af **4.1** i planen — kan overlappe PR-review af **4.2**).
+4. **Frontend:** Dispatcher **Task 5.2** på **`phase2/stage5-frontend`** fra **`main`** **efter** **5.1** er merged (Grill-Me two-path + archetypes i API).
 
 ## Downstream
 
-**Task 4.2** afhænger af **4.1** (`installSkillFromFiles`, `installSkillFromGitHub`, opdateret MCP/webhook backend). Se `.apm/plan.md` Stage **4**.
+**Task 5.2** — `.apm/plan.md` Stage **5**; se `.apm/bus/frontend-agent/task.md` for fuld dispatch-prompt.

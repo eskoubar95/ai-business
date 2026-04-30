@@ -142,6 +142,43 @@ export async function listSkillsByBusiness(businessId: string) {
   });
 }
 
+export type SkillOverviewRow = {
+  id: string;
+  name: string;
+  fileCount: number;
+  agents: { id: string; name: string }[];
+};
+
+/** Skills with file counts and agents linked via `agent_skills`. */
+export async function listSkillsOverviewByBusiness(
+  businessId: string,
+): Promise<SkillOverviewRow[]> {
+  await ensureBusinessMembership(businessId);
+  const db = getDb();
+  const rows = await db.query.skills.findMany({
+    where: eq(skills.businessId, businessId),
+    orderBy: [asc(skills.name)],
+    columns: { id: true, name: true },
+    with: {
+      files: { columns: { id: true } },
+      agentLinks: {
+        with: {
+          agent: { columns: { id: true, name: true } },
+        },
+      },
+    },
+  });
+
+  return rows.map((s) => ({
+    id: s.id,
+    name: s.name,
+    fileCount: s.files.length,
+    agents: s.agentLinks
+      .map((l) => l.agent)
+      .filter((a): a is { id: string; name: string } => Boolean(a)),
+  }));
+}
+
 export async function getSkillsByAgent(agentId: string) {
   const { businessId } = await assertUserOwnsAgent(agentId);
   const db = getDb();

@@ -1,9 +1,7 @@
-# Backend Agent — Task 4.1 report (closed)
+# Backend Agent — status
 
-**Merged:** `main` — **PR [#8](https://github.com/eskoubar95/ai-business/pull/8)** (squash, merge **`fbe25fc`**).
+**Sidste merged task:** **4.1** på `main` — **PR [#8](https://github.com/eskoubar95/ai-business/pull/8)** (`fbe25fc`).
 
-**Summary:** Skills multi-fil + GitHub (`lib/skills/file-actions.ts`), webhook-modtagelse (`app/api/webhooks/[businessId]/receive/route.ts`) med HMAC + idempotens, MCP refaktor til business-scoped actions + grant/revoke. Dashboard/MCP/Notion opdateringer. Tests og build grøne ved merge.
+**Næste:** **Task 5.1** på **`phase2/stage5-backend`** — fuld prompt i [`task.md`](task.md). Plan-afhængighed: kun **4.1** (parallel med **4.2** PR muligt).
 
-**log_path:** `.apm/memory/stage-04/task-04-01.log.md`
-
-**Næste backend-arbejde:** Task **5.1** på **`phase2/stage5-backend`** efter **Task 4.2** er merged til `main`.
+**log_path (4.1):** `.apm/memory/stage-04/task-04-01.log.md`

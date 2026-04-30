@@ -3,7 +3,7 @@
 import { assertUserOwnsAgent } from "@/lib/agents/actions";
 import { assertUserBusinessAccess } from "@/lib/grill-me/access";
 import { getDb } from "@/db/index";
-import { agentMcpAccess, mcpCredentials } from "@/db/schema";
+import { agentMcpAccess, agents, mcpCredentials } from "@/db/schema";
 import { encryptCredential as encryptCredentialCrypto } from "@/lib/mcp/encryption";
 import { requireSessionUserId } from "@/lib/roster/session";
 import { and, asc, eq } from "drizzle-orm";
@@ -96,6 +96,49 @@ export async function getMcpCredentialsByBusiness(businessId: string) {
     .from(mcpCredentials)
     .where(eq(mcpCredentials.businessId, businessId))
     .orderBy(asc(mcpCredentials.mcpName));
+}
+
+export type McpLibraryBoard = {
+  credentials: Awaited<ReturnType<typeof getMcpCredentialsByBusiness>>;
+  agents: { id: string; name: string }[];
+  accessLinks: { agentId: string; mcpCredentialId: string }[];
+};
+
+/** MCP credential rows, roster agents, and grant edges for the MCP library UI. */
+export async function getMcpLibraryBoard(businessId: string): Promise<McpLibraryBoard> {
+  const userId = await requireSessionUserId();
+  await assertUserBusinessAccess(userId, businessId);
+  const db = getDb();
+
+  const [credentialRows, agentRows, accessRows] = await Promise.all([
+    db
+      .select({
+        id: mcpCredentials.id,
+        mcpName: mcpCredentials.mcpName,
+        createdAt: mcpCredentials.createdAt,
+      })
+      .from(mcpCredentials)
+      .where(eq(mcpCredentials.businessId, businessId))
+      .orderBy(asc(mcpCredentials.mcpName)),
+    db
+      .select({ id: agents.id, name: agents.name })
+      .from(agents)
+      .where(eq(agents.businessId, businessId))
+      .orderBy(asc(agents.name)),
+    db
+      .select({
+        agentId: agentMcpAccess.agentId,
+        mcpCredentialId: agentMcpAccess.mcpCredentialId,
+      })
+      .from(agentMcpAccess)
+      .where(eq(agentMcpAccess.businessId, businessId)),
+  ]);
+
+  return {
+    credentials: credentialRows,
+    agents: agentRows,
+    accessLinks: accessRows,
+  };
 }
 
 export async function getMcpCredentialsForAgent(agentId: string) {

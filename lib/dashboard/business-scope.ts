@@ -30,6 +30,7 @@ export type DashboardScopedPath =
   | "/dashboard/agents"
   | "/dashboard/teams"
   | "/dashboard/tasks"
+  | "/dashboard/skills"
   | "/dashboard/approvals"
   | "/dashboard/notion"
   | "/dashboard/webhooks";

@@ -3,9 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   collectGitHubSkillFiles,
   installSkillFromFiles,
-  normalizeSkillFilePath,
-  parseGitHubRepoUrl,
 } from "../file-actions";
+import { normalizeSkillFilePath, parseGitHubRepoUrl } from "../skill-file-utils";
 
 vi.mock("@/lib/roster/session", () => ({
   requireSessionUserId: vi.fn(async () => "user-1"),
