@@ -36,7 +36,6 @@ const mainNav = [
     href: "/dashboard/approvals",
     label: "Approvals",
     icon: ShieldCheck,
-    badge: true as const,
   },
 ] as const;
 
@@ -235,7 +234,9 @@ export function AppSidebar({
             icon={item.icon}
             collapsed={collapsed}
             isActive={isActive(item.href)}
-            pendingApprovalsCount={item.badge ? pendingApprovalsCount : undefined}
+            pendingApprovalsCount={
+              item.href === "/dashboard/approvals" ? pendingApprovalsCount : undefined
+            }
           />
         ))}
       </nav>
