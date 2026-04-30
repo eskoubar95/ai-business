@@ -8,7 +8,8 @@
 
 - **npm / Neon Auth:** `@neondatabase/auth` (beta) may list `next@>=16` as optional peer while the app targets Next 15; installs can require `.npmrc` with `legacy-peer-deps=true` until upstream or Next alignment changes.
 - **Production builds:** `next build` can require `NEON_AUTH_BASE_URL` and `NEON_AUTH_COOKIE_SECRET` to be set during route analysis for Neon Auth routes—document in CI as the Worker noted.
-- **Stage 1 — DB / Auth smoke:** Run `npm run db:migrate` against Neon when `DATABASE_URL` is available; verify session/unauthenticated behaviour against a **reachable** Neon Auth URL (not `build.invalid` placeholders).
+- **Local dev / port 3000:** Run **at most one** Next process bound to `:3000`, started from the **repository root** (e.g. `npm run dev`). A stray `next start` or `next dev` left running from an old git worktree (e.g. a former `schema-auth-infra` checkout) can still answer on 3000 and surface **misleading Neon Auth errors** while the app you think you are using is another tree. Stop orphan processes before debugging auth.
+- **Stage 1 — DB / Auth smoke:** `DATABASE_URL` / Neon Auth are configured in this environment; run `npm run db:migrate` from repo root after schema changes. Verify session behaviour against the real Neon Auth URL (not `build.invalid` placeholders).
 
 ## Stage Summaries
 
