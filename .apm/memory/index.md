@@ -1,7 +1,7 @@
 ---
 
 ## phase: 2
-updated: 2026-04-30 (Task 2.2 merged via PR #5; memory index synced)
+updated: 2026-04-30 (`/apm-5-check-reports`: PR #5 still open; index aligned to GitHub)
 
 # Phase 2 Memory Index
 
@@ -14,7 +14,7 @@ All **numbered Phase 2 task bodies** are mirrored from `plan.md` under [tasks/fr
 | 1.1 — Schema Migrations       | `.apm/memory/stage-01/task-01-01.log.md` | ✅ Done (PR #2) — **logfil genskrevet i repo** (2026-04-30 transcript recovery); se også `worker-recovered/backend-agent-task-1.1-handoff.md` |
 | 1.2 — P0 UX Fixes             | `.apm/memory/stage-01/task-01-02.log.md` | ✅ Done (PR #3) — **logfil genskrevet i repo** (2026-04-30 transcript recovery); se `worker-recovered/frontend-agent-task-1.2-handoff.md`   |
 | 2.1 — Cursor SDK + Heartbeat  | `.apm/memory/stage-02/task-02-01.log.md` | ✅ Merged (PR #4)                                                                                                                            |
-| 2.2 — Agent Config UI         | `.apm/memory/stage-02/task-02-02.log.md` | ✅ Merged (**PR #5** → `main`); handoff `.apm/bus/frontend-agent/handoff.md`                                                                 |
+| 2.2 — Agent Config UI         | `.apm/memory/stage-02/task-02-02.log.md` | 🔄 **PR #5** open (merge pending); handoff `.apm/bus/frontend-agent/handoff.md`                                                                |
 | 3.1 — Tasks Backend           | `.apm/memory/stage-03/task-03-01.log.md` | Not created yet                                                                                                                             |
 | 3.2 — Tasks Frontend          | `.apm/memory/stage-03/task-03-02.log.md` | Not created yet                                                                                                                             |
 | 4.1 — Skills + Webhooks + MCP | `.apm/memory/stage-04/task-04-01.log.md` | Not created yet                                                                                                                             |

@@ -5,14 +5,14 @@ task: "2.2 — Agent Config Tabs + Run Heartbeat UI + Settings Page"
 phase: 2
 stage: 2
 branch: phase2/stage2-frontend
-status: merged_main
+status: pr_open
 handoff_version: 2
 
 # Worker Handoff — Frontend Agent → Manager / downstream
 
 ## Summary
 
-Task **2.2** merged til **`main`** via **PR #5** (squash/merge efter Manager review). See commit history on `main`.
+Task **2.2** is on **`phase2/stage2-frontend`** and submitted as **PR #5** against `main` (**OPEN** as of 2026-04-30 Manager check). Merge når review er godkendt.
 
 ## Authoritative artifacts
 
@@ -41,9 +41,10 @@ Authenticated E2E (`tests/agents.spec.ts`) still requires `E2E_EMAIL` / `E2E_PAS
 
 ## Manager actions
 
-1. Review and merge **PR #5** to `main` when satisfied.
-2. After merge: update `.apm/tracker.md` merge truth; optional: set `merge_commit` in `task-02-02.log.md`.
-3. Run **`/apm-5-check-reports frontend-agent`**; replace `.apm/bus/frontend-agent/task.md` with the idle stub (see `backend-agent/task.md` pattern) until the next dispatch.
+1. **`/apm-5-check-reports`** (2026-04-30): PR #5 stadig åben — tracker og memory index realigneret.
+2. Review og **merge PR #5** til `main` når tilfredsstillende.
+3. Efter merge: opdatér `.apm/tracker.md` merge-sandhed; sæt `merge_commit` i `task-02-02.log.md`.
+4. Kør evt. **`/apm-5-check-reports frontend-agent`** igen efter merge; hold `task.md` som idle-stub indtil næste dispatch.
 
 ## Downstream notes
 

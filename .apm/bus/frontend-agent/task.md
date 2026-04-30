@@ -4,7 +4,7 @@
 **Stage:** 3 (next when dispatched)  
 **Worker:** Frontend Agent  
 
-**Status:** Task **2.2** is **merged til `main`** ([PR #5](https://github.com/eskoubar95/ai-business/pull/5)). Ingen aktiv Worker-opgave her, indtil Manager dispatch’er **Task 3.2**.
+**Status:** Task **2.2** afventer merge — [**PR #5**](https://github.com/eskoubar95/ai-business/pull/5) er **åben** (`phase2/stage2-frontend` → `main`). Verificeret i `/apm-5-check-reports` (2026-04-30). Ingen aktiv Worker-opgave her, indtil **3.2** dispatch’es efter merge og næste Task Bus er skrevet.
 
 ## Where to find work
 
