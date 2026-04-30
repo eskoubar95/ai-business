@@ -41,9 +41,9 @@ Authenticated E2E (`tests/agents.spec.ts`) still requires `E2E_EMAIL` / `E2E_PAS
 
 ## Manager actions
 
-1. Review and merge **PR #5** to `main` when satisfied.
-2. After merge: update `.apm/tracker.md` merge truth; optional: set `merge_commit` in `task-02-02.log.md`.
-3. Run **`/apm-5-check-reports frontend-agent`**; replace `.apm/bus/frontend-agent/task.md` with the idle stub (see `backend-agent/task.md` pattern) until the next dispatch.
+1. ✅ **PR #5** merged til `main` (`f059c4b`).
+2. ✅ `merge_commit` sat i `.apm/memory/stage-02/task-02-02.log.md`; **`/apm-5-check-reports frontend-agent`** post-merge (2026-04-30).
+3. **Idle bus** — næste dispatch er **Task 3.2** efter backend **3.1**.
 
 ## Downstream notes
 

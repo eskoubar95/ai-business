@@ -1,7 +1,7 @@
 ---
 
 ## phase: 2
-updated: 2026-04-30 (Task 2.2 merged via PR #5; memory index synced)
+updated: 2026-04-30 (post-merge `/apm-5-check-reports`; PR #5 = f059c4b on `main`)
 
 # Phase 2 Memory Index
 
