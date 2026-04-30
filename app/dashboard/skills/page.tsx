@@ -2,6 +2,9 @@ import Link from "next/link";
 
 import { BusinessSelector } from "@/components/business-selector";
 import { SkillsDashboard } from "@/components/skills/skills-dashboard";
+import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { PageWrapper } from "@/components/ui/page-wrapper";
 import { loadUserBusinesses, resolveBusinessIdParam } from "@/lib/dashboard/business-scope";
 import { listAgentSummariesByBusiness } from "@/lib/agents/actions";
 import { listSkillsOverviewByBusiness } from "@/lib/skills/actions";
@@ -23,26 +26,32 @@ export default async function SkillsDashboardPage({
   ]);
 
   return (
-    <div className="bg-background text-foreground flex flex-col gap-6 p-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Skills</h1>
-        <p className="text-muted-foreground text-sm">
-          Install multi-file skills (<span className="font-mono">SKILL.md</span> plus references),
-          then attach them to agents via checkboxes or from each agent&apos;s edit page.
-        </p>
-      </div>
+    <PageWrapper className="mx-auto max-w-screen-2xl px-6 py-6">
+      <PageHeader
+        breadcrumb={
+          <div>
+            <h1 className="text-foreground text-lg font-semibold">Skills</h1>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Install multi-file skills (<span className="font-mono">SKILL.md</span> plus references),
+              then attach them to agents. Open a skill to browse files and preview content.
+            </p>
+          </div>
+        }
+        actions={
+          <Button asChild variant="outline" className="cursor-pointer">
+            <Link href={`/dashboard/settings?businessId=${encodeURIComponent(businessId)}&section=mcp`}>
+              MCP library
+            </Link>
+          </Button>
+        }
+        className="px-0 pt-0"
+      />
 
       <BusinessSelector businesses={businesses} currentBusinessId={businessId} />
 
-      <SkillsDashboard businessId={businessId} skills={skillsOverview} agents={agents} />
-
-      <p className="text-muted-foreground text-xs">
-        Webhook endpoint and MCP library live under{" "}
-        <Link href={`/dashboard/settings?businessId=${encodeURIComponent(businessId)}`} className="text-primary underline">
-          Settings
-        </Link>
-        .
-      </p>
-    </div>
+      <div className="mt-6">
+        <SkillsDashboard businessId={businessId} skills={skillsOverview} agents={agents} />
+      </div>
+    </PageWrapper>
   );
 }

@@ -96,10 +96,12 @@ test.describe("approvals queue", () => {
       timeout: 30_000,
     });
 
-    await page.goto(`/dashboard/webhooks?businessId=${businessId}`);
+    await page.goto(
+      `/dashboard/settings?businessId=${businessId}&section=webhooks`,
+    );
     await expect(page.getByTestId("webhook-deliveries-table")).toBeVisible();
 
-    await page.goto(`/dashboard/notion?businessId=${businessId}`);
+    await page.goto(`/dashboard/settings?businessId=${businessId}&section=notion`);
     await expect(page.getByTestId("notion-connection-panel")).toBeVisible();
   });
 });

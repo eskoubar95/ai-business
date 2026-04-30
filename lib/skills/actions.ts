@@ -179,6 +179,27 @@ export async function listSkillsOverviewByBusiness(
   }));
 }
 
+export type SkillFilePayload = { path: string; content: string };
+
+/** All files for a skill (ordered by path) for dashboard preview / editor. */
+export async function listSkillFilesForSkill(
+  skillId: string,
+  businessId: string,
+): Promise<SkillFilePayload[]> {
+  await ensureBusinessMembership(businessId);
+  const skill = await skillRowForBusiness(skillId, businessId);
+  if (!skill) throw new Error("Skill not found");
+
+  const db = getDb();
+  const files = await db.query.skillFiles.findMany({
+    where: eq(skillFiles.skillId, skillId),
+    orderBy: [asc(skillFiles.path)],
+    columns: { path: true, content: true },
+  });
+
+  return files.map((f) => ({ path: f.path, content: f.content }));
+}
+
 export async function getSkillsByAgent(agentId: string) {
   const { businessId } = await assertUserOwnsAgent(agentId);
   const db = getDb();
