@@ -14,12 +14,12 @@ completed_at:
 | ----- | --------------------------------------- | -------------- | ---------- |
 | 1     | Database Foundation + P0 UX Fixes       | ✅ Complete     | 2/2        |
 | 2     | Heartbeat MVP + Agent Configuration     | ✅ Complete     | 2/2        |
-| 3     | Tasks System                            | 🔄 In Progress | 1/2        |
+| 3     | Tasks System                            | ✅ Complete     | 2/2        |
 | 4     | Skills + Webhooks + MCP Library         | 🔲 Not Started | 0/2        |
 | 5     | Polish + Archetypes + Grill-Me Two-Path | 🔲 Not Started | 0/2        |
 
 
-**Total:** 5/10 tasks complete
+**Total:** 6/10 tasks complete
 
 ---
 
@@ -33,7 +33,7 @@ completed_at:
 | 2.1  | Cursor SDK + runHeartbeat + user_settings           | Backend Agent  | `main` (PR **#4**)       | ✅ Done         | `.apm/memory/stage-02/task-02-01.log.md` |
 | 2.2  | Agent Config Tabs + Run Heartbeat UI + Settings     | Frontend Agent | `main` (PR **#5**)       | ✅ Done         | `.apm/memory/stage-02/task-02-02.log.md` |
 | 3.1  | Tasks CRUD + task_logs + @mention trigger           | Backend Agent  | `main` (PR **#6**)       | ✅ Done         | `.apm/memory/stage-03/task-03-01.log.md` |
-| 3.2  | Tasks UI + log feed + dashboard integration         | Frontend Agent | `phase2/stage3-frontend` | 🔲 Not Started | —                                        |
+| 3.2  | Tasks UI + log feed + dashboard integration         | Frontend Agent | `phase2/stage3-frontend` · PR [**#7**](https://github.com/eskoubar95/ai-business/pull/7) | ✅ Done         | `.apm/memory/stage-03/task-03-02.log.md` |
 | 4.1  | Skills file tree + Webhook endpoint + MCP migration | Backend Agent  | `phase2/stage4-backend`  | 🔲 Not Started | —                                        |
 | 4.2  | Skills UI + MCP library UI + Webhook config         | Frontend Agent | `phase2/stage4-frontend` | 🔲 Not Started | —                                        |
 | 5.1  | Archetypes seeding + Grill-Me two-path              | Backend Agent  | `phase2/stage5-backend`  | 🔲 Not Started | —                                        |
@@ -52,3 +52,5 @@ completed_at:
 | ✅      | Done (branch ready for review) |
 | ❌      | Blocked                        |
 | ⏸️     | Paused — resume later          |
+
+

@@ -29,6 +29,7 @@ export async function loadUserBusinesses(): Promise<{ id: string; name: string }
 export type DashboardScopedPath =
   | "/dashboard/agents"
   | "/dashboard/teams"
+  | "/dashboard/tasks"
   | "/dashboard/approvals"
   | "/dashboard/notion"
   | "/dashboard/webhooks";

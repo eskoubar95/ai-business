@@ -1,55 +1,57 @@
 ---
 
 ## worker: frontend-agent
-task: "2.2 — Agent Config Tabs + Run Heartbeat UI + Settings Page"
+
+task: "3.2 — Tasks UI + log feed + dashboard integration"
 phase: 2
-stage: 2
-branch: phase2/stage2-frontend
-status: merged_main
-handoff_version: 2
+stage: 3
+branch: phase2/stage3-frontend
+status: pr_open
+pr_number: 7
+handoff_version: 3
+commit_tip: 535a20a
 
 # Worker Handoff — Frontend Agent → Manager / downstream
 
 ## Summary
 
-Task **2.2** merged til **`main`** via **PR #5** (squash/merge efter Manager review). See commit history on `main`.
+Task **3.2** er **klar til review** og tracker på **PR [#7](https://github.com/eskoubar95/ai-business/pull/7)** (`phase2/stage3-frontend` → `main`). UI til tasks-board, oprettelse, detail med log-feed og kommentarer (`appendTaskLog`), samt dashboard-tællinger pr. virksomhed.
 
 ## Authoritative artifacts
 
-| Artifact        | Path                                     |
-| --------------- | ---------------------------------------- |
-| Task definition | `.apm/tasks/from-plan/2.2-agent-config-tabs-run-heartbeat-ui-settings-page-frontend.md` |
-| Task log        | `.apm/memory/stage-02/task-02-02.log.md` |
-| Worker report   | `.apm/bus/frontend-agent/report.md`      |
-| Pull request    | https://github.com/eskoubar95/ai-business/pull/5 |
+
+| Artifact        | Path                                                                 |
+| --------------- | -------------------------------------------------------------------- |
+| Task definition | `.apm/bus/frontend-agent/task.md` / `.apm/plan.md` — Stage **3**, Task **3.2** |
+| Task log        | `.apm/memory/stage-03/task-03-02.log.md`                            |
+| Worker report   | `.apm/bus/frontend-agent/report.md`                                  |
+| Pull request    | https://github.com/eskoubar95/ai-business/pull/7                    |
 
 ## Deliverables checklist (Worker-verified)
 
-- **Document Server Actions:** `lib/agents/document-actions.ts`, `lib/agents/document-model.ts`
-- **Tabs UI:** `components/agents/document-editor.tsx`, `components/ui/tabs.tsx`, `@radix-ui/react-tabs`
-- **Heartbeat button:** `components/agents/run-heartbeat-button.tsx` → `lib/heartbeat/actions.ts`
-- **Edit page:** `app/dashboard/agents/[agentId]/edit/page.tsx` — `getAgentDocuments`, `DocumentEditor`, `RunHeartbeatButton`, `AgentForm` with `showInstructions={false}`
-- **Agent form:** `components/agents/agent-form.tsx` — optional `showInstructions` for edit vs create
-- **Settings:** `getSettingsPageState` in `lib/settings/actions.ts`; `app/dashboard/settings/page.tsx`, `settings-forms.tsx` — `settings-api-key-saved` test id
-- **Tests:** `lib/agents/__tests__/document-actions.test.ts`; `tests/agents.spec.ts` (soul tab)
+- **`app/dashboard/tasks/page.tsx`** — five-column board, `BusinessSelector`, link til new/detail
+- **`app/dashboard/tasks/new/page.tsx`** + **`components/tasks/task-create-form.tsx`** — `createTask`
+- **`app/dashboard/tasks/[taskId]/page.tsx`** — detail, **`TaskLogFeed`**, **`TaskCommentInput`**, **`TaskStatusSelect`**
+- **`components/tasks/`** — `task-card.tsx`, `task-status-board.tsx`, `task-log-feed.tsx`, `task-comment-input.tsx`, `task-status-select.tsx`
+- **`app/dashboard/page.tsx`** — in-progress / blocked counts, **Open tasks** link
+- **Server helpers:** `lib/tasks/actions.ts` (`getTaskById`), `lib/tasks/flatten-task-tree.ts`, `lib/tasks/dashboard-queries.ts`; `lib/dashboard/business-scope.ts` (`/dashboard/tasks` scoped path)
+- **Tests:** `lib/tasks/__tests__/flatten-task-tree.test.ts`; `tests/tasks.spec.ts` (E2E gated på `E2E_EMAIL` / `E2E_PASSWORD`)
 
 ## Validation gate (Worker-reported — re-run before merge)
 
-`npm test -- --run`, `npm run build`, `npm run lint` — **Green** on **2026-04-30** (branch tip).
-
-Authenticated E2E (`tests/agents.spec.ts`) still requires `E2E_EMAIL` / `E2E_PASSWORD` in the environment.
+`npm test -- lib/tasks/__tests__/flatten-task-tree.test.ts lib/tasks --run`, `npm run lint`, `npx tsc --noEmit`, `npm run build` — **Green** på branch tip (bekræft ved merge).
 
 ## Manager actions
 
-1. ✅ **PR #5** merged til `main` (`f059c4b`).
-2. ✅ `merge_commit` sat i `.apm/memory/stage-02/task-02-02.log.md`; **`/apm-5-check-reports frontend-agent`** post-merge (2026-04-30).
-3. **Idle bus** — næste dispatch er **Task 3.2** efter backend **3.1**.
+1. Review og merge **PR #7** til `main` når gate er grøn.
+2. Efter merge: opdater task-log med merge-commit; kør evt. **`/apm-5-check-reports frontend-agent`** (eller tilsvarende post-merge check).
+3. **Backend Task 4.1** kan planlægges fra **`phase2/stage4-backend`** når `main` indeholder **Task 3.2**.
 
 ## Downstream notes
 
-1. **Task 3.2** (Tasks UI) depends on **3.1** backend — align branches after **3.1** lands.
-2. No change to **Notion** or **webhook** contracts in this task.
+1. Importer `createTask`, `updateTaskStatus`, `getTasksByBusiness`, `getTaskById`, `appendTaskLog`, `getTaskLogs` kun fra **server**-grænser (RSC / Server Actions), jf. `AGENTS.md`.
+2. `getTasksByBusiness` returnerer træ — UI flader via **`flattenTaskTree`** til kolonne-board.
 
 ## Integration
 
-If `main` moves before merge, rebase or merge `main` into `phase2/stage2-frontend` and re-run the validation gate.
+Hvis `main` flytter før merge: merge eller rebase `main` ind i `phase2/stage3-frontend` og genkør validation gate.
