@@ -36,6 +36,13 @@
       "when": 1777534000000,
       "tag": "0004_phase2_drop_legacy_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1777536278224,
+      "tag": "0005_slimy_cerebro",
+      "breakpoints": true
     }
   ]
 }

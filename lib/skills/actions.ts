@@ -68,33 +68,35 @@ export async function updateSkill(
     payload.name = nm;
   }
 
-  if (patch.markdown !== undefined) {
-    const trimmed = patch.markdown.trim();
-    await db
-      .insert(skillFiles)
-      .values({
-        skillId,
-        path: SKILL_MD_PATH,
-        content: trimmed,
-      })
-      .onConflictDoUpdate({
-        target: [skillFiles.skillId, skillFiles.path],
-        set: { content: trimmed },
-      });
-  }
+  return db.transaction(async (tx) => {
+    if (patch.markdown !== undefined) {
+      const trimmed = patch.markdown.trim();
+      await tx
+        .insert(skillFiles)
+        .values({
+          skillId,
+          path: SKILL_MD_PATH,
+          content: trimmed,
+        })
+        .onConflictDoUpdate({
+          target: [skillFiles.skillId, skillFiles.path],
+          set: { content: trimmed },
+        });
+    }
 
-  if (patch.name !== undefined || patch.markdown !== undefined) {
-    payload.updatedAt = new Date();
-    const [updated] = await db.update(skills).set(payload).where(eq(skills.id, skillId)).returning();
-    if (!updated) throw new Error("Skill not found");
-    return updated;
-  }
+    if (patch.name !== undefined || patch.markdown !== undefined) {
+      payload.updatedAt = new Date();
+      const [updated] = await tx.update(skills).set(payload).where(eq(skills.id, skillId)).returning();
+      if (!updated) throw new Error("Skill not found");
+      return updated;
+    }
 
-  const unchanged = await db.query.skills.findFirst({
-    where: eq(skills.id, skillId),
+    const unchanged = await tx.query.skills.findFirst({
+      where: eq(skills.id, skillId),
+    });
+    if (!unchanged) throw new Error("Skill not found");
+    return unchanged;
   });
-  if (!unchanged) throw new Error("Skill not found");
-  return unchanged;
 }
 
 export async function deleteSkill(skillId: string): Promise<void> {

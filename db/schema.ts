@@ -98,6 +98,7 @@ export const agents = pgTable(
       columns: [t.reportsToAgentId],
       foreignColumns: [t.id],
     }).onDelete("set null"),
+    uniqueIndex("agents_business_id_id_unique").on(t.businessId, t.id),
     index("agents_business_id_idx").on(t.businessId),
     index("agents_reports_to_agent_id_idx").on(t.reportsToAgentId),
     index("agents_archetype_id_idx").on(t.archetypeId),
@@ -232,6 +233,7 @@ export const teams = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
+    uniqueIndex("teams_business_id_id_unique").on(t.businessId, t.id),
     index("teams_business_id_idx").on(t.businessId),
     index("teams_lead_agent_id_idx").on(t.leadAgentId),
   ],
@@ -273,6 +275,7 @@ export const mcpCredentials = pgTable(
   },
   (t) => [
     uniqueIndex("mcp_credentials_business_id_mcp_name_unique").on(t.businessId, t.mcpName),
+    uniqueIndex("mcp_credentials_business_id_id_unique").on(t.businessId, t.id),
     index("mcp_credentials_business_id_idx").on(t.businessId),
   ],
 );
@@ -282,19 +285,27 @@ export const agentMcpAccess = pgTable(
   "agent_mcp_access",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    agentId: uuid("agent_id")
+    businessId: uuid("business_id")
       .notNull()
-      .references(() => agents.id, { onDelete: "cascade" }),
-    mcpCredentialId: uuid("mcp_credential_id")
-      .notNull()
-      .references(() => mcpCredentials.id, { onDelete: "cascade" }),
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    agentId: uuid("agent_id").notNull(),
+    mcpCredentialId: uuid("mcp_credential_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
+    foreignKey({
+      columns: [t.businessId, t.agentId],
+      foreignColumns: [agents.businessId, agents.id],
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [t.businessId, t.mcpCredentialId],
+      foreignColumns: [mcpCredentials.businessId, mcpCredentials.id],
+    }).onDelete("cascade"),
     uniqueIndex("agent_mcp_access_agent_id_mcp_credential_id_unique").on(
       t.agentId,
       t.mcpCredentialId,
     ),
+    index("agent_mcp_access_business_id_idx").on(t.businessId),
     index("agent_mcp_access_agent_id_idx").on(t.agentId),
     index("agent_mcp_access_mcp_credential_id_idx").on(t.mcpCredentialId),
   ],
@@ -366,6 +377,7 @@ export const approvals = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
+    uniqueIndex("approvals_business_id_id_unique").on(t.businessId, t.id),
     index("approvals_business_id_idx").on(t.businessId),
     index("approvals_agent_id_idx").on(t.agentId),
     index("approvals_approval_status_idx").on(t.approvalStatus),
@@ -389,21 +401,33 @@ export const tasks = pgTable(
     businessId: uuid("business_id")
       .notNull()
       .references(() => businesses.id, { onDelete: "cascade" }),
-    teamId: uuid("team_id").references(() => teams.id, { onDelete: "set null" }),
-    agentId: uuid("agent_id").references(() => agents.id, { onDelete: "set null" }),
+    teamId: uuid("team_id"),
+    agentId: uuid("agent_id"),
     parentTaskId: uuid("parent_task_id"),
     title: text("title").notNull(),
     description: text("description").notNull().default(""),
     status: taskStatusEnum("status").notNull().default("backlog"),
     blockedReason: text("blocked_reason"),
-    approvalId: uuid("approval_id").references(() => approvals.id, { onDelete: "set null" }),
+    approvalId: uuid("approval_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     foreignKey({
-      columns: [t.parentTaskId],
-      foreignColumns: [t.id],
+      columns: [t.businessId, t.teamId],
+      foreignColumns: [teams.businessId, teams.id],
+    }).onDelete("set null"),
+    foreignKey({
+      columns: [t.businessId, t.agentId],
+      foreignColumns: [agents.businessId, agents.id],
+    }).onDelete("set null"),
+    foreignKey({
+      columns: [t.businessId, t.parentTaskId],
+      foreignColumns: [t.businessId, t.id],
+    }).onDelete("set null"),
+    foreignKey({
+      columns: [t.businessId, t.approvalId],
+      foreignColumns: [approvals.businessId, approvals.id],
     }).onDelete("set null"),
     index("tasks_business_id_idx").on(t.businessId),
     index("tasks_agent_id_idx").on(t.agentId),
@@ -567,6 +591,10 @@ export const mcpCredentialsRelations = relations(mcpCredentials, ({ one, many })
 }));
 
 export const agentMcpAccessRelations = relations(agentMcpAccess, ({ one }) => ({
+  business: one(businesses, {
+    fields: [agentMcpAccess.businessId],
+    references: [businesses.id],
+  }),
   agent: one(agents, {
     fields: [agentMcpAccess.agentId],
     references: [agents.id],

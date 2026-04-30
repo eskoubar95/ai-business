@@ -125,14 +125,6 @@ export async function updateAgent(
     if (!rl) throw new Error("Agent role is required");
     payload.role = rl;
   }
-  if (patch.instructions !== undefined) {
-    const ins = patch.instructions.trim();
-    if (!ins) throw new Error("Instructions are required");
-    await db
-      .update(agentDocuments)
-      .set({ content: ins, updatedAt: new Date() })
-      .where(and(eq(agentDocuments.agentId, agentId), eq(agentDocuments.slug, "soul")));
-  }
   if (patch.reportsToAgentId !== undefined) {
     const validated = await validateReportsToForBusiness(
       existing.businessId,
@@ -145,25 +137,37 @@ export async function updateAgent(
   const shouldPatchAgentRow =
     patch.name !== undefined || patch.role !== undefined || patch.reportsToAgentId !== undefined;
 
-  let updated: typeof agents.$inferSelect | undefined;
-  if (shouldPatchAgentRow) {
-    payload.updatedAt = new Date();
-    const rows = await db.update(agents).set(payload).where(eq(agents.id, agentId)).returning();
-    updated = rows[0];
-  } else {
-    updated = await db.query.agents.findFirst({
-      where: eq(agents.id, agentId),
+  return db.transaction(async (tx) => {
+    if (patch.instructions !== undefined) {
+      const ins = patch.instructions.trim();
+      if (!ins) throw new Error("Instructions are required");
+      await tx
+        .update(agentDocuments)
+        .set({ content: ins, updatedAt: new Date() })
+        .where(and(eq(agentDocuments.agentId, agentId), eq(agentDocuments.slug, "soul")));
+    }
+
+    let updated: typeof agents.$inferSelect | undefined;
+    if (shouldPatchAgentRow) {
+      payload.updatedAt = new Date();
+      const rows = await tx.update(agents).set(payload).where(eq(agents.id, agentId)).returning();
+      updated = rows[0];
+    } else {
+      updated = await tx.query.agents.findFirst({
+        where: eq(agents.id, agentId),
+      });
+    }
+
+    if (!updated) throw new Error("Agent not found");
+
+    const soulRows = await tx.query.agentDocuments.findMany({
+      where: and(eq(agentDocuments.agentId, agentId), eq(agentDocuments.slug, "soul")),
+      columns: { content: true },
     });
-  }
+    const soulContent = soulRows[0]?.content ?? "";
 
-  if (!updated) throw new Error("Agent not found");
-
-  const soulRow = await db.query.agentDocuments.findMany({
-    where: eq(agentDocuments.agentId, agentId),
+    return { ...updated, instructions: soulContent };
   });
-  const soulContent = soulRow.find((d) => d.slug === "soul")?.content ?? "";
-
-  return { ...updated, instructions: soulContent };
 }
 
 export async function deleteAgent(agentId: string): Promise<void> {
@@ -190,7 +194,10 @@ export async function getAgentsByBusiness(businessId: string): Promise<AgentWith
     where: eq(agents.businessId, businessId),
     orderBy: [asc(agents.name)],
     with: {
-      documents: true,
+      documents: {
+        where: eq(agentDocuments.slug, "soul"),
+        columns: { slug: true, content: true },
+      },
     },
   });
 

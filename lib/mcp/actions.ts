@@ -3,12 +3,8 @@
 import { assertUserOwnsAgent } from "@/lib/agents/actions";
 import { getDb } from "@/db/index";
 import { agentMcpAccess, mcpCredentials } from "@/db/schema";
-import {
-  decryptCredential as decryptCredentialCrypto,
-  encryptCredential as encryptCredentialCrypto,
-  type McpEncryptedPayload,
-} from "@/lib/mcp/encryption";
-import { and, asc, eq } from "drizzle-orm";
+import { encryptCredential as encryptCredentialCrypto } from "@/lib/mcp/encryption";
+import { asc, eq } from "drizzle-orm";
 
 export async function saveMcpCredential(
   agentId: string,
@@ -47,6 +43,7 @@ export async function saveMcpCredential(
     await tx
       .insert(agentMcpAccess)
       .values({
+        businessId,
         agentId,
         mcpCredentialId: cred.id,
       })
@@ -79,28 +76,4 @@ export async function deleteMcpCredential(id: string): Promise<void> {
   await assertUserOwnsAgent(link.agentId);
 
   await db.delete(mcpCredentials).where(eq(mcpCredentials.id, id));
-}
-
-/** Decrypt MCP payload for trusted server workflows only; never expose to client code. */
-export async function getMcpCredentialDecrypted(id: string): Promise<Record<string, unknown>> {
-  const db = getDb();
-  const link = await db.query.agentMcpAccess.findFirst({
-    where: eq(agentMcpAccess.mcpCredentialId, id),
-    columns: { agentId: true },
-  });
-  if (!link) throw new Error("Credential not found");
-
-  await assertUserOwnsAgent(link.agentId);
-
-  const row = await db.query.mcpCredentials.findFirst({
-    where: eq(mcpCredentials.id, id),
-    columns: {
-      iv: true,
-      encryptedPayload: true,
-    },
-  });
-  if (!row) throw new Error("Credential not found");
-
-  const payload = row.encryptedPayload as McpEncryptedPayload;
-  return decryptCredentialCrypto(row.iv, payload);
 }
