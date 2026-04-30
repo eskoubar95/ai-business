@@ -1,8 +1,11 @@
-# Backend Agent — Task 2.1 report (closed)
+# Backend Agent — Task 3.1 report
 
-**Merged:** `**main`** @ `**ea84f6c**` — PR **#4** (`feat(heartbeat): … Task 2.1`).
+**Branch:** `phase2/stage3-backend` · **`main`** ikke opdateret endnu — åbn PR når CI er grøn.
 
-**Summary:** Heartbeat prompt builder, `**runHeartbeat`** via `**@cursor/sdk**`, encrypted Cursor API key + business settings server actions, `**orchestration_events**` logging, Vitest coverage. `**getUserCursorApiKeyDecrypted**` lives in `**lib/settings/cursor-api-key.ts**` (non–Server Actions module) so the plaintext key is not a client-invokable RPC.
+**Summary:** Server Actions til **tasks CRUD** (`createTask`, `updateTask`, `updateTaskStatus`, `deleteTask`, `getTasksByBusiness` som træ, `getTasksByAgent`), **task logs** (`appendTaskLog`, `getTaskLogs`), og **@-mention orchestration**: `mention-trigger.ts` matcher agenter på handle pr. business og logger `mention_trigger`-events til `orchestration_events`. `task-tree.ts` håndterer sletteorden (børn før parent). **`lib/tasks/__tests__`** (10 tests) + `lib/tasks/README.md`.
 
-**Log:** `.apm/memory/stage-02/task-02-01.log.md`  
-**Worker handoff (Manager / Frontend):** `.apm/bus/backend-agent/handoff.md`
+**Validation:** `npm test -- --run lib/tasks` groen på branch (Worker); Worker-log nævner fuld suite + lint + build groen — **bekræft før merge.**
+
+**Manual smoke:** Ikke mod live DB i Worker-session (jf. Task Log).
+
+**log_path:** `.apm/memory/stage-03/task-03-01.log.md`
