@@ -19,7 +19,7 @@ export default defineConfig({
   workers: 1,
   reporter: process.env.CI ? "github" : "list",
   // Agents roster E2E compiles many App Router pages on cold webpack dev (minutes); 60s was aborting mid-flow / at onboarding.
-  timeout: 15 * 60_000,
+  timeout: 600_000,
   expect: { timeout: 15_000 },
   use: {
     baseURL: "http://localhost:3000",
