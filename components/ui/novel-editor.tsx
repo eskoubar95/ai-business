@@ -22,9 +22,18 @@ const NovelEditorClient = dynamic(
 export function NovelEditor({
   initialContent,
   className,
+  onHtmlChange,
 }: {
   initialContent?: string;
   className?: string;
+  /** Fired when document changes (HTML). */
+  onHtmlChange?: (html: string) => void;
 }) {
-  return <NovelEditorClient initialContent={initialContent} className={className} />;
+  return (
+    <NovelEditorClient
+      initialContent={initialContent}
+      className={className}
+      onHtmlChange={onHtmlChange}
+    />
+  );
 }

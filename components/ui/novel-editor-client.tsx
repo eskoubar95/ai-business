@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -11,9 +11,11 @@ import { cn } from "@/lib/utils";
 export function NovelEditorClient({
   initialContent,
   className,
+  onHtmlChange,
 }: {
   initialContent?: string;
   className?: string;
+  onHtmlChange?: (html: string) => void;
 }) {
   const [codeView, setCodeView] = useState(false);
 
@@ -28,9 +30,16 @@ export function NovelEditorClient({
         class: "outline-none min-h-[200px] text-[13.5px] leading-relaxed text-foreground/80",
       },
     },
+    onUpdate: ({ editor: ed }) => {
+      onHtmlChange?.(ed.getHTML());
+    },
   });
 
   const getHtml = useCallback(() => editor?.getHTML() ?? "", [editor]);
+
+  useEffect(() => {
+    if (editor && onHtmlChange) onHtmlChange(editor.getHTML());
+  }, [editor, onHtmlChange]);
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>

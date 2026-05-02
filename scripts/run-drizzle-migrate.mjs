@@ -1,3 +1,10 @@
+import { config } from "dotenv";
+import { resolve } from "node:path";
+
+/** Match Drizzle CLI: `.env` then `.env.local` overrides. */
+config({ path: resolve(process.cwd(), ".env") });
+config({ path: resolve(process.cwd(), ".env.local"), override: true });
+
 /**
  * Apply Drizzle migrations using a TCP Postgres driver.
  *

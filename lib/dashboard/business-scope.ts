@@ -34,7 +34,8 @@ export type DashboardScopedPath =
   | "/dashboard/approvals"
   | "/dashboard/notion"
   | "/dashboard/webhooks"
-  | "/dashboard/settings";
+  | "/dashboard/settings"
+  | "/dashboard/projects";
 
 /** Ensures `businessId` belongs to the session user; otherwise redirects with first business or onboarding. */
 export async function resolveBusinessIdParam(

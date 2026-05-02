@@ -1,0 +1,263 @@
+import { Agent } from "@cursor/sdk";
+import type { SDKAssistantMessage } from "@cursor/sdk";
+
+import { getAgentStatus, logAgentLifecycleStatus } from "@/lib/orchestration/events";
+import { taskLogs } from "@/db/schema";
+import { getDb } from "@/db/index";
+import { buildOrchestrationPrompt } from "./prompt-builder";
+import { prepareWorkingDirectory } from "./worktree";
+import {
+  finishOrchestrationEvent,
+  getBusinessLocalPath,
+  getLatestBusinessMemoryContent,
+  loadAgentForRun,
+  loadAgentSkillsContext,
+  requireBusinessMemoryExists,
+  getLeadAgentIdForBusiness,
+} from "./queries";
+
+const MODEL_ID = "composer-2";
+const MAX_OUTPUT_CHARS = 60_000;
+
+function pickTaskId(payload: Record<string, unknown>): string | undefined {
+  if (typeof payload.taskId === "string" && payload.taskId.trim()) return payload.taskId.trim();
+  const body = payload.body;
+  if (body && typeof body === "object" && body !== null) {
+    const b = body as Record<string, unknown>;
+    if (typeof b.taskId === "string" && b.taskId.trim()) return b.taskId.trim();
+    if (typeof b.task_id === "string" && b.task_id.trim()) return b.task_id.trim();
+  }
+  return undefined;
+}
+
+function pickAgentIdOverride(payload: Record<string, unknown>): string | undefined {
+  if (typeof payload.agentId === "string" && payload.agentId.trim()) return payload.agentId.trim();
+  const body = payload.body;
+  if (body && typeof body === "object" && body !== null) {
+    const b = body as Record<string, unknown>;
+    if (typeof b.agentId === "string" && b.agentId.trim()) return b.agentId.trim();
+    if (typeof b.agent_id === "string" && b.agent_id.trim()) return b.agent_id.trim();
+  }
+  return undefined;
+}
+
+export async function dispatchOrchestrationEvent(
+  eventId: string,
+  event: {
+    businessId: string | null;
+    type: string;
+    payload: Record<string, unknown>;
+  },
+  apiKey: string,
+): Promise<void> {
+  const businessId = event.businessId;
+  if (!businessId) {
+    await finishOrchestrationEvent(eventId, {
+      status: "failed",
+      payload: { ...event.payload, runnerError: "Missing businessId on event" },
+    });
+    return;
+  }
+
+  if (event.type !== "webhook_trigger") {
+    await finishOrchestrationEvent(eventId, {
+      status: "failed",
+      payload: {
+        ...event.payload,
+        runnerError: `Unsupported orchestration type: ${event.type}`,
+      },
+    });
+    return;
+  }
+
+  const hasMemory = await requireBusinessMemoryExists(businessId);
+  if (!hasMemory) {
+    await finishOrchestrationEvent(eventId, {
+      status: "failed",
+      payload: {
+        ...event.payload,
+        runnerError: "Business has no business-scope memory. Complete Grill-Me onboarding first.",
+      },
+    });
+    return;
+  }
+
+  const localPath = await getBusinessLocalPath(businessId);
+  if (!localPath) {
+    await finishOrchestrationEvent(eventId, {
+      status: "failed",
+      payload: { ...event.payload, runnerError: "Business localPath is not set in Settings." },
+    });
+    return;
+  }
+
+  const agentIdOverride = pickAgentIdOverride(event.payload);
+  const agentId = agentIdOverride ?? (await getLeadAgentIdForBusiness(businessId));
+  if (!agentId) {
+    await finishOrchestrationEvent(eventId, {
+      status: "failed",
+      payload: {
+        ...event.payload,
+        runnerError: "No target agent: set agentId in webhook body or create a team with a lead agent.",
+      },
+    });
+    return;
+  }
+
+  const agent = await loadAgentForRun(agentId);
+  if (!agent || agent.businessId !== businessId) {
+    await finishOrchestrationEvent(eventId, {
+      status: "failed",
+      payload: { ...event.payload, runnerError: "Agent not found or wrong business." },
+    });
+    return;
+  }
+
+  if (!agent.systemRoleId || !agent.systemRole) {
+    await finishOrchestrationEvent(eventId, {
+      status: "failed",
+      payload: {
+        ...event.payload,
+        runnerError: "Agent has no system role assigned. Pick one in agent settings.",
+      },
+    });
+    return;
+  }
+
+  const life = await getAgentStatus(agentId);
+  if (life !== "idle") {
+    await finishOrchestrationEvent(eventId, {
+      status: "failed",
+      payload: {
+        ...event.payload,
+        runnerError: `Agent is not idle (status: ${life}). Wait for current work to finish.`,
+      },
+    });
+    return;
+  }
+
+  const instructions = agent.documents[0]?.content ?? "";
+  const memoryMd = await getLatestBusinessMemoryContent(businessId);
+  const skillsBlock = await loadAgentSkillsContext(agentId);
+  const prompt = buildOrchestrationPrompt({
+    systemRoleBasePrompt: agent.systemRole.baseSystemPrompt,
+    includeBusinessMemory: agent.systemRole.includeBusinessContext,
+    businessMemoryMarkdown: memoryMd,
+    agentInstructions: instructions,
+    skillsBlock,
+    orchestrationPayload: event.payload,
+  });
+
+  const taskId = pickTaskId(event.payload);
+  const isEngineer = agent.systemRole.slug === "engineer";
+  const { cwd, cleanup } = prepareWorkingDirectory({
+    localPathAbs: localPath,
+    useWorktree: isEngineer,
+    worktreeKey: taskId ?? eventId,
+  });
+
+  let agentSdk: Awaited<ReturnType<typeof Agent.create>> | null = null;
+  const started = Date.now();
+  try {
+    await logAgentLifecycleStatus(businessId, agentId, "working", { source: "runner", eventId });
+    agentSdk = await Agent.create({
+      apiKey: apiKey.trim(),
+      model: { id: MODEL_ID },
+      local: { cwd },
+    });
+    const run = await agentSdk.send(prompt);
+
+    let text = "";
+    let tokensIn = 0;
+    let tokensOut = 0;
+    for await (const msg of run.stream()) {
+      if (
+        typeof msg === "object" &&
+        msg !== null &&
+        "usage" in msg &&
+        typeof (msg as { usage?: unknown }).usage === "object" &&
+        (msg as { usage?: unknown }).usage !== null
+      ) {
+        const u = (msg as unknown as {
+          usage?: { prompt_tokens?: number; completion_tokens?: number };
+        }).usage;
+        if (u) {
+          if (typeof u.prompt_tokens === "number") tokensIn += u.prompt_tokens;
+          if (typeof u.completion_tokens === "number") tokensOut += u.completion_tokens;
+        }
+      }
+      if (typeof msg !== "object" || msg === null || (msg as { type?: unknown }).type !== "assistant")
+        continue;
+      const assistant = msg as SDKAssistantMessage;
+      const parts = assistant.message?.content;
+      if (!Array.isArray(parts)) continue;
+      for (const block of parts) {
+        if (
+          typeof block === "object" &&
+          block !== null &&
+          "type" in block &&
+          block.type === "text" &&
+          "text" in block &&
+          typeof (block as { text: unknown }).text === "string"
+        ) {
+          text += (block as { text: string }).text;
+        }
+      }
+    }
+
+    const result = await run.wait();
+    const durationMs =
+      typeof result.durationMs === "number" ? result.durationMs : Date.now() - started;
+
+    const out =
+      text.length > MAX_OUTPUT_CHARS
+        ? `${text.slice(0, MAX_OUTPUT_CHARS)}\n\n…(truncated)`
+        : text;
+
+    const nextPayload: Record<string, unknown> = {
+      ...event.payload,
+      runner: {
+        agentId,
+        agentName: agent.name,
+        systemRoleSlug: agent.systemRole.slug,
+        model: result.model?.id ?? MODEL_ID,
+        durationMs,
+        tokensIn,
+        tokensOut,
+        assistantOutput: out,
+        cwd,
+      },
+    };
+
+    await finishOrchestrationEvent(eventId, { status: "succeeded", payload: nextPayload });
+
+    if (taskId) {
+      const db = getDb();
+      await db.insert(taskLogs).values({
+        taskId,
+        authorType: "agent",
+        authorId: agentId,
+        content: `Runner completed (event ${eventId}).\n\n${out.slice(0, 12_000)}`,
+      });
+    }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    await finishOrchestrationEvent(eventId, {
+      status: "failed",
+      payload: {
+        ...event.payload,
+        runnerError: message,
+      },
+    });
+  } finally {
+    cleanup();
+    if (agentSdk) {
+      try {
+        agentSdk.close();
+      } catch {
+        /* ignore */
+      }
+    }
+    await logAgentLifecycleStatus(businessId, agentId, "idle", { source: "runner", eventId });
+  }
+}

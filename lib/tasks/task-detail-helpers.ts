@@ -32,23 +32,43 @@ export function getMonogram(
   return label.slice(0, 2).toUpperCase();
 }
 
+type HastNode =
+  | { type: "text"; value: string }
+  | {
+      type: "element";
+      properties?: { className?: string[] };
+      children?: unknown[];
+    }
+  | { type: "root"; children?: unknown[] };
+
+function isHastNode(node: object): node is HastNode {
+  const t = (node as { type?: unknown }).type;
+  return t === "text" || t === "element" || t === "root";
+}
+
+function isTextHast(node: HastNode): node is Extract<HastNode, { type: "text" }> {
+  return node.type === "text" && typeof (node as { value?: unknown }).value === "string";
+}
+
 /** Minimal hast → HTML for lowlight-highlighted fragments inside comment previews. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function hastToHtml(node: any): string {
-  if (node.type === "text") {
-    return (node.value as string)
+export function hastToHtml(node: unknown): string {
+  if (typeof node !== "object" || node === null) return "";
+  if (!isHastNode(node)) return "";
+
+  if (isTextHast(node)) {
+    return node.value
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
   }
   if (node.type === "element") {
-    const cls: string[] | undefined = node.properties?.className;
+    const cls = node.properties?.className;
     const clsAttr = cls?.length ? ` class="${cls.join(" ")}"` : "";
-    const children = ((node.children ?? []) as unknown[]).map(hastToHtml).join("");
+    const children = (node.children ?? []).map(hastToHtml).join("");
     return `<span${clsAttr}>${children}</span>`;
   }
   if (node.type === "root") {
-    return ((node.children ?? []) as unknown[]).map(hastToHtml).join("");
+    return (node.children ?? []).map(hastToHtml).join("");
   }
   return "";
 }

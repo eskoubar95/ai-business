@@ -13,6 +13,20 @@ test.describe("smoke", () => {
     expect(status).toBeLessThan(500);
   });
 
+  test("dashboard projects route responds (auth may redirect)", async ({ page }) => {
+    const response = await page.goto("/dashboard/projects");
+    const status = response?.status() ?? 0;
+    expect(status).toBeGreaterThanOrEqual(200);
+    expect(status).toBeLessThan(500);
+  });
+
+  test("dashboard webhooks route responds (auth may redirect)", async ({ page }) => {
+    const response = await page.goto("/dashboard/webhooks");
+    const status = response?.status() ?? 0;
+    expect(status).toBeGreaterThanOrEqual(200);
+    expect(status).toBeLessThan(500);
+  });
+
   test("sign-in page shows email input", async ({ page }) => {
     await page.goto("/auth/sign-in");
     const emailInput = page.locator('input[type="email"]').first();

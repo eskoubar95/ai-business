@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition, useRef } from "react";
+import { useEffect, useState, useTransition, useRef } from "react";
 import { toast } from "sonner";
 import {
   Bot, Brain, Cpu, Zap, Shield, Target, Globe, Eye,
@@ -24,15 +24,18 @@ import { CustomSelect } from "@/components/ui/custom-select";
 
 import { updateAgent, deleteAgent } from "@/lib/agents/actions";
 import type { AgentWithInstructions } from "@/lib/agents/actions";
-import type { agents } from "@/db/schema";
+import type { agents, systemRoles as systemRolesTable } from "@/db/schema";
 import { cn } from "@/lib/utils";
 
 type Peer = Pick<typeof agents.$inferSelect, "id" | "name">;
+
+type PlatformSystemRole = typeof systemRolesTable.$inferSelect;
 
 type Props = {
   businessId: string;
   agent: AgentWithInstructions;
   peerAgents: Peer[];
+  platformSystemRoles: PlatformSystemRole[];
 };
 
 // ─── Icon Library ────────────────────────────────────────────────────────────
@@ -62,22 +65,13 @@ const ICON_LIBRARY = [
 
 type IconId = (typeof ICON_LIBRARY)[number]["id"];
 
-// ─── System Roles ─────────────────────────────────────────────────────────────
 
-const SYSTEM_ROLES: { id: string; label: string; description: string }[] = [
-  { id: "general", label: "General", description: "A versatile agent without a fixed specialty" },
-  { id: "lead", label: "Lead Agent", description: "Coordinates other agents and manages sprints" },
-  { id: "developer", label: "Developer", description: "Writes and reviews code" },
-  { id: "designer", label: "Designer", description: "UI/UX and visual design work" },
-  { id: "analyst", label: "Analyst", description: "Data analysis and reporting" },
-  { id: "researcher", label: "Researcher", description: "Information gathering and synthesis" },
-  { id: "reviewer", label: "Reviewer", description: "Code review and quality assurance" },
-  { id: "coordinator", label: "Coordinator", description: "Task distribution and scheduling" },
-];
-
-// ─── Main Component ───────────────────────────────────────────────────────────
-
-export function AgentSettingsForm({ businessId, agent, peerAgents }: Props) {
+export function AgentSettingsForm({
+  businessId,
+  agent,
+  peerAgents,
+  platformSystemRoles,
+}: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -86,7 +80,7 @@ export function AgentSettingsForm({ businessId, agent, peerAgents }: Props) {
   // Identity
   const [name, setName] = useState(agent.name);
   const [role, setRole] = useState(agent.role);
-  const [systemRole, setSystemRole] = useState("general");
+  const [systemRoleId, setSystemRoleId] = useState(agent.systemRoleId ?? "");
   const [reportsToAgentId, setReportsToAgentId] = useState<string>(agent.reportsToAgentId ?? "");
   const [selectedIcon, setSelectedIcon] = useState<IconId | null>(null);
   const [showIconPicker, setShowIconPicker] = useState(false);
@@ -111,6 +105,10 @@ export function AgentSettingsForm({ businessId, agent, peerAgents }: Props) {
 
   const peers = peerAgents.filter((p) => p.id !== agent.id);
 
+  useEffect(() => {
+    setSystemRoleId(agent.systemRoleId ?? "");
+  }, [agent.systemRoleId]);
+
   // Derive monogram from name
   const monogram = name.slice(0, 2).toUpperCase() || "??";
   const SelectedIcon = selectedIcon ? ICON_LIBRARY.find((i) => i.id === selectedIcon)?.Icon : null;
@@ -123,6 +121,7 @@ export function AgentSettingsForm({ businessId, agent, peerAgents }: Props) {
           name,
           role,
           reportsToAgentId: reportsToAgentId || null,
+          systemRoleId: systemRoleId || null,
         });
         toast.success("Settings saved.");
         router.refresh();
@@ -257,13 +256,22 @@ export function AgentSettingsForm({ businessId, agent, peerAgents }: Props) {
           <label htmlFor="system-role" className="section-label">System role</label>
           <CustomSelect
             id="system-role"
-            value={systemRole}
-            onChange={setSystemRole}
-            options={SYSTEM_ROLES}
+            value={systemRoleId}
+            onChange={setSystemRoleId}
+            options={[
+              { id: "", label: "— Choose platform role —" },
+              ...platformSystemRoles.map((r) => ({ id: r.id, label: r.name })),
+            ]}
           />
           <p className="text-[11px] text-muted-foreground/35 leading-snug">
-            {SYSTEM_ROLES.find((r) => r.id === systemRole)?.description}
+            {platformSystemRoles.find((r) => r.id === systemRoleId)?.description ??
+              "Platform-defined behaviour layer (prompt + behaviour). Agents must assign a role before the local runner executes webhooks."}
           </p>
+          {platformSystemRoles.find((r) => r.id === systemRoleId)?.includeBusinessContext && (
+            <p className="text-[11px] text-emerald-500/70 leading-snug">
+              Business-scope memory will be appended for this role when orchestration runs.
+            </p>
+          )}
         </div>
 
         {/* Reports to */}
