@@ -10,9 +10,9 @@ describe("LAUNCH_ARCHETYPE_ROWS", () => {
     for (const row of LAUNCH_ARCHETYPE_ROWS) {
       expect(row.name.length).toBeGreaterThan(0);
       expect(row.description.length).toBeGreaterThan(0);
-      expect(row.soulAddendum.trim().length).toBeGreaterThan(20);
-      expect(row.toolsAddendum.trim().length).toBeGreaterThan(20);
-      expect(row.heartbeatAddendum.trim().length).toBeGreaterThan(20);
+      expect((row.soulAddendum ?? "").trim().length).toBeGreaterThan(20);
+      expect((row.toolsAddendum ?? "").trim().length).toBeGreaterThan(20);
+      expect((row.heartbeatAddendum ?? "").trim().length).toBeGreaterThan(20);
     }
   });
 });
