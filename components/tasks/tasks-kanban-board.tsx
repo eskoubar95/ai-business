@@ -85,6 +85,7 @@ function KanbanCard({
 }) {
   return (
     <div
+      data-testid={`task-card-${task.id}`}
       role={onOpen ? "button" : undefined}
       tabIndex={onOpen ? 0 : undefined}
       onClick={onOpen}
@@ -362,46 +363,48 @@ export function TasksKanbanBoard({
       </div>
 
       {view === "board" ? (
-        <KanbanBoard<TaskRow>
-          columns={COLUMNS}
-          columnItemIds={columnItemIds}
-          getItem={(id) => localItems[id]}
-          onColumnItemIdsChange={onColumnItemIdsChange}
-          renderColumnHeader={(col, count) => (
-            <div className="flex w-full items-center justify-between gap-2">
-              <span
-                className={cn(
-                  "text-[11px] font-semibold uppercase tracking-[0.06em]",
-                  COL_ACCENT[col.id as TaskStatus],
-                )}
+        <div data-testid="task-status-board">
+          <KanbanBoard<TaskRow>
+            columns={COLUMNS}
+            columnItemIds={columnItemIds}
+            getItem={(id) => localItems[id]}
+            onColumnItemIdsChange={onColumnItemIdsChange}
+            renderColumnHeader={(col, count) => (
+              <div className="flex w-full items-center justify-between gap-2">
+                <span
+                  className={cn(
+                    "text-[11px] font-semibold uppercase tracking-[0.06em]",
+                    COL_ACCENT[col.id as TaskStatus],
+                  )}
+                >
+                  {col.title}
+                </span>
+                <span className="font-mono text-[11px] text-muted-foreground/35 tabular-nums">
+                  {count}
+                </span>
+              </div>
+            )}
+            renderCard={(task, isDragOverlay) => (
+              <KanbanCard
+                task={task}
+                agentName={task.agentId ? (agentNames[task.agentId] ?? null) : null}
+                teamName={task.teamId ? (teamNames[task.teamId] ?? null) : null}
+                onOpen={isDragOverlay ? undefined : () => openTask(task.id)}
+                isDragOverlay={isDragOverlay}
+                isNew={task.id === newlyAddedId}
+              />
+            )}
+            renderColumnFooter={(col) => (
+              <button
+                type="button"
+                onClick={() => openModal(col.id as TaskStatus)}
+                className="flex w-full cursor-pointer items-center gap-1.5 rounded px-2 py-1.5 text-[11px] text-muted-foreground/30 transition-colors duration-150 hover:text-muted-foreground/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/50"
               >
-                {col.title}
-              </span>
-              <span className="font-mono text-[11px] text-muted-foreground/35 tabular-nums">
-                {count}
-              </span>
-            </div>
-          )}
-          renderCard={(task, isDragOverlay) => (
-            <KanbanCard
-              task={task}
-              agentName={task.agentId ? (agentNames[task.agentId] ?? null) : null}
-              teamName={task.teamId ? (teamNames[task.teamId] ?? null) : null}
-              onOpen={isDragOverlay ? undefined : () => openTask(task.id)}
-              isDragOverlay={isDragOverlay}
-              isNew={task.id === newlyAddedId}
-            />
-          )}
-          renderColumnFooter={(col) => (
-            <button
-              type="button"
-              onClick={() => openModal(col.id as TaskStatus)}
-              className="flex w-full cursor-pointer items-center gap-1.5 rounded px-2 py-1.5 text-[11px] text-muted-foreground/30 transition-colors duration-150 hover:text-muted-foreground/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/50"
-            >
-              <Plus className="size-3" /> Add task
-            </button>
-          )}
-        />
+                <Plus className="size-3" /> Add task
+              </button>
+            )}
+          />
+        </div>
       ) : (
         <ListView
           grouped={grouped}

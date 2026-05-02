@@ -58,7 +58,11 @@ test.describe("tasks UI", () => {
     await backlog.locator('[data-testid^="task-card-"]').filter({ hasText: title }).click();
     await expect(page.getByTestId("task-detail-title")).toHaveText(title);
 
-    await page.getByTestId("task-comment-body").fill("Smoke comment from E2E");
+    const commentEditor = page
+      .getByTestId("task-comment-body")
+      .locator('[contenteditable="true"]');
+    await commentEditor.click();
+    await commentEditor.fill("Smoke comment from E2E");
     await page.getByTestId("task-comment-submit").click();
     await expect(page.getByTestId("task-log-feed")).toContainText("Smoke comment from E2E", {
       timeout: 30_000,

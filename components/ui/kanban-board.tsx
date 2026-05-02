@@ -274,6 +274,7 @@ export function KanbanBoard<T extends { id: string }>({
             <div
               key={col.id}
               data-kanban-column={col.id}
+              data-testid={`task-column-${col.id}`}
               className={cn(
                 "flex min-h-[360px] w-[min(100%,272px)] min-w-[220px] shrink-0 flex-col rounded-md",
                 "border border-border bg-background",
