@@ -128,6 +128,9 @@ test.describe("agent roster and teams", () => {
       waitUntil: "domcontentloaded",
     });
 
+    // Overview tab is default; lead stat unmounts when switching to Org Chart.
+    await expect(page.getByTestId("team-lead-label")).toContainText("E2E Lead");
+
     await page.getByRole("button", { name: "Org Chart" }).click();
     await expect(page.getByTestId("org-chart")).toBeVisible();
     const orgChart = page.getByTestId("org-chart");
@@ -135,6 +138,5 @@ test.describe("agent roster and teams", () => {
     for (const name of ["E2E Lead", "E2E Member One", "E2E Member Two"] as const) {
       await expect(orgChart.getByText(name, { exact: true })).toBeVisible();
     }
-    await expect(page.getByTestId("team-lead-label")).toContainText("E2E Lead");
   });
 });
