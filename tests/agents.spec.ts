@@ -56,8 +56,10 @@ test.describe("agent roster and teams", () => {
       await page.getByRole("button", { name: /^Continue$/i }).click();
       await page.getByRole("button", { name: /^Continue$/i }).click();
       await page.getByTestId("agent-save").click();
+      // App Router client transition: default waitUntil `load` may never fire after RSC POST 200.
       await page.waitForURL(/\/dashboard\/agents\/[0-9a-f-]+/i, {
         timeout: 120_000,
+        waitUntil: "domcontentloaded",
       });
     }
 

@@ -57,6 +57,7 @@ test.describe("approvals queue", () => {
     await page.getByTestId("agent-save").click();
     await page.waitForURL(/\/dashboard\/agents\/[0-9a-f-]+/i, {
       timeout: 120_000,
+      waitUntil: "domcontentloaded",
     });
 
     const agentUrlMatch = page.url().match(/\/dashboard\/agents\/([^/?]+)/i);

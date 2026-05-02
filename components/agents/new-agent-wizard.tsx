@@ -39,7 +39,6 @@ export function NewAgentWizard({ businessId, peerAgents }: { businessId: string;
         router.push(
           `/dashboard/agents/${created.id}?businessId=${encodeURIComponent(businessId)}&onboarding=1`,
         );
-        router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Create failed");
       }
