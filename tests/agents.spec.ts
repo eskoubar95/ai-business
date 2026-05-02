@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { fillMarkdownEditor } from "./e2e-markdown-fill";
 import { signInWithCredentials } from "./e2e-sign-in";
 
 const hasAuth =
@@ -39,6 +40,7 @@ test.describe("agent roster and teams", () => {
     await page.getByTestId("onboarding-submit").click();
     await page.waitForURL(/\/dashboard\/grill-me\/[0-9a-f-]+/i, {
       timeout: 120_000,
+      waitUntil: "domcontentloaded",
     });
 
     const grillUrl = page.url();
@@ -52,7 +54,7 @@ test.describe("agent roster and teams", () => {
       await page.getByTestId("agent-role").fill(role);
       const editor = page.getByTestId("agent-instructions-editor");
       await expect(editor).toBeVisible({ timeout: 60_000 });
-      await editor.locator("textarea").first().fill(`${name} instructions`);
+      await fillMarkdownEditor(editor, `${name} instructions`);
       await page.getByRole("button", { name: /^Continue$/i }).click();
       await page.getByRole("button", { name: /^Continue$/i }).click();
       await page.getByTestId("agent-save").click();
@@ -85,10 +87,6 @@ test.describe("agent roster and teams", () => {
 
     await page.getByTestId("skill-create-toggle").click();
     await page.getByTestId("skill-new-name").fill("E2E Skill");
-    await page
-      .getByTestId("skill-manager")
-      .locator(".markdown-editor-field textarea")
-      .fill("Skill body");
     await page.getByTestId("skill-create-submit").click();
     await expect(page.locator('[data-testid^="skill-attached-"]').first()).toBeVisible({
       timeout: 30_000,

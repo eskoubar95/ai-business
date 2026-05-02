@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { fillMarkdownEditor } from "./e2e-markdown-fill";
 import { signInWithCredentials } from "./e2e-sign-in";
 
 const hasAuth =
@@ -7,7 +8,7 @@ const hasAuth =
 const hasSeedSecret = !!process.env.E2E_SETUP_SECRET?.trim();
 
 test.describe("approvals queue", () => {
-  test.describe.configure({ timeout: 15 * 60_000 });
+  test.describe.configure({ timeout: 8 * 60_000 });
 
   test.skip(
     !hasAuth || !hasSeedSecret,
@@ -15,7 +16,7 @@ test.describe("approvals queue", () => {
   );
 
   test("pending approval appears, approve removes from queue", async ({ page }) => {
-    test.setTimeout(15 * 60_000);
+    test.setTimeout(8 * 60_000);
     await signInWithCredentials(
       page,
       process.env.E2E_EMAIL!,
@@ -39,6 +40,7 @@ test.describe("approvals queue", () => {
     await page.getByTestId("onboarding-submit").click();
     await page.waitForURL(/\/dashboard\/grill-me\/[0-9a-f-]+/i, {
       timeout: 120_000,
+      waitUntil: "domcontentloaded",
     });
 
     const grillUrl = page.url();
@@ -51,7 +53,7 @@ test.describe("approvals queue", () => {
     await page.getByTestId("agent-role").fill("Worker");
     const editor = page.getByTestId("agent-instructions-editor");
     await expect(editor).toBeVisible({ timeout: 60_000 });
-    await editor.locator("textarea").first().fill("Instructions for approval E2E.");
+    await fillMarkdownEditor(editor, "Instructions for approval E2E.");
     await page.getByRole("button", { name: /^Continue$/i }).click();
     await page.getByRole("button", { name: /^Continue$/i }).click();
     await page.getByTestId("agent-save").click();
@@ -76,13 +78,15 @@ test.describe("approvals queue", () => {
     expect(approvalId).toMatch(/^[0-9a-f-]{36}$/i);
 
     await page.goto(`/dashboard/approvals?businessId=${businessId}`);
-    await expect(page.getByTestId(`approval-card-${approvalId}`)).toBeVisible({
+    const approvalCard = page.getByTestId(`approval-card-${approvalId}`);
+    await expect(approvalCard).toBeVisible({
       timeout: 30_000,
     });
 
     await expect(page.getByTestId("nav-approvals-pending-count")).toBeVisible();
 
-    await page.getByTestId(`approval-comment-${approvalId}`).fill("E2E approve comment");
+    // Row actions use group-hover; approve does not use the reject textarea.
+    await approvalCard.hover();
     await page.getByTestId(`approval-approve-${approvalId}`).click();
 
     await expect(page.getByTestId(`approval-card-${approvalId}`)).not.toBeVisible({

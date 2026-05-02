@@ -6,12 +6,12 @@ const hasAuth =
   !!process.env.E2E_EMAIL?.trim() && !!process.env.E2E_PASSWORD?.trim();
 
 test.describe("tasks UI", () => {
-  test.describe.configure({ timeout: 15 * 60_000 });
+  test.describe.configure({ timeout: 8 * 60_000 });
 
   test.skip(!hasAuth, "Set E2E_EMAIL and E2E_PASSWORD to run authenticated tasks E2E.");
 
   test("create task, backlog column, comment in feed", async ({ page }) => {
-    test.setTimeout(15 * 60_000);
+    test.setTimeout(8 * 60_000);
     await signInWithCredentials(page, process.env.E2E_EMAIL!, process.env.E2E_PASSWORD!);
     await page.waitForFunction(
       () => !window.location.pathname.includes("/auth/sign-in"),
@@ -31,6 +31,7 @@ test.describe("tasks UI", () => {
     await page.getByTestId("onboarding-submit").click();
     await page.waitForURL(/\/dashboard\/grill-me\/[0-9a-f-]+/i, {
       timeout: 120_000,
+      waitUntil: "domcontentloaded",
     });
 
     const grillUrl = page.url();

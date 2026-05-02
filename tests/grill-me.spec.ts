@@ -35,6 +35,7 @@ test.describe("grill-me flow", () => {
     await page.getByTestId("onboarding-submit").click();
     await page.waitForURL(/\/dashboard\/grill-me\/[0-9a-f-]+/i, {
       timeout: 60_000,
+      waitUntil: "domcontentloaded",
     });
 
     const input = page.getByTestId("grill-me-chat-input");
