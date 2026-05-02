@@ -63,11 +63,19 @@ test.describe("agent roster and teams", () => {
 
     await createAgentViaForm("E2E Lead", "Lead");
     await page.getByRole("tab", { name: "Instructions" }).click();
+    // Wizard persists onboarding instructions to soul.md; default selected tab is agent.md.
+    await page
+      .getByRole("navigation", { name: "Documents" })
+      .getByRole("button", { name: /^soul\.md$/ })
+      .click();
+    await expect(page.getByTestId("agent-doc-editor-soul")).toBeVisible({
+      timeout: 30_000,
+    });
     await page.getByTestId("agent-doc-editor-soul").fill(
       "Updated lead instructions for E2E.",
     );
     await page.getByTestId("agent-doc-save-soul").click();
-    await expect(page.getByRole("status").filter({ hasText: /soul saved/i })).toBeVisible({
+    await expect(page.getByTestId("agent-doc-editor").getByText("Saved")).toBeVisible({
       timeout: 30_000,
     });
     await page.getByRole("tab", { name: "Skills" }).click();
