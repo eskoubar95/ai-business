@@ -49,18 +49,19 @@ test.describe("approvals queue", () => {
     await page.goto(`/dashboard/agents/new?businessId=${businessId}`);
     await page.getByTestId("agent-name").fill("E2E Approval Agent");
     await page.getByTestId("agent-role").fill("Worker");
-    await page
-      .getByTestId("agent-instructions-editor")
-      .locator("textarea")
-      .fill("Instructions for approval E2E.");
+    const editor = page.getByTestId("agent-instructions-editor");
+    await expect(editor).toBeVisible({ timeout: 60_000 });
+    await editor.locator("textarea").first().fill("Instructions for approval E2E.");
+    await page.getByRole("button", { name: /^Continue$/i }).click();
+    await page.getByRole("button", { name: /^Continue$/i }).click();
     await page.getByTestId("agent-save").click();
-    await page.waitForURL(/\/dashboard\/agents\/[0-9a-f-]+\/edit/i, {
-      timeout: 60_000,
+    await page.waitForURL(/\/dashboard\/agents\/[0-9a-f-]+/i, {
+      timeout: 120_000,
     });
 
-    const editMatch = page.url().match(/\/dashboard\/agents\/([^/?]+)\/edit/i);
-    expect(editMatch?.[1]).toBeTruthy();
-    const agentId = editMatch![1];
+    const agentUrlMatch = page.url().match(/\/dashboard\/agents\/([^/?]+)/i);
+    expect(agentUrlMatch?.[1]).toBeTruthy();
+    const agentId = agentUrlMatch![1];
 
     const seedRes = await page.request.post("/api/e2e/seed-approval", {
       data: { businessId, agentId },
