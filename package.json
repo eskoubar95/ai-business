@@ -13,6 +13,7 @@
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/run-drizzle-migrate.mjs",
+    "db:reset-app-data": "node scripts/db-reset-app-data.mjs",
     "db:seed": "tsx db/seeds/archetypes.ts",
     "apm:tasks-from-plan": "node scripts/split-phase2-plan-tasks.mjs",
     "apm:collect-transcript-writes": "node scripts/collect-apm-transcript-writes.mjs",

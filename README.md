@@ -29,6 +29,7 @@ Database scripts:
 | --------------------- | --------------------------------------- |
 | `npm run db:generate` | Generate SQL from `db/schema.ts`        |
 | `npm run db:migrate`  | Apply migrations (needs `DATABASE_URL`) |
+| `npm run db:reset-app-data` | **Wipes all businesses + tenant data** (needs `ALLOW_APP_DATA_RESET=1`; see `[scripts/README.md](scripts/README.md)`) |
 | `npm run db:push`     | Push schema to DB (dev convenience)     |
 | `npm run db:studio`   | Open Drizzle Studio                     |
 
