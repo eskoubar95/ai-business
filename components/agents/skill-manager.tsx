@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Check, ExternalLink, Plus, X } from "lucide-react";
 
 import {
@@ -94,8 +94,24 @@ export function SkillManager({ agentId, businessId, attached, library }: Props) 
   const [newName, setNewName] = useState("");
   const newNameRef = useRef<HTMLInputElement>(null);
 
-  const attachedSkills = library.filter((s) => localAttached.has(s.id));
-  const availableSkills = library.filter((s) => !localAttached.has(s.id));
+  /** Skills created in-session until RSC refresh merges them into `library`. */
+  const [pendingLibrarySkills, setPendingLibrarySkills] = useState<Skill[]>([]);
+
+  useEffect(() => {
+    setPendingLibrarySkills((prev) =>
+      prev.filter((s) => !library.some((row) => row.id === s.id)),
+    );
+  }, [library]);
+
+  const mergedLibrary = useMemo(() => {
+    const byId = new Map<string, Skill>();
+    for (const s of library) byId.set(s.id, s);
+    for (const s of pendingLibrarySkills) byId.set(s.id, s);
+    return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [library, pendingLibrarySkills]);
+
+  const attachedSkills = mergedLibrary.filter((s) => localAttached.has(s.id));
+  const availableSkills = mergedLibrary.filter((s) => !localAttached.has(s.id));
 
   function toggle(skill: Skill) {
     const isAttached = localAttached.has(skill.id);
@@ -140,6 +156,10 @@ export function SkillManager({ agentId, businessId, attached, library }: Props) 
       try {
         const skill = await createSkill({ businessId, name, markdown: "" });
         await attachSkillToAgent(agentId, skill.id);
+        setLocalAttached((prev) => new Set(prev).add(skill.id));
+        setPendingLibrarySkills((prev) =>
+          prev.some((s) => s.id === skill.id) ? prev : [...prev, skill],
+        );
         setCreating(false);
         setNewName("");
         router.refresh();
@@ -161,7 +181,7 @@ export function SkillManager({ agentId, businessId, attached, library }: Props) 
 
       {/* Skill list */}
       <div className="rounded-md border border-border overflow-hidden">
-        {library.length === 0 ? (
+        {mergedLibrary.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
             <p className="text-[13px] text-muted-foreground">No skills in library yet</p>
             <p className="text-[11px] text-muted-foreground/50">
