@@ -82,12 +82,30 @@ export async function saveBusinessSettings(
   return { success: true };
 }
 
+export async function saveBusinessProfile(
+  businessId: string,
+  data: { name?: string; websiteUrl?: string; description?: string },
+): Promise<{ success: true }> {
+  const userId = await requireSessionUserId();
+  await assertUserBusinessAccess(userId, businessId);
+  const db = getDb();
+  await db
+    .update(businesses)
+    .set({
+      ...(data.name?.trim() ? { name: data.name.trim() } : {}),
+      ...(data.description !== undefined ? { description: data.description.trim() || null } : {}),
+    })
+    .where(eq(businesses.id, businessId));
+  return { success: true };
+}
+
 export type SettingsBusinessRow = {
   id: string;
   name: string;
   localPath: string | null;
   githubRepoUrl: string | null;
   description: string | null;
+  websiteUrl: string | null; // placeholder — not in DB yet
 };
 
 /**
@@ -117,5 +135,10 @@ export async function getSettingsPageState(): Promise<{
     .innerJoin(businesses, eq(userBusinesses.businessId, businesses.id))
     .where(eq(userBusinesses.userId, userId));
 
-  return { hasCursorApiKey, businesses: rows };
+  const businessRows: SettingsBusinessRow[] = rows.map((r) => ({
+    ...r,
+    websiteUrl: null, // not yet in DB schema
+  }));
+
+  return { hasCursorApiKey, businesses: businessRows };
 }

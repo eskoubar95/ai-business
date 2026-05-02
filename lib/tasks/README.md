@@ -9,9 +9,12 @@ Server Actions and helpers for business-scoped **tasks**, **task logs**, and **@
 | `actions.ts` | `"use server"` — CRUD, status updates (including approval link), subtree delete, tree listing by business, list by agent, `getTaskById` |
 | `log-actions.ts` | `"use server"` — append log lines and fetch logs; human-authored logs trigger mention parsing |
 | `mention-trigger.ts` | Scans log text for `@Name`, matches agents in the same business (case-insensitive), emits `orchestration_events` with `type: mention_trigger` (`status: pending`) |
-| `task-tree.ts` | Pure helpers: subtree collection and safe delete ordering (children before parents) |
+| `task-tree.ts` | Types: `TaskRow`, `TaskStatus`, `TaskTreeNode`. Pure helpers: subtree collection and safe delete ordering (children before parents) |
 | `flatten-task-tree.ts` | Pure `flattenTaskTree` for kanban listings (depth-first over `TaskTreeNode[]`) |
 | `dashboard-queries.ts` | Signed-in user's per-business task counts (in progress, blocked) for dashboard cards |
+| `task-detail-display.ts` | Pure helpers/constants for task detail UI (`relativeTime`, label/priority/status maps). |
+| `task-detail-types.ts` | `LogEntry`, `TaskRelationItem` shapes shared by task detail client modules. |
+| `task-detail-helpers.ts` | Pure helpers (`slugifyTaskTitleSegment`, `getAuthorLabel`, `getMonogram`, `hastToHtml` for highlighted code in comments). Tests: `__tests__/task-detail-helpers.test.ts`. |
 
 ## Usage
 

@@ -19,8 +19,6 @@ import {
 import { runCursorAgent } from "@/lib/cursor/agent";
 import { desc, eq, max, sql } from "drizzle-orm";
 
-export type { GrillBusinessType } from "@/lib/grill-me/grill-prompt";
-
 async function collectStream(iterable: AsyncIterable<string>): Promise<string> {
   let out = "";
   for await (const chunk of iterable) out += chunk;

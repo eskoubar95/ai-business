@@ -1,4 +1,4 @@
-import type { TaskTreeNode } from "./actions";
+import type { TaskTreeNode } from "./task-tree";
 import type { TaskRow } from "./task-tree";
 
 /** Depth-first flatten of `getTasksByBusiness` tree nodes into plain task rows. */
