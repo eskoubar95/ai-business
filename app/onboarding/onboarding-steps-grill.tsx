@@ -10,88 +10,38 @@ import {
 import { createPortal } from "react-dom";
 import {
   ArrowUp,
-  ChevronDown,
-  ChevronRight,
   MessageSquarePlus,
   X,
 } from "lucide-react";
 import type { ChatMessage } from "@/lib/onboarding/types";
+import ReactMarkdown from "react-markdown";
+import type { ReactNode } from "react";
+
 import { Heading, Label, PrimaryBtn } from "./onboarding-steps-ui";
-
-function ThinkingBlock({
-  thinking,
-  expanded,
-  onToggle,
-}: {
-  thinking: string;
-  expanded: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div className="mb-2">
-      <button
-        onClick={onToggle}
-        className="flex items-center gap-1 text-[10px] text-white/25 hover:text-white/45 transition-colors font-mono"
-      >
-        {expanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
-        <span>{expanded ? "Reasoning" : "Thinking..."}</span>
-      </button>
-      {expanded && (
-        <div className="mt-1.5 pl-3 border-l border-white/[0.07] text-[11px] text-white/22 leading-relaxed font-mono animate-fade-in">
-          {thinking}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ThinkingIndicator() {
-  return (
-    <div className="flex items-start gap-2">
-      <span className="mt-0.5 shrink-0 rounded bg-primary/10 text-primary text-[9px] font-mono font-semibold px-1.5 py-0.5 tracking-wider">
-        AI
-      </span>
-      <div className="flex items-center gap-1.5 pt-1.5">
-        <span className="thinking-dot-1 inline-block size-1.5 rounded-full bg-white/20" />
-        <span className="thinking-dot-2 inline-block size-1.5 rounded-full bg-white/20" />
-        <span className="thinking-dot-3 inline-block size-1.5 rounded-full bg-white/20" />
-      </div>
-    </div>
-  );
-}
 
 function Step7Editor({
   bizName,
+  soulMarkdown,
+  setSoulMarkdown,
   editorMessages,
   editorInput,
   setEditorInput,
   onEditorSend,
   onContinue,
+  continueDisabled,
+  continueLoading,
 }: {
   bizName: string;
+  soulMarkdown: string;
+  setSoulMarkdown: Dispatch<SetStateAction<string>>;
   editorMessages: ChatMessage[];
   editorInput: string;
   setEditorInput: Dispatch<SetStateAction<string>>;
   onEditorSend: (quote?: string) => void;
-  onContinue: () => void;
+  onContinue: () => void | Promise<void>;
+  continueDisabled?: boolean;
+  continueLoading?: boolean;
 }) {
-  const defaultContent = `# ${bizName || "Your Business"}
-
-## Business Overview
-A next-generation AI orchestration platform built to coordinate agents, automate workflows, and accelerate delivery.
-
-## Vision
-To make AI-powered businesses accessible to every founder. Ship faster, stay in control, and let agents do the heavy lifting.
-
-## Technical Stack
-Next.js · TypeScript · Cursor CLI · Neon PostgreSQL
-
-## Core Principles
-- Human curation, AI execution
-- Speed without chaos
-- Transparent agent behavior`;
-
-  const [content, setContent] = useState(defaultContent);
   const [selectedText, setSelectedText] = useState("");
   const [quotedTexts, setQuotedTexts] = useState<string[]>([]);
   const [selectionBadgePos, setSelectionBadgePos] = useState<{ x: number; y: number } | null>(null);
@@ -191,8 +141,8 @@ Next.js · TypeScript · Cursor CLI · Neon PostgreSQL
         </div>
         <textarea
           ref={editorRef}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
+          value={soulMarkdown}
+          onChange={(e) => setSoulMarkdown(e.target.value)}
           onMouseUp={(e) => readSelection(e.clientX, e.clientY)}
           onKeyUp={() => readSelection()}
           onMouseDown={() => {
@@ -271,8 +221,12 @@ Next.js · TypeScript · Cursor CLI · Neon PostgreSQL
               <ArrowUp size={13} className="text-white" />
             </button>
           </div>
-          <PrimaryBtn onClick={onContinue} className="w-full justify-center">
-            Enter workspace →
+          <PrimaryBtn
+            onClick={() => void onContinue()}
+            disabled={continueDisabled || continueLoading}
+            className="w-full justify-center"
+          >
+            {continueLoading ? "Saving…" : "Enter workspace →"}
           </PrimaryBtn>
         </div>
       </div>
@@ -281,143 +235,77 @@ Next.js · TypeScript · Cursor CLI · Neon PostgreSQL
 }
 
 export function Step7({
-  messages,
-  chatInput,
-  setChatInput,
-  onSend,
-  onFinishChat,
-  exchangeCount,
-  isThinking,
-  chatEndRef,
+  bizName,
   chatPhase,
+  grillChatPhase,
+  onProceedToSoulEditor,
+  canProceedFromChat,
   editorMessages,
   editorInput,
   setEditorInput,
   onEditorSend,
-  onContinue,
-  bizName,
+  soulMarkdownDraft,
+  setSoulMarkdownDraft,
+  onFinalizeEditorToDashboard,
+  editorContinueLoading,
 }: {
-  messages: ChatMessage[];
-  chatInput: string;
-  setChatInput: Dispatch<SetStateAction<string>>;
-  onSend: () => void;
-  onFinishChat: () => void;
-  exchangeCount: number;
-  isThinking: boolean;
-  chatEndRef: React.RefObject<HTMLDivElement | null>;
+  bizName: string;
   chatPhase: "chat" | "editor";
+  grillChatPhase: ReactNode;
+  onProceedToSoulEditor: () => void;
+  canProceedFromChat: boolean;
   editorMessages: ChatMessage[];
   editorInput: string;
   setEditorInput: Dispatch<SetStateAction<string>>;
   onEditorSend: (quote?: string) => void;
-  onContinue: () => void;
-  bizName: string;
+  soulMarkdownDraft: string;
+  setSoulMarkdownDraft: Dispatch<SetStateAction<string>>;
+  onFinalizeEditorToDashboard: () => Promise<void>;
+  editorContinueLoading?: boolean;
 }) {
-  const [expandedThinking, setExpandedThinking] = useState<Set<number>>(new Set());
-
-  function toggleThinking(idx: number) {
-    setExpandedThinking((prev) => {
-      const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx);
-      else next.add(idx);
-      return next;
-    });
-  }
-
-  function handleKey(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      onSend();
-    }
-  }
-
   if (chatPhase === "editor") {
     return (
       <Step7Editor
         bizName={bizName}
+        soulMarkdown={soulMarkdownDraft}
+        setSoulMarkdown={setSoulMarkdownDraft}
         editorMessages={editorMessages}
         editorInput={editorInput}
         setEditorInput={setEditorInput}
         onEditorSend={onEditorSend}
-        onContinue={onContinue}
+        onContinue={() => void onFinalizeEditorToDashboard()}
+        continueDisabled={!soulMarkdownDraft.trim()}
+        continueLoading={editorContinueLoading}
       />
     );
   }
 
   return (
-    <div className="flex flex-col h-[540px]">
-      <div className="px-6 pt-6 pb-4 border-b border-white/[0.06]">
+    <div className="flex h-[620px] flex-col overflow-hidden">
+      <div className="shrink-0 border-b border-white/[0.06] px-6 pt-6 pb-4">
         <Label>Grill Me</Label>
         <h2 className="text-[18px] font-semibold text-foreground leading-tight">
           Tell us about your business
         </h2>
+        <p className="mt-1 text-[12px] text-muted-foreground/60">
+          Same agent flow as dashboard Grill-Me. Keep going until your soul file is saved below, then
+          review and edit.
+        </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-        {messages.map((m, i) => (
-          <div
-            key={i}
-            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} animate-slide-in-up`}
-          >
-            {m.role === "ai" ? (
-              <div className="max-w-[85%]">
-                {m.thinking && (
-                  <ThinkingBlock
-                    thinking={m.thinking}
-                    expanded={expandedThinking.has(i)}
-                    onToggle={() => toggleThinking(i)}
-                  />
-                )}
-                <div className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0 rounded bg-primary/10 text-primary text-[9px] font-mono font-semibold px-1.5 py-0.5 tracking-wider">
-                    AI
-                  </span>
-                  <p className="text-[13px] text-foreground/70 leading-relaxed">{m.content}</p>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-white/[0.05] rounded-xl px-4 py-2.5 text-[13px] text-foreground max-w-[80%] leading-relaxed">
-                {m.content}
-              </div>
-            )}
-          </div>
-        ))}
-        {isThinking && (
-          <div className="flex justify-start animate-fade-in">
-            <ThinkingIndicator />
-          </div>
-        )}
-        <div ref={chatEndRef} />
-      </div>
+      <div className="flex min-h-0 flex-1 flex-col">{grillChatPhase}</div>
 
-      <div className="px-6 pb-6 pt-3 border-t border-white/[0.05]">
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={handleKey}
-            placeholder="Reply..."
-            disabled={isThinking}
-            className="bg-white/[0.04] border border-border rounded-xl px-4 py-3 text-[13px] text-foreground placeholder:text-muted-foreground/30 w-full focus:border-primary/50 focus:outline-none transition-all disabled:opacity-50"
-          />
-          <button
-            onClick={onSend}
-            disabled={!chatInput.trim() || isThinking}
-            className="shrink-0 size-10 rounded-full bg-primary flex items-center justify-center hover:brightness-110 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-            aria-label="Send"
-          >
-            <ArrowUp size={16} className="text-white" />
-          </button>
-        </div>
-        {exchangeCount >= 2 && !isThinking && (
-          <div className="mt-3 text-right">
-            <button
-              onClick={onFinishChat}
-              className="text-[12px] text-muted-foreground/30 hover:text-primary transition-colors underline"
-            >
-              Done — see my profile →
-            </button>
+      <div className="shrink-0 border-t border-white/[0.05] px-6 py-4">
+        {!canProceedFromChat ? (
+          <p className="text-[12px] text-muted-foreground/50">
+            Answer the assistant&apos;s questions until you see &quot;Soul file saved&quot;. Then continue
+            to the editor.
+          </p>
+        ) : (
+          <div className="flex justify-end">
+            <PrimaryBtn onClick={onProceedToSoulEditor} className="px-6">
+              Review / edit soul →
+            </PrimaryBtn>
           </div>
         )}
       </div>
@@ -425,26 +313,36 @@ export function Step7({
   );
 }
 
-export function Step8({ bizName, onEnter }: { bizName: string; onEnter: () => void }) {
-  const html = `
-<h2>Business Overview</h2>
-<p>${bizName || "Your AI Business"} — a next-generation AI orchestration platform built to coordinate agents, automate workflows, and accelerate delivery.</p>
-<h2>Vision</h2>
-<p>To make AI-powered businesses accessible to every founder. Ship faster, stay in control, and let agents do the heavy lifting.</p>
-<h2>Technical Stack</h2>
-<p>Next.js &middot; TypeScript &middot; Cursor CLI &middot; Neon PostgreSQL</p>
-  `.trim();
+export function Step8({
+  bizName,
+  soulMarkdown,
+  onEnter,
+}: {
+  bizName: string;
+  soulMarkdown: string;
+  onEnter: () => void;
+}) {
+  const md = soulMarkdown.trim();
 
   return (
     <div className="stagger-children">
       <Label>Your Business Soul</Label>
       <Heading>Here&apos;s what we captured.</Heading>
       <p className="text-[14px] text-muted-foreground/60 leading-relaxed mb-6">
-        This profile will be injected into every agent run to give your AI context.
+        This profile is stored for <span className="text-foreground/80">{bizName || "your business"}</span> and is
+        injected into agent runs.
       </p>
 
-      <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-6 py-5 mb-8 onboarding-prose">
-        <div dangerouslySetInnerHTML={{ __html: html }} />
+      <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-6 py-5 mb-8 max-h-[min(48vh,440px)] overflow-y-auto">
+        {md ? (
+          <div className="onboarding-prose text-[13px] leading-relaxed text-foreground/85">
+            <ReactMarkdown>{md}</ReactMarkdown>
+          </div>
+        ) : (
+          <p className="text-[13px] text-muted-foreground/50">
+            No soul markdown found — go back and complete the Grill-Me chat.
+          </p>
+        )}
       </div>
 
       <div className="flex justify-center">

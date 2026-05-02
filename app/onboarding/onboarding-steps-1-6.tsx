@@ -316,6 +316,7 @@ export function Step5({
   onBack,
   onNext,
   progressPct,
+  createError,
 }: {
   bizName: string;
   bizDesc: string;
@@ -328,6 +329,7 @@ export function Step5({
   onBack: () => void;
   onNext: () => void;
   progressPct: number;
+  createError?: string | null;
 }) {
   return (
     <div className="stagger-children">
@@ -387,6 +389,12 @@ export function Step5({
           <Input value={githubUrl} onChange={setGithubUrl} placeholder="https://github.com/you/repo" />
         </div>
       </div>
+
+      {createError ? (
+        <p className="mb-4 text-[12px] text-destructive" role="alert">
+          {createError}
+        </p>
+      ) : null}
 
       <StepFooter>
         <BtnGhost onClick={onBack}>Back</BtnGhost>

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import type { UIMessage } from "ai";
+import { cn } from "@/lib/utils";
 
 function messagePlainText(message: UIMessage): string {
   return message.parts
@@ -11,7 +12,14 @@ function messagePlainText(message: UIMessage): string {
     .join("");
 }
 
-export function MessageList({ messages }: { messages: UIMessage[] }) {
+export function MessageList({
+  messages,
+  className,
+}: {
+  messages: UIMessage[];
+  /** Merges onto the scroll container (layout + max-height in wizards). */
+  className?: string;
+}) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -21,7 +29,10 @@ export function MessageList({ messages }: { messages: UIMessage[] }) {
   return (
     <div
       data-testid="grill-me-message-list"
-      className="border-border bg-muted/20 flex max-h-[50vh] flex-col gap-3 overflow-y-auto rounded-lg border p-4"
+      className={cn(
+        "border-border bg-muted/20 flex flex-col gap-3 overflow-y-auto rounded-lg border p-4",
+        className ?? "max-h-[50vh]",
+      )}
     >
       {messages.map((m) => (
         <div

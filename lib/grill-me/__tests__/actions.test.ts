@@ -38,6 +38,14 @@ vi.mock("@/db/index", () => ({
   getDb() {
     return {
       query: {
+        businesses: {
+          findFirst: vi.fn(async () => ({
+            id: businessId,
+            name: "Wizard Test Biz",
+            description: "We ship widgets",
+            githubRepoUrl: "https://github.com/acme/public",
+          })),
+        },
         userBusinesses: {
           findFirst: vi.fn(async () => ({
             userId: "test-user-id",
@@ -143,6 +151,14 @@ describe("startGrillMeTurn", () => {
     expect(store.lastCursorPrompt).toContain("Existing business");
     expect(store.lastCursorPrompt).not.toContain("New project");
     expect(store.lastCursorPrompt).toContain("# What We Build");
+  });
+
+  it("injects business row into Grill prompt as wizard seed", async () => {
+    const { startGrillMeTurn } = await import("../actions.js");
+    await startGrillMeTurn(businessId, "Hi");
+    expect(store.lastCursorPrompt).toContain("Wizard Test Biz");
+    expect(store.lastCursorPrompt).toContain("We ship widgets");
+    expect(store.lastCursorPrompt).toContain("github.com/acme/public");
   });
 
   it("passes new-project Grill path when businessType is new", async () => {

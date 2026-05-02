@@ -15,6 +15,17 @@ describe("buildGrillPrompt", () => {
     }
   });
 
+  it("embeds wizard seed facts when provided", () => {
+    const p = buildGrillPrompt([], "Hey", "new", {
+      businessName: "Acme Labs",
+      summary: "B2B AI ops",
+      publicRepoUrl: "https://github.com/acme/repo",
+    });
+    expect(p).toContain("Acme Labs");
+    expect(p).toContain("B2B AI ops");
+    expect(p).toContain("github.com/acme/repo");
+  });
+
   it("differs materially between existing business and new project paths", () => {
     const existing = buildGrillPrompt([], "Hi", "existing");
     const nu = buildGrillPrompt([], "Hi", "new");

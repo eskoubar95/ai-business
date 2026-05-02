@@ -2,6 +2,13 @@ import { GRILL_ME_COMPLETE_MARKER } from "@/lib/grill-me/markers";
 
 export type GrillBusinessType = "existing" | "new";
 
+/** Optional seed from signup wizard (`businesses` row). Passed into the Grill-Me Cursor prompt. */
+export type GrillWizardSeed = {
+  businessName: string;
+  summary?: string;
+  publicRepoUrl?: string;
+};
+
 /** Expected soul markdown section headings (both onboarding paths). */
 export const GRILL_SOUL_SECTION_HEADINGS = [
   "# What We Build",
@@ -46,9 +53,24 @@ export function buildGrillPrompt(
   transcript: { role: "user" | "assistant"; content: string }[],
   latestUserMessage: string,
   businessType: GrillBusinessType,
+  wizardSeed?: GrillWizardSeed | null,
 ): string {
   let t = `# Grill-Me onboarding\n`;
   t += `You are helping a human produce a structured **business soul** markdown file.\n\n`;
+
+  const name = wizardSeed?.businessName?.trim();
+  if (name) {
+    t += `## Facts already captured in the signup wizard\n`;
+    t += `Treat these as **ground truth** from the founder; deepen, sharpen, and structure them rather than contradicting lightly.\n\n`;
+    t += `- **Working name**: ${name}\n`;
+    const summary = wizardSeed?.summary?.trim();
+    if (summary) t += `- **Their summary / pitch**: ${summary}\n`;
+    const repo = wizardSeed?.publicRepoUrl?.trim();
+    if (repo)
+      t += `- **Linked public repo (if any)** — skim conceptually only; do not claim private code: ${repo}\n`;
+    t += `\n`;
+  }
+
   t += pathInstructions(businessType);
   t += `\n\n## Output format\n`;
   t += `When onboarding is complete and the markdown artefact is ready, output **exactly one** line:\n`;

@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+
+import { Chat } from "@/components/grill-me/chat";
 import LetterGlitch from "@/components/ui/letter-glitch";
-import { AI_RESPONSES, LOADING_MESSAGES, TOTAL_STEPS } from "@/lib/onboarding/constants";
+import { createBusinessWithDetails, saveBusinessSoulFromOnboarding } from "@/lib/grill-me/actions";
+import { LOADING_MESSAGES, TOTAL_STEPS } from "@/lib/onboarding/constants";
 import type { BizType, ChatMessage, KeyStatus, Role } from "@/lib/onboarding/types";
 import {
   Step1,
@@ -19,7 +22,6 @@ export function OnboardingClient() {
   const router = useRouter();
 
   const [step, setStep] = useState(1);
-  const directionRef = useRef<"forward" | "back">("forward");
   const [cardAnim, setCardAnim] = useState<string>("");
 
   const [firstName, setFirstName] = useState("");
@@ -36,32 +38,30 @@ export function OnboardingClient() {
   const [githubUrl, setGithubUrl] = useState("");
 
   const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
+  const [creatingBusiness, setCreatingBusiness] = useState(false);
+  const [businessCreateError, setBusinessCreateError] = useState<string | null>(null);
+  const [businessId, setBusinessId] = useState<string | null>(null);
 
   const [chatPhase, setChatPhase] = useState<"chat" | "editor">("chat");
-  const chatEndRef = useRef<HTMLDivElement>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: "ai",
-      content:
-        "Hi! I'm here to understand your business. What problem are you solving, and who are your target users?",
-    },
-  ]);
-  const [chatInput, setChatInput] = useState("");
-  const [exchangeCount, setExchangeCount] = useState(0);
-  const [isThinking, setIsThinking] = useState(false);
+  const [soulCaptured, setSoulCaptured] = useState(false);
+  const [capturedSoulMarkdown, setCapturedSoulMarkdown] = useState("");
+  const [soulMarkdownDraft, setSoulMarkdownDraft] = useState("");
+  const [celebrationMarkdown, setCelebrationMarkdown] = useState("");
+  const [editorPersisting, setEditorPersisting] = useState(false);
 
   const [editorMessages, setEditorMessages] = useState<ChatMessage[]>([
     {
       role: "ai",
       content:
-        "What do you think about this profile? Feel free to edit anything above — I'll help you refine it.",
+        "What do you think about this profile? Feel free to edit anything on the left — I can help you refine any part.",
     },
   ]);
   const [editorInput, setEditorInput] = useState("");
 
+  const createInFlightRef = useRef(false);
+
   function goTo(s: number) {
     const dir = s > step ? "forward" : "back";
-    directionRef.current = dir;
     setCardAnim(`card-exit-${dir}`);
     setTimeout(() => {
       setStep(s);
@@ -73,46 +73,39 @@ export function OnboardingClient() {
   }
 
   useEffect(() => {
-    if (step !== 6) return;
+    if (step !== 6 || !creatingBusiness) return;
     setLoadingMsgIdx(0);
     const interval = setInterval(() => {
       setLoadingMsgIdx((prev) => Math.min(prev + 1, LOADING_MESSAGES.length - 1));
     }, 1500);
-    const timer = setTimeout(() => {
-      clearInterval(interval);
+    return () => clearInterval(interval);
+  }, [step, creatingBusiness]);
+
+  async function handleCreateBusinessAndOpenGrill() {
+    if (!bizName.trim() || createInFlightRef.current) return;
+    createInFlightRef.current = true;
+    setBusinessCreateError(null);
+    goTo(6);
+    setCreatingBusiness(true);
+    try {
+      const { id } = await createBusinessWithDetails({
+        name: bizName.trim(),
+        description: bizDesc.trim() || undefined,
+        githubRepoUrl: githubUrl.trim() || undefined,
+      });
+      setBusinessId(id);
+      setSoulCaptured(false);
+      setCapturedSoulMarkdown("");
+      setSoulMarkdownDraft("");
+      setChatPhase("chat");
       goTo(7);
-    }, 4000);
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isThinking]);
-
-  function sendMessage() {
-    const text = chatInput.trim();
-    if (!text || isThinking) return;
-
-    setMessages((prev) => [...prev, { role: "user", content: text }]);
-    setChatInput("");
-    setIsThinking(true);
-
-    const next = exchangeCount + 1;
-    setExchangeCount(next);
-
-    const response = AI_RESPONSES[Math.min(next - 1, AI_RESPONSES.length - 1)];
-
-    setTimeout(() => {
-      setIsThinking(false);
-      setMessages((prev) => [
-        ...prev,
-        { role: "ai", content: response.content, thinking: response.thinking },
-      ]);
-    }, 1200);
+    } catch (e) {
+      setBusinessCreateError(e instanceof Error ? e.message : "Could not create business");
+      goTo(5);
+    } finally {
+      setCreatingBusiness(false);
+      createInFlightRef.current = false;
+    }
   }
 
   function sendEditorMessage(quote?: string) {
@@ -133,16 +126,46 @@ export function OnboardingClient() {
     }, 900);
   }
 
+  function proceedToSoulEditor() {
+    setSoulMarkdownDraft(capturedSoulMarkdown);
+    setChatPhase("editor");
+  }
+
+  async function finalizeEditorAndCelebrate() {
+    if (!businessId || !soulMarkdownDraft.trim()) return;
+    setEditorPersisting(true);
+    try {
+      await saveBusinessSoulFromOnboarding(businessId, soulMarkdownDraft);
+      setCelebrationMarkdown(soulMarkdownDraft);
+      goTo(8);
+    } catch (e) {
+      setEditorMessages((prev) => [
+        ...prev,
+        {
+          role: "ai",
+          content:
+            e instanceof Error
+              ? `Could not save: ${e.message}`
+              : "Could not save your soul file. Try again.",
+        },
+      ]);
+    } finally {
+      setEditorPersisting(false);
+    }
+  }
+
   const isStep7 = step === 7;
   const cardMaxW = isStep7
     ? chatPhase === "editor"
       ? "max-w-5xl"
       : "max-w-3xl"
     : step === 8
-    ? "max-w-[600px]"
-    : "max-w-[520px]";
-  const cardPadding = isStep7 ? "p-0 overflow-hidden" : "p-8";
+      ? "max-w-[600px]"
+      : "max-w-[520px]";
+  const cardPadding = isStep7 ? "p-0 overflow-hidden" : step === 8 ? "p-8" : "p-8";
   const progressPct = Math.round(((step - 1) / (TOTAL_STEPS - 1)) * 100);
+
+  const grillBusinessType = bizType === "new" ? "new" : "existing";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-background py-8">
@@ -196,33 +219,54 @@ export function OnboardingClient() {
               setBizDesc={setBizDesc}
               setBizType={setBizType}
               setGithubUrl={setGithubUrl}
-              onBack={() => goTo(4)}
-              onNext={() => goTo(6)}
+              onBack={() => {
+                setBusinessCreateError(null);
+                goTo(4);
+              }}
+              onNext={() => void handleCreateBusinessAndOpenGrill()}
               progressPct={progressPct}
+              createError={businessCreateError}
             />
           )}
           {step === 6 && <Step6 msgIdx={loadingMsgIdx} />}
-          {step === 7 && (
+          {step === 7 && businessId && (
             <Step7
-              messages={messages}
-              chatInput={chatInput}
-              setChatInput={setChatInput}
-              onSend={sendMessage}
-              onFinishChat={() => setChatPhase("editor")}
-              exchangeCount={exchangeCount}
-              isThinking={isThinking}
-              chatEndRef={chatEndRef}
+              bizName={bizName}
               chatPhase={chatPhase}
+              grillChatPhase={
+                <Chat
+                  key={businessId}
+                  businessId={businessId}
+                  businessType={grillBusinessType}
+                  initialTurns={[]}
+                  initialSoulMarkdown={null}
+                  embedded
+                  showSoulPreview={false}
+                  messageListClassName="max-h-[min(42vh,380px)] min-h-[200px] flex-1 border-border/50 bg-background/30"
+                  onSoulCaptured={(md) => {
+                    setCapturedSoulMarkdown(md);
+                    setSoulCaptured(true);
+                  }}
+                />
+              }
+              onProceedToSoulEditor={proceedToSoulEditor}
+              canProceedFromChat={soulCaptured}
               editorMessages={editorMessages}
               editorInput={editorInput}
               setEditorInput={setEditorInput}
               onEditorSend={sendEditorMessage}
-              onContinue={() => goTo(8)}
-              bizName={bizName}
+              soulMarkdownDraft={soulMarkdownDraft}
+              setSoulMarkdownDraft={setSoulMarkdownDraft}
+              onFinalizeEditorToDashboard={finalizeEditorAndCelebrate}
+              editorContinueLoading={editorPersisting}
             />
           )}
           {step === 8 && (
-            <Step8 bizName={bizName} onEnter={() => router.push("/dashboard")} />
+            <Step8
+              bizName={bizName}
+              soulMarkdown={celebrationMarkdown}
+              onEnter={() => router.push("/dashboard")}
+            />
           )}
         </div>
       </div>

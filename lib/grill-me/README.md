@@ -2,11 +2,12 @@
 
 Server actions in `actions.ts` orchestrate the onboarding loop:
 
-1. `createBusiness(name)` — authenticated user only; inserts into `businesses` + `user_businesses`.
-2. `startGrillMeTurn(businessId, userMessage, businessType?)` — `businessType` is `'existing' | 'new'` (default `'existing'`) and selects the Grill-Me system path. Same session persistence + `runCursorAgent` wiring as before.
+1. `createBusiness(name)` / `createBusinessWithDetails({ name, description?, githubRepoUrl? })` — authenticated; inserts into `businesses` (+ optional profile fields) and `user_businesses`.
+2. `startGrillMeTurn(businessId, userMessage, businessType?)` — loads the `businesses` row to **seed** the Cursor prompt with wizard facts (name, summary, repo). `businessType` is `'existing' | 'new'` (default `'existing'`).
 3. When the assistant output contains `[[GRILL_ME_COMPLETE]]`, `extractAndStoreSoulFile` writes/updates the markdown **soul blob** in `memory` with `scope = 'business'` (no `agentId`).
+4. `saveBusinessSoulFromOnboarding(businessId, markdown)` — overwrites business soul after the landing onboarding editor step (validated access).
 
-4. `getBusinessSoulMemory(businessId)` (`memory-read.ts`) — authenticated server action; returns latest business-scoped markdown soul row or `null`.
+5. `getBusinessSoulMemory(businessId)` (`memory-read.ts`) — authenticated server action; returns latest business-scoped markdown soul row or `null`.
 
 Completion marker (must match product copy exactly):
 
