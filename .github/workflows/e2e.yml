@@ -30,6 +30,12 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
+      # Lockfile from Windows can omit Rollup's Linux optional binary; Vitest/Vite needs it on ubuntu-latest.
+      - name: Ensure Rollup Linux native module
+        run: |
+          RVER=$(node -p "require('rollup/package.json').version")
+          npm install --no-save "@rollup/rollup-linux-x64-gnu@${RVER}"
+
       - name: Vitest (unit / integration)
         run: npm test -- --run
 
