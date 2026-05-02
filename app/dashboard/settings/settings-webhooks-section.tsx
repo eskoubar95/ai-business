@@ -2,6 +2,8 @@ import { WebhookDeliveriesTable } from "@/components/webhooks/webhook-deliveries
 import { loadSettingsIntegrationsPanel } from "@/lib/settings/integrations-panel";
 import { listWebhookDeliveriesByBusiness } from "@/lib/webhooks/deliveries-queries";
 
+import { WebhookUrlCopy } from "./webhook-url-copy";
+
 export async function SettingsWebhooksSection({ businessId }: { businessId: string }) {
   const [integrations, deliveries] = await Promise.all([
     loadSettingsIntegrationsPanel(businessId),
@@ -9,34 +11,55 @@ export async function SettingsWebhooksSection({ businessId }: { businessId: stri
   ]);
 
   return (
-    <div className="flex flex-col gap-10">
-      <section className="flex flex-col gap-4">
-        <div>
-          <h2 className="text-lg font-medium">Inbound webhooks</h2>
-          <p className="text-muted-foreground text-sm">
+    <div className="flex flex-col gap-8">
+      <section className="flex max-w-xl flex-col gap-4">
+        {/* Endpoint URL */}
+        <div className="flex flex-col gap-1.5">
+          <p className="font-mono text-[9.5px] uppercase tracking-[0.08em] text-muted-foreground/30">
+            Endpoint URL
+          </p>
+          <WebhookUrlCopy url={integrations.webhookEndpoint} />
+        </div>
+
+        {/* Instructions */}
+        <div className="rounded-md border border-white/[0.07] bg-white/[0.02] px-4 py-3 flex flex-col gap-1.5">
+          <p className="font-mono text-[9.5px] uppercase tracking-[0.08em] text-muted-foreground/30 mb-1">
+            Usage
+          </p>
+          <p className="text-[12px] text-muted-foreground/50 leading-relaxed">
             POST JSON to this URL with headers{" "}
-            <span className="font-mono text-xs">X-Idempotency-Key</span>,{" "}
-            <span className="font-mono text-xs">X-Webhook-Signature</span> (HMAC-SHA256 hex). Uses server
-            secret <span className="font-mono text-xs">WEBHOOK_SECRET</span>.
+            <code className="rounded bg-white/[0.06] px-1 py-0.5 font-mono text-[11px] text-foreground/60">
+              X-Idempotency-Key
+            </code>{" "}
+            and{" "}
+            <code className="rounded bg-white/[0.06] px-1 py-0.5 font-mono text-[11px] text-foreground/60">
+              X-Webhook-Signature
+            </code>{" "}
+            (HMAC-SHA256 hex). Uses server secret{" "}
+            <code className="rounded bg-white/[0.06] px-1 py-0.5 font-mono text-[11px] text-foreground/60">
+              WEBHOOK_SECRET
+            </code>
+            .
           </p>
         </div>
-        <code
-          className="border-border bg-muted/40 block break-all rounded-md border p-3 text-xs"
-          data-testid="settings-webhook-endpoint"
-        >
-          {integrations.webhookEndpoint}
-        </code>
-        <p className="text-muted-foreground text-sm">
-          Recorded deliveries for this business:{" "}
-          <span className="text-foreground font-medium">{integrations.webhookDeliveryCount}</span>.
+
+        <p className="text-[12px] text-muted-foreground/40">
+          Recorded deliveries:{" "}
+          <span className="text-foreground/60 font-medium tabular-nums">
+            {integrations.webhookDeliveryCount}
+          </span>
         </p>
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">Delivery log</h2>
-        <p className="text-muted-foreground text-sm">
-          Recent webhook rows for this business (type, status, attempts).
-        </p>
+        <div>
+          <p className="font-mono text-[9.5px] uppercase tracking-[0.08em] text-muted-foreground/30 mb-0.5">
+            Delivery log
+          </p>
+          <p className="text-[11px] text-muted-foreground/35">
+            Recent webhook rows for this workspace (type, status, attempts).
+          </p>
+        </div>
         <WebhookDeliveriesTable deliveries={deliveries} />
       </section>
     </div>

@@ -1,7 +1,6 @@
 import dynamic from "next/dynamic";
 
 import { cn } from "@/lib/utils";
-import type { JSONContent } from "@tiptap/react";
 
 const NovelEditorClient = dynamic(
   () =>
@@ -24,7 +23,7 @@ export function NovelEditor({
   initialContent,
   className,
 }: {
-  initialContent?: JSONContent;
+  initialContent?: string;
   className?: string;
 }) {
   return <NovelEditorClient initialContent={initialContent} className={className} />;

@@ -5,39 +5,27 @@ import { usePathname } from "next/navigation";
 import {
   BookOpen,
   Bot,
-  CheckSquare,
   ChevronLeft,
   ChevronRight,
+  ChevronsUpDown,
+  HelpCircle,
+  Inbox,
   LayoutDashboard,
+  LogOut,
   Menu,
   Plus,
   Settings,
-  ShieldCheck,
-  Users,
   X,
 } from "lucide-react";
-import { SignedIn, SignedOut, UserButton } from "@neondatabase/auth/react";
+import { SignedIn, SignedOut } from "@neondatabase/auth/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { SidebarTeamsGroup } from "@/components/sidebar-teams-group";
 
 import { NavNewBusinessButton } from "./nav-new-business-button";
 
 const SIDEBAR_COLLAPSED_KEY = "ai-business-sidebar-collapsed";
-
-const mainNav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/agents", label: "Agents", icon: Bot },
-  { href: "/dashboard/teams", label: "Teams", icon: Users },
-  { href: "/dashboard/tasks", label: "Tasks", icon: CheckSquare },
-  { href: "/dashboard/skills", label: "Skills", icon: BookOpen },
-  {
-    href: "/dashboard/approvals",
-    label: "Approvals",
-    icon: ShieldCheck,
-  },
-] as const;
 
 function NavItem({
   href,
@@ -54,50 +42,69 @@ function NavItem({
   collapsed: boolean;
   pendingApprovalsCount?: number;
 }) {
-  const showBadge = href === "/dashboard/approvals" && (pendingApprovalsCount ?? 0) > 0;
+  const showBadge =
+    href === "/dashboard/approvals" && (pendingApprovalsCount ?? 0) > 0;
 
   return (
     <Link
       href={href}
       className={cn(
-        "text-muted-foreground hover:bg-accent hover:text-foreground group relative flex cursor-pointer items-center gap-3 rounded-md py-2 pr-2 pl-2 text-sm transition-colors duration-150",
+        "group relative flex cursor-pointer items-center gap-2.5 rounded-md py-1.5 pr-2 pl-2.5 text-[13px] transition-all duration-150",
         collapsed && "justify-center px-2",
-        isActive &&
-          "bg-accent text-primary border-primary border-l-[3px] pl-[calc(0.5rem-3px)] font-medium",
-        !isActive && "border-l-[3px] border-transparent",
+        isActive
+          ? "bg-white/[0.07] font-medium text-foreground"
+          : "text-muted-tier-label hover:bg-white/[0.04] hover:text-foreground/80",
       )}
       title={collapsed ? label : undefined}
     >
-      <Icon className="size-4 shrink-0" aria-hidden />
-      <span
+      <Icon
         className={cn(
-          "truncate transition-[opacity,width] duration-200",
-          collapsed ? "hidden w-0 opacity-0" : "inline opacity-100",
+          "size-[15px] shrink-0 transition-colors duration-150",
+          isActive
+            ? "text-foreground/70"
+            : "text-muted-tier-label group-hover:text-foreground/60",
         )}
-      >
-        {label}
-      </span>
-      {showBadge ? (
+        aria-hidden
+      />
+      {!collapsed && (
+        <span className="flex-1 truncate tracking-[-0.01em]">{label}</span>
+      )}
+      {showBadge && (
         <span
           data-testid="nav-approvals-pending-count"
           className={cn(
-            "bg-destructive text-destructive-foreground inline-flex min-w-[1.25rem] justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none",
-            collapsed && "absolute -top-0.5 -right-0.5",
+            "ml-auto inline-flex min-w-[1.125rem] items-center justify-center rounded-full bg-amber-400/15 px-1 py-0.5 font-mono text-[10px] font-medium leading-none text-amber-400",
+            collapsed && "absolute -right-0.5 -top-0.5 ml-0",
           )}
         >
           {(pendingApprovalsCount ?? 0) > 99 ? "99+" : pendingApprovalsCount}
         </span>
-      ) : null}
+      )}
     </Link>
+  );
+}
+
+function UserAvatar({ email }: { email: string | null }) {
+  const initials = email
+    ? email.split("@")[0].slice(0, 2).toUpperCase()
+    : "?";
+  return (
+    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/[0.10] text-[10px] font-semibold text-foreground/80">
+      {initials}
+    </span>
   );
 }
 
 export function AppSidebar({
   pendingApprovalsCount = 0,
   userEmail,
+  teams = [],
+  businessId = null,
 }: {
   pendingApprovalsCount?: number;
   userEmail?: string | null;
+  teams?: { id: string; name: string }[];
+  businessId?: string | null;
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -109,12 +116,11 @@ export function AppSidebar({
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
   useEffect(() => {
     try {
       const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
-      if (stored === "1") {
-        setCollapsed(true);
-      }
+      if (stored === "1") setCollapsed(true);
     } catch {
       /* ignore */
     }
@@ -122,9 +128,7 @@ export function AppSidebar({
   }, []);
 
   useEffect(() => {
-    if (!hydrated) {
-      return;
-    }
+    if (!hydrated) return;
     try {
       localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? "1" : "0");
     } catch {
@@ -134,7 +138,10 @@ export function AppSidebar({
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (workspaceRef.current && !workspaceRef.current.contains(e.target as Node)) {
+      if (
+        workspaceRef.current &&
+        !workspaceRef.current.contains(e.target as Node)
+      ) {
         setWorkspaceOpen(false);
       }
     }
@@ -153,204 +160,274 @@ export function AppSidebar({
 
   const sidebarInner = (
     <>
+      {/* Workspace header — h-14 matches page header */}
       <div
         className={cn(
-          "border-sidebar-border flex h-14 shrink-0 items-center gap-2 border-b px-3",
-          collapsed && "justify-center px-2",
+          "flex h-14 shrink-0 items-center gap-1.5 border-b border-sidebar-border pl-2 pr-3",
+          collapsed && "justify-center",
         )}
       >
-        <div className={cn("relative min-w-0 flex-1", collapsed && "flex-initial")} ref={workspaceRef}>
+        <div
+          className={cn("relative min-w-0 flex-1", collapsed && "flex-initial")}
+          ref={workspaceRef}
+        >
           <button
             type="button"
             onClick={() => setWorkspaceOpen((o) => !o)}
             className={cn(
-              "hover:bg-sidebar-accent flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors duration-150",
+              "flex w-full cursor-pointer items-center gap-2 rounded-md px-1.5 py-1.5 text-left transition-colors duration-150 hover:bg-white/[0.04]",
               collapsed && "justify-center p-2",
             )}
             aria-expanded={workspaceOpen}
             aria-haspopup="true"
           >
-            <span
-              className={cn(
-                "bg-primary text-primary-foreground flex size-8 shrink-0 items-center justify-center rounded-md text-xs font-bold",
-              )}
-            >
+            <span className="flex size-5 shrink-0 items-center justify-center rounded-sm bg-white/[0.12] text-[9px] font-bold tracking-wider text-foreground/70">
               AI
             </span>
-            {!collapsed ? (
-              <span className="text-sidebar-foreground min-w-0 flex-1 truncate font-medium">
-                Workspace
-              </span>
-            ) : null}
+            {!collapsed && (
+              <>
+                <span className="min-w-0 flex-1 truncate text-[13px] font-medium tracking-[-0.01em] text-foreground/90">
+                  Workspace
+                </span>
+                <ChevronsUpDown className="size-3 shrink-0 text-muted-foreground" />
+              </>
+            )}
           </button>
-          {workspaceOpen && !collapsed ? (
-            <div className="bg-popover text-popover-foreground border-border absolute top-full left-0 z-50 mt-1 w-56 rounded-md border p-2 text-sm shadow-md">
-              <div className="text-muted-foreground border-border mb-2 border-b px-1 pb-2 text-xs">
-                {userEmail ? (
-                  <>
-                    Signed in as
-                    <div className="text-foreground mt-0.5 truncate font-medium">{userEmail}</div>
-                  </>
-                ) : (
-                  "Not signed in"
-                )}
-              </div>
+
+          {workspaceOpen && !collapsed && (
+            <div className="absolute top-full left-0 z-50 mt-1 w-56 rounded-md border border-border bg-popover p-1 text-sm shadow-xl shadow-black/40">
+              {userEmail && (
+                <div className="mb-1 border-b border-white/[0.06] px-2 py-2">
+                  <p className="section-label">Signed in as</p>
+                  <p className="mt-0.5 truncate text-[12px] font-medium text-foreground">
+                    {userEmail}
+                  </p>
+                </div>
+              )}
               <Link
-                href="/dashboard"
-                className="hover:bg-accent block cursor-pointer rounded px-2 py-1.5 transition-colors"
+                href="/dashboard/onboarding"
+                className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-[13px] text-foreground/80 transition-colors hover:bg-white/[0.05]"
                 onClick={() => setWorkspaceOpen(false)}
               >
-                Switch workspace
+                <Plus className="size-3.5" />
+                New workspace
               </Link>
               <Link
                 href="/dashboard/settings"
-                className="hover:bg-accent block cursor-pointer rounded px-2 py-1.5 transition-colors"
+                className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-[13px] text-foreground/80 transition-colors hover:bg-white/[0.05]"
                 onClick={() => setWorkspaceOpen(false)}
               >
-                Profile settings
+                <Settings className="size-3.5" />
+                Settings
+              </Link>
+              <div className="my-1 border-t border-white/[0.06]" />
+              <Link
+                href="/auth/sign-out"
+                className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-[13px] text-destructive/80 transition-colors hover:bg-destructive/10"
+                onClick={() => setWorkspaceOpen(false)}
+              >
+                <LogOut className="size-3.5" />
+                Sign out
               </Link>
             </div>
-          ) : null}
+          )}
         </div>
-        {!collapsed ? (
-          <div className="flex shrink-0 items-center gap-1">
-            <NavNewBusinessButton />
-          </div>
-        ) : (
-          <Button variant="ghost" size="icon" asChild className="size-8 shrink-0" title="New business">
-            <Link href="/dashboard/onboarding" data-testid="nav-new-business">
-              <Plus className="size-4" aria-hidden />
-            </Link>
-          </Button>
-        )}
+
+        {!collapsed && <NavNewBusinessButton />}
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3" aria-label="Primary">
-        {mainNav.map((item) => (
+      {/* Nav */}
+      <nav
+        className="flex flex-1 flex-col overflow-y-auto p-2 pt-2"
+        aria-label="Primary"
+      >
+        {/* Section 1: Dashboard, Agents, Inbox — no label */}
+        <div className="flex flex-col gap-0.5">
           <NavItem
-            key={item.href}
-            href={item.href}
-            label={item.label}
-            icon={item.icon}
+            href="/dashboard"
+            label="Dashboard"
+            icon={LayoutDashboard}
             collapsed={collapsed}
-            isActive={isActive(item.href)}
-            pendingApprovalsCount={
-              item.href === "/dashboard/approvals" ? pendingApprovalsCount : undefined
-            }
+            isActive={isActive("/dashboard")}
           />
-        ))}
-      </nav>
-
-      <div className="border-sidebar-border mt-auto flex flex-col gap-1 border-t p-3">
-        <Link
-          href="/dashboard/settings"
-          className={cn(
-            "text-muted-foreground hover:bg-accent hover:text-foreground flex cursor-pointer items-center gap-3 rounded-md py-2 pr-2 pl-2 text-sm transition-colors duration-150",
-            collapsed && "justify-center px-2",
-            isActive("/dashboard/settings") &&
-              "bg-accent text-primary border-primary border-l-[3px] pl-[calc(0.5rem-3px)] font-medium",
-            !isActive("/dashboard/settings") && "border-l-[3px] border-transparent",
-          )}
-          title={collapsed ? "Settings" : undefined}
-        >
-          <Settings className="size-4 shrink-0" aria-hidden />
-          <span
-            className={cn(
-              "truncate transition-[opacity,width] duration-200",
-              collapsed ? "hidden w-0 opacity-0" : "inline opacity-100",
-            )}
-          >
-            Settings
-          </span>
-        </Link>
-
-        <div className={cn("flex items-center gap-2 pt-1", collapsed && "justify-center")}>
-          <SignedIn>
-            <UserButton />
-            {!collapsed ? (
-              <span className="text-muted-foreground truncate text-xs">Account</span>
-            ) : null}
-          </SignedIn>
-          <SignedOut>
-            <div className={cn("flex flex-col gap-1", collapsed ? "items-center" : "w-full")}>
-              <Link
-                href="/auth/sign-in"
-                className="text-muted-foreground hover:text-foreground cursor-pointer text-sm transition-colors"
-              >
-                Sign in
-              </Link>
-              {!collapsed ? (
-                <Link
-                  href="/auth/sign-up"
-                  className="text-muted-foreground hover:text-foreground cursor-pointer text-sm transition-colors"
-                >
-                  Sign up
-                </Link>
-              ) : null}
-            </div>
-          </SignedOut>
+          <NavItem
+            href="/dashboard/agents"
+            label="Agents"
+            icon={Bot}
+            collapsed={collapsed}
+            isActive={isActive("/dashboard/agents")}
+          />
+          <NavItem
+            href="/dashboard/approvals"
+            label="Inbox"
+            icon={Inbox}
+            collapsed={collapsed}
+            isActive={isActive("/dashboard/approvals")}
+            pendingApprovalsCount={pendingApprovalsCount}
+          />
         </div>
 
-        <Button
+        {/* Teams section — SidebarTeamsGroup renders its own "YOUR TEAMS" label */}
+        <SidebarTeamsGroup
+          teams={teams}
+          businessId={businessId}
+          collapsed={collapsed}
+        />
+
+        {/* Workspace section */}
+        {!collapsed && (
+          <p className="select-none px-2.5 pb-1.5 pt-4 font-mono text-[9.5px] uppercase tracking-[0.08em] text-muted-foreground/45">
+            Workspace
+          </p>
+        )}
+        <div className="flex flex-col gap-0.5">
+          <NavItem
+            href="/dashboard/skills"
+            label="Skills"
+            icon={BookOpen}
+            collapsed={collapsed}
+            isActive={isActive("/dashboard/skills")}
+          />
+          <NavItem
+            href="/dashboard/settings"
+            label="Settings"
+            icon={Settings}
+            collapsed={collapsed}
+            isActive={isActive("/dashboard/settings")}
+          />
+        </div>
+      </nav>
+
+      {/* Bottom: user account + version + support + collapse */}
+      <div className="shrink-0 space-y-0.5 border-t border-sidebar-border p-2 pt-2">
+        <SignedIn>
+          <div
+            className={cn(
+              "text-muted-tier-label hover:text-foreground/80 flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 transition-colors duration-150 hover:bg-white/[0.04]",
+              collapsed && "justify-center px-2",
+            )}
+          >
+            <UserAvatar email={userEmail ?? null} />
+            {!collapsed && (
+              <span className="min-w-0 flex-1 truncate text-[12px] tracking-[-0.01em]">
+                {userEmail?.split("@")[0] ?? "Account"}
+              </span>
+            )}
+          </div>
+        </SignedIn>
+
+        <SignedOut>
+          <Link
+            href="/auth/sign-in"
+            className={cn(
+              "flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground",
+              collapsed && "justify-center",
+            )}
+          >
+            <LogOut className="size-[15px] shrink-0" />
+            {!collapsed && <span>Sign in</span>}
+          </Link>
+        </SignedOut>
+
+        {/* Version + support — only when expanded */}
+        {!collapsed && (
+          <>
+            <div className="px-2.5 py-0.5">
+              <span className="font-mono text-[9.5px] text-muted-foreground/20">
+                v0.1.0
+              </span>
+            </div>
+            <button
+              disabled
+              type="button"
+              className="flex w-full cursor-not-allowed items-center gap-2 rounded-md px-2.5 py-1 text-[12px] text-muted-foreground/25"
+            >
+              <HelpCircle className="size-[13px]" />
+              <span>Support</span>
+            </button>
+          </>
+        )}
+
+        {/* Collapse toggle */}
+        <button
           type="button"
-          variant="ghost"
-          size="sm"
-          className={cn("text-muted-foreground mt-1 cursor-pointer", collapsed && "px-2")}
+          className={cn(
+            "flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] text-muted-tier-label transition-colors duration-150 hover:text-muted-tier-secondary",
+            collapsed && "justify-center px-2",
+          )}
           onClick={toggleCollapsed}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
-          {!collapsed ? <span className="ml-1">Collapse</span> : null}
-        </Button>
+          {collapsed ? (
+            <ChevronRight className="size-3.5" />
+          ) : (
+            <>
+              <ChevronLeft className="size-3.5" />
+              <span className="text-[11px] tracking-wide">Collapse</span>
+            </>
+          )}
+        </button>
       </div>
     </>
   );
 
   return (
-    <div className="md:flex md:h-svh md:shrink-0">
-      {/* Mobile top bar */}
-      <div className="border-border bg-background md:hidden fixed top-0 right-0 left-0 z-40 flex h-12 items-center border-b px-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="cursor-pointer"
+    <>
+      {/* Mobile/tablet top bar */}
+      <div className="fixed top-0 right-0 left-0 z-40 flex h-12 items-center border-b border-border bg-background px-3 lg:hidden">
+        <button
+          type="button"
+          className="flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-white/[0.05] hover:text-foreground"
           onClick={() => setMobileOpen(true)}
           aria-label="Open menu"
         >
-          <Menu className="size-5" />
-        </Button>
-        <Link href="/dashboard" className="text-foreground ml-2 text-sm font-semibold">
+          <Menu className="size-4" />
+        </button>
+        <Link
+          href="/dashboard"
+          className="ml-2 text-sm font-semibold tracking-[-0.01em] text-foreground/90"
+        >
           AI Business
         </Link>
       </div>
 
-      {/* Mobile overlay */}
-      {mobileOpen ? (
+      {/* Mobile/tablet overlay */}
+      {mobileOpen && (
         <button
           type="button"
-          className="bg-background/80 md:hidden fixed inset-0 z-40 backdrop-blur-sm"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
           aria-label="Close menu"
           onClick={() => setMobileOpen(false)}
         />
-      ) : null}
+      )}
 
-      {/* Mobile drawer */}
+      {/* Sidebar */}
       <aside
         className={cn(
-          "border-sidebar-border bg-sidebar text-sidebar-foreground md:border-sidebar-border flex flex-col border-r transition-transform duration-200 ease-out",
-          "fixed top-0 left-0 z-50 h-svh w-[240px] md:relative md:z-0 md:translate-x-0",
-          mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
-          hydrated && collapsed ? "md:w-14" : "md:w-[240px]",
+          "flex h-svh flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground",
+          "fixed top-0 left-0 z-50 lg:relative lg:z-0",
+          "transition-[transform,width] duration-200 ease-out",
+          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          hydrated && collapsed ? "w-14" : "w-[280px]",
         )}
       >
-        <div className="flex h-12 items-center justify-between border-b px-2 md:hidden">
-          <span className="text-sm font-medium">Menu</span>
-          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)} aria-label="Close">
-            <X className="size-5" />
-          </Button>
+        {/* Mobile/tablet close row */}
+        <div className="flex h-12 items-center justify-between border-b border-sidebar-border px-3 lg:hidden">
+          <span className="text-[13px] font-medium text-foreground/80">
+            Menu
+          </span>
+          <button
+            type="button"
+            className="flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close"
+          >
+            <X className="size-4" />
+          </button>
         </div>
-        <div className="flex h-full min-h-0 flex-1 flex-col">{sidebarInner}</div>
+
+        {sidebarInner}
       </aside>
-    </div>
+    </>
   );
 }

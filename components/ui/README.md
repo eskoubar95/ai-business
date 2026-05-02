@@ -16,6 +16,10 @@ Shared primitives for the AI Business dashboard. Prefer these over one-off style
 | `file-tree.tsx` | Collapsible tree for instruction/skill files |
 | `novel-editor.tsx` | Dynamic wrapper; loads TipTap “novel” editor client-only |
 | `novel-editor-client.tsx` | Novel editor + code/JSON view toggle |
+| `tiptap-editor.tsx` | Rich text / markdown-ish editor with slash commands and shared code blocks |
+| `comment-editor-parts.tsx` | Slash-command list + popup, mention list/`MentionChip` + suggestion wiring; see `comment-editor.tsx` shell |
+| `comment-editor.tsx` | Compact TipTap editor with mentions and shared code blocks |
+| `tiptap-code-block-view.tsx` | Shared TipTap React node view for syntax-highlighted code blocks |
 | `kanban-board.tsx` | Generic `@dnd-kit` multi-column board |
 | `page-wrapper.tsx` | Page enter animation (`animate-in`) |
 | `select.tsx`, `tabs.tsx`, `sonner.tsx` | Existing shadcn-style widgets |

@@ -3,9 +3,9 @@
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import type { SettingsBusinessRow } from "@/lib/settings/actions";
 import { saveBusinessSettings } from "@/lib/settings/actions";
+import { PrimaryButton } from "@/components/ui/primary-button";
 
 export function SettingsBusinessSection({
   businessId,
@@ -28,7 +28,7 @@ export function SettingsBusinessSection({
   async function onSaveBusiness(e: React.FormEvent) {
     e.preventDefault();
     if (!businessId) {
-      toast.error("Select a business first.");
+      toast.error("Select a workspace first.");
       return;
     }
     startBusinessSave(async () => {
@@ -38,58 +38,73 @@ export function SettingsBusinessSection({
         description: description.trim() || undefined,
       });
       if (result.success) {
-        toast.success("Business settings saved.");
+        toast.success("Workspace settings saved.");
       } else {
-        toast.error("Could not save business settings.");
+        toast.error("Could not save workspace settings.");
       }
     });
   }
 
   return (
-    <section className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-medium">Business</h2>
-        <p className="text-muted-foreground text-sm">
-          Workspace defaults for <span className="text-foreground font-medium">{business.name}</span>.
-        </p>
-      </div>
-      <form onSubmit={onSaveBusiness} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-2 text-sm font-medium">
-          Local path
+    <section className="flex max-w-md flex-col gap-5">
+      <form onSubmit={onSaveBusiness} className="flex flex-col gap-5">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="localPath" className="label-upper">
+            Local path
+          </label>
           <input
+            id="localPath"
             name="localPath"
             value={localPath}
             onChange={(e) => setLocalPath(e.target.value)}
-            className="border-input bg-background rounded-md border px-3 py-2 text-sm"
+            className="h-9 rounded-md border border-border bg-white/[0.04] px-3 text-[13px] text-foreground/80 placeholder:text-muted-foreground/30 focus:border-white/[0.16] focus:outline-none transition-colors disabled:opacity-50"
             placeholder="/path/to/repo"
             disabled={businessPending}
           />
-        </label>
-        <label className="flex flex-col gap-2 text-sm font-medium">
-          GitHub repository URL
+          <p className="text-muted-tier-faint text-[11px]">
+            Absolute path to the project on your machine, e.g. /Users/you/projects/myapp
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="githubRepoUrl" className="label-upper">
+            GitHub repository URL
+          </label>
           <input
+            id="githubRepoUrl"
             name="githubRepoUrl"
             value={githubRepoUrl}
             onChange={(e) => setGithubRepoUrl(e.target.value)}
-            className="border-input bg-background rounded-md border px-3 py-2 text-sm"
+            className="h-9 rounded-md border border-border bg-white/[0.04] px-3 text-[13px] text-foreground/80 placeholder:text-muted-foreground/30 focus:border-white/[0.16] focus:outline-none transition-colors disabled:opacity-50"
             placeholder="https://github.com/org/repo"
             disabled={businessPending}
           />
-        </label>
-        <label className="flex flex-col gap-2 text-sm font-medium">
-          Description
+          <p className="text-muted-tier-faint text-[11px]">
+            Full HTTPS URL to the GitHub repository for this workspace.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="description" className="label-upper">
+            Description / Notes
+          </label>
           <textarea
+            id="description"
             name="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="border-input bg-background min-h-[88px] rounded-md border px-3 py-2 text-sm"
-            placeholder="Short notes for this workspace"
+            className="min-h-[88px] rounded-md border border-border bg-white/[0.04] px-3 py-2 text-[13px] text-foreground/80 placeholder:text-muted-foreground/30 focus:border-white/[0.16] focus:outline-none transition-colors disabled:opacity-50 resize-none"
+            placeholder="Optional notes about this workspace"
             disabled={businessPending}
           />
-        </label>
-        <Button type="submit" disabled={businessPending} className="cursor-pointer">
-          Save business settings
-        </Button>
+          <p className="text-muted-tier-faint text-[11px]">Optional notes about this workspace.</p>
+        </div>
+
+        <div>
+          <PrimaryButton type="submit" disabled={businessPending} loading={businessPending}>
+            {businessPending ? "Saving…" : "Save workspace settings"}
+          </PrimaryButton>
+        </div>
       </form>
     </section>
   );

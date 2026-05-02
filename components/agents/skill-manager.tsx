@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
+import { Check, ExternalLink, Plus, X } from "lucide-react";
 
 import {
   attachSkillToAgent,
@@ -9,69 +11,137 @@ import {
   detachSkillFromAgent,
 } from "@/lib/skills/actions";
 import type { skills } from "@/db/schema";
+import { cn } from "@/lib/utils";
 
-import { MarkdownEditorField } from "./markdown-editor-field";
+type Skill = typeof skills.$inferSelect;
 
 type Props = {
   agentId: string;
   businessId: string;
-  attached: (typeof skills.$inferSelect)[];
-  library: (typeof skills.$inferSelect)[];
+  attached: Skill[];
+  library: Skill[];
 };
+
+function SkillRow({
+  skill,
+  isAttached,
+  onToggle,
+  disabled,
+  businessId,
+}: {
+  skill: Skill;
+  isAttached: boolean;
+  onToggle: () => void;
+  disabled: boolean;
+  businessId: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "group grid grid-cols-[20px_1fr_auto] items-center gap-3 px-4 py-2.5 transition-colors",
+        "border-b border-white/[0.05] last:border-0",
+        "hover:bg-white/[0.04]",
+      )}
+      data-testid={isAttached ? `skill-attached-${skill.id}` : `skill-available-${skill.id}`}
+    >
+      {/* Checkbox */}
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={isAttached}
+        disabled={disabled}
+        onClick={onToggle}
+        data-testid={isAttached ? `skill-detach-${skill.id}` : `skill-attach-${skill.id}`}
+        className={cn(
+          "flex size-[14px] shrink-0 cursor-pointer items-center justify-center rounded-sm border transition-all duration-100",
+          "disabled:pointer-events-none disabled:opacity-40",
+          isAttached
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-white/[0.20] bg-transparent hover:border-white/[0.35]",
+        )}
+      >
+        {isAttached && <Check className="size-2.5 stroke-[3]" />}
+      </button>
+
+      {/* Name */}
+      <span className={cn("text-[13px] tracking-[-0.01em]", isAttached ? "text-foreground" : "text-muted-foreground")}>
+        {skill.name}
+      </span>
+
+      {/* View link */}
+      <Link
+        href={`/dashboard/skills/${skill.id}?businessId=${encodeURIComponent(businessId)}`}
+        className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground"
+        onClick={(e) => e.stopPropagation()}
+      >
+        View
+        <ExternalLink className="size-2.5" />
+      </Link>
+    </div>
+  );
+}
 
 export function SkillManager({ agentId, businessId, attached, library }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [pickSkillId, setPickSkillId] = useState("");
+
+  // Optimistic attach state
+  const [localAttached, setLocalAttached] = useState(() => new Set(attached.map((s) => s.id)));
+
+  // New skill inline form
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
-  const [newMarkdown, setNewMarkdown] = useState("");
+  const newNameRef = useRef<HTMLInputElement>(null);
 
-  const attachable = useMemo(() => {
-    const have = new Set(attached.map((s) => s.id));
-    return library.filter((s) => !have.has(s.id));
-  }, [attached, library]);
+  const attachedSkills = library.filter((s) => localAttached.has(s.id));
+  const availableSkills = library.filter((s) => !localAttached.has(s.id));
 
-  function attachSelected() {
-    if (!pickSkillId) return;
+  function toggle(skill: Skill) {
+    const isAttached = localAttached.has(skill.id);
+    // Optimistic update
+    setLocalAttached((prev) => {
+      const next = new Set(prev);
+      isAttached ? next.delete(skill.id) : next.add(skill.id);
+      return next;
+    });
     setError(null);
     startTransition(async () => {
       try {
-        await attachSkillToAgent(agentId, pickSkillId);
-        setPickSkillId("");
+        if (isAttached) {
+          await detachSkillFromAgent(agentId, skill.id);
+        } else {
+          await attachSkillToAgent(agentId, skill.id);
+        }
         router.refresh();
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Attach failed");
+        // Revert optimistic update
+        setLocalAttached((prev) => {
+          const next = new Set(prev);
+          isAttached ? next.add(skill.id) : next.delete(skill.id);
+          return next;
+        });
+        setError(e instanceof Error ? e.message : "Action failed");
       }
     });
   }
 
-  function detach(skillId: string) {
-    setError(null);
-    startTransition(async () => {
-      try {
-        await detachSkillFromAgent(agentId, skillId);
-        router.refresh();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Detach failed");
-      }
-    });
+  function startCreate() {
+    setCreating(true);
+    setNewName("");
+    setTimeout(() => newNameRef.current?.focus(), 50);
   }
 
   function createAndAttach() {
+    const name = newName.trim();
+    if (!name) return;
     setError(null);
     startTransition(async () => {
       try {
-        const skill = await createSkill({
-          businessId,
-          name: newName,
-          markdown: newMarkdown,
-        });
+        const skill = await createSkill({ businessId, name, markdown: "" });
         await attachSkillToAgent(agentId, skill.id);
-        setNewName("");
-        setNewMarkdown("");
         setCreating(false);
+        setNewName("");
         router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Create failed");
@@ -80,112 +150,139 @@ export function SkillManager({ agentId, businessId, attached, library }: Props) 
   }
 
   return (
-    <section
-      className="border-border mt-8 flex flex-col gap-4 rounded-lg border p-4"
-      data-testid="skill-manager"
-    >
-      <h2 className="text-lg font-semibold">Skills</h2>
-
-      <ul className="flex flex-col gap-2">
-        {attached.map((s) => (
-          <li
-            key={s.id}
-            className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-2 text-sm"
-            data-testid={`skill-attached-${s.id}`}
-          >
-            <span>{s.name}</span>
-            <button
-              type="button"
-              data-testid={`skill-detach-${s.id}`}
-              disabled={pending}
-              className="text-muted-foreground hover:text-foreground text-xs underline disabled:opacity-50"
-              onClick={() => detach(s.id)}
-            >
-              Remove
-            </button>
-          </li>
-        ))}
-        {attached.length === 0 ? (
-          <li className="text-muted-foreground text-sm">No skills attached yet.</li>
-        ) : null}
-      </ul>
-
-      <div className="flex flex-wrap items-end gap-2">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium" htmlFor="skill-attach-select">
-            Attach existing
-          </label>
-          <select
-            id="skill-attach-select"
-            data-testid="skill-attach-select"
-            className="border-border bg-background rounded-md border px-2 py-1 text-sm"
-            value={pickSkillId}
-            onChange={(e) => setPickSkillId(e.target.value)}
-          >
-            <option value="">— Choose skill —</option>
-            {attachable.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button
-          type="button"
-          data-testid="skill-attach-submit"
-          disabled={pending || !pickSkillId}
-          className="bg-secondary text-secondary-foreground rounded-md px-3 py-1.5 text-sm disabled:opacity-50"
-          onClick={attachSelected}
-        >
-          Attach
-        </button>
+    <div className="flex flex-col" data-testid="skill-manager">
+      {/* Header row */}
+      <div className="mb-3 flex items-center justify-between">
+        <p className="section-label">Skills library</p>
+        <span className="font-mono text-[11px] text-muted-foreground/50">
+          {localAttached.size} attached
+        </span>
       </div>
 
-      {!creating ? (
-        <button
-          type="button"
-          data-testid="skill-create-toggle"
-          className="text-primary w-fit text-sm underline"
-          onClick={() => setCreating(true)}
-        >
-          Create new skill
-        </button>
-      ) : (
-        <div className="flex flex-col gap-3 rounded-md border border-dashed p-3">
-          <input
-            data-testid="skill-new-name"
-            placeholder="Skill name"
-            className="border-border bg-background rounded-md border px-3 py-2 text-sm"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-          />
-          <MarkdownEditorField value={newMarkdown} onChange={setNewMarkdown} />
-          <div className="flex gap-2">
-            <button
-              type="button"
-              data-testid="skill-create-submit"
-              disabled={pending || !newName.trim()}
-              className="bg-primary text-primary-foreground rounded-md px-3 py-1.5 text-sm disabled:opacity-50"
-              onClick={createAndAttach}
-            >
-              Create & attach
-            </button>
-            <button
-              type="button"
-              className="text-muted-foreground text-sm underline"
-              onClick={() => setCreating(false)}
-            >
-              Cancel
-            </button>
+      {/* Skill list */}
+      <div className="rounded-md border border-border overflow-hidden">
+        {library.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
+            <p className="text-[13px] text-muted-foreground">No skills in library yet</p>
+            <p className="text-[11px] text-muted-foreground/50">
+              Create skills in the{" "}
+              <Link
+                href={`/dashboard/skills?businessId=${encodeURIComponent(businessId)}`}
+                className="text-primary hover:opacity-80"
+              >
+                Skills section
+              </Link>
+            </p>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Attached group */}
+            {attachedSkills.length > 0 && (
+              <>
+                <div className="border-b border-white/[0.07] bg-white/[0.015] px-4 py-2">
+                  <p className="section-label">Attached</p>
+                </div>
+                {attachedSkills.map((s) => (
+                  <SkillRow
+                    key={s.id}
+                    skill={s}
+                    isAttached
+                    onToggle={() => toggle(s)}
+                    disabled={pending}
+                    businessId={businessId}
+                  />
+                ))}
+              </>
+            )}
+
+            {/* Available group */}
+            {availableSkills.length > 0 && (
+              <>
+                <div
+                  className={cn(
+                    "bg-white/[0.015] px-4 py-2",
+                    attachedSkills.length > 0
+                      ? "border-y border-white/[0.07]"
+                      : "border-b border-white/[0.07]",
+                  )}
+                >
+                  <p className="section-label">Available</p>
+                </div>
+                {availableSkills.map((s) => (
+                  <SkillRow
+                    key={s.id}
+                    skill={s}
+                    isAttached={false}
+                    onToggle={() => toggle(s)}
+                    disabled={pending}
+                    businessId={businessId}
+                  />
+                ))}
+              </>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Error */}
+      {error && (
+        <p className="mt-2 text-[12px] text-destructive" role="alert">{error}</p>
       )}
 
-      {error ? (
-        <p className="text-destructive text-sm" role="alert">
-          {error}
-        </p>
-      ) : null}
-    </section>
+      {/* Footer: create new skill */}
+      <div className="mt-3">
+        {!creating ? (
+          <button
+            type="button"
+            data-testid="skill-create-toggle"
+            onClick={startCreate}
+            className="flex cursor-pointer items-center gap-1.5 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Plus className="size-3" />
+            New skill
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 rounded-md border border-white/[0.10] bg-white/[0.02] px-3 py-2">
+            <Plus className="size-3 shrink-0 text-muted-foreground/40" />
+            <input
+              ref={newNameRef}
+              data-testid="skill-new-name"
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") createAndAttach();
+                if (e.key === "Escape") { setCreating(false); setNewName(""); }
+              }}
+              placeholder="Skill name…"
+              className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground/30"
+            />
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                data-testid="skill-create-submit"
+                disabled={pending || !newName.trim()}
+                onClick={createAndAttach}
+                className={cn(
+                  "flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-[11px] font-medium transition-colors",
+                  "bg-primary/10 text-primary hover:bg-primary/15",
+                  "disabled:pointer-events-none disabled:opacity-40",
+                )}
+              >
+                <Check className="size-3" />
+                Create
+              </button>
+              <button
+                type="button"
+                onClick={() => { setCreating(false); setNewName(""); }}
+                className="cursor-pointer rounded p-1 text-muted-foreground/40 hover:text-foreground transition-colors"
+              >
+                <X className="size-3" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

@@ -54,9 +54,9 @@
   --color-warning: var(--warning);
 }
 
-/* Light mode (Linear-inspired spec) */
+/* Light mode */
 :root {
-  --radius: 0.625rem;
+  --radius: 0.375rem;
   --background: #f8fafc;
   --foreground: #0f172a;
   --card: #ffffff;
@@ -98,23 +98,23 @@
   --warning: #f59e0b;
 }
 
-/* Dark mode — default app theme */
+/* Dark mode — Supabase-inspired professional dark */
 .dark {
-  --background: #051937;
-  --foreground: #f1f5f9;
-  --card: #0a2240;
-  --card-foreground: #f1f5f9;
-  --popover: #0a2240;
-  --popover-foreground: #f1f5f9;
+  --background: #111111;
+  --foreground: #ededed;
+  --card: #1a1a1a;
+  --card-foreground: #ededed;
+  --popover: #1c1c1c;
+  --popover-foreground: #ededed;
   --primary: #a8eb12;
-  --primary-foreground: #051937;
-  --secondary: #0d2d4f;
-  --secondary-foreground: #f1f5f9;
-  --muted: #0d2d4f;
-  --muted-foreground: #64748b;
-  --accent: rgba(168, 235, 18, 0.12);
-  --accent-foreground: #f1f5f9;
-  --destructive: #ef4444;
+  --primary-foreground: #111111;
+  --secondary: #222222;
+  --secondary-foreground: #ededed;
+  --muted: #222222;
+  --muted-foreground: #8c8c8c;
+  --accent: rgba(168, 235, 18, 0.09);
+  --accent-foreground: #ededed;
+  --destructive: #e5484d;
   --destructive-foreground: #ffffff;
   --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.06);
@@ -122,21 +122,21 @@
   --chart-1: #a8eb12;
   --chart-2: #22c55e;
   --chart-3: #f59e0b;
-  --chart-4: #ef4444;
-  --chart-5: #64748b;
-  --sidebar: #030f1f;
-  --sidebar-foreground: #f1f5f9;
+  --chart-4: #e5484d;
+  --chart-5: #8c8c8c;
+  --sidebar: #0c0c0c;
+  --sidebar-foreground: #ededed;
   --sidebar-primary: #a8eb12;
-  --sidebar-primary-foreground: #051937;
-  --sidebar-accent: rgba(168, 235, 18, 0.12);
-  --sidebar-accent-foreground: #f1f5f9;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-primary-foreground: #111111;
+  --sidebar-accent: rgba(255, 255, 255, 0.04);
+  --sidebar-accent-foreground: #ededed;
+  --sidebar-border: rgba(255, 255, 255, 0.07);
   --sidebar-ring: #a8eb12;
   --status-active: #a8eb12;
-  --status-idle: #64748b;
+  --status-idle: #555555;
   --status-paused: #f59e0b;
-  --status-failed: #ef4444;
-  --status-offline: #374151;
+  --status-failed: #e5484d;
+  --status-offline: #333333;
   --success: #22c55e;
   --warning: #f59e0b;
 }
@@ -147,6 +147,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-size: 13px;
+    line-height: 1.5;
   }
   code,
   kbd,
@@ -155,20 +157,140 @@
     font-family: var(--font-geist-mono), ui-monospace, monospace;
   }
   h1 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-  }
-  h2 {
     font-size: 1.125rem;
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: -0.01em;
   }
+  h2 {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+  }
   h3 {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     letter-spacing: 0;
   }
+}
+
+/* ── Design system token reference ───────────────────────────────────────── */
+/*
+ * Standard border opacities (dark mode):
+ *   border-border  — standard card / panel border  (= var(--border))
+ *   border-white/[0.06]  — subtle inner dividers
+ *   border-white/[0.14]  — hover / raised border state
+ *
+ * Standard hover backgrounds (dark mode):
+ *   hover:bg-white/[0.02]  — large card hover lift
+ *   hover:bg-white/[0.04]  — nav item / row hover
+ *
+ * Card radius tokens:
+ *   rounded-md   — standard panel / card (default)
+ *   rounded-xl   — inner content boxes inside a card
+ *   rounded-2xl  — full-page modal cards (onboarding)
+ *   rounded-lg   — small chips, badges
+ *
+ * Muted text:
+ *   .text-muted-tier-secondary — body secondary (maps to muted-foreground)
+ *   .text-muted-tier-label     — captions / de-emphasized labels
+ *   .text-muted-tier-faint     — hints / placeholders / meta (do not rely on raw text-white/*)
+ */
+
+/* ── Utility classes ─────────────────────────────────────────────────────── */
+
+/* Section / panel label — Supabase-style (10px mono caps) */
+.section-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  opacity: 0.6;
+}
+
+/* Inline field label — slightly larger, same mono caps pattern */
+.label-upper {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  opacity: 0.5;
+}
+
+/* Muted text tiers — semantic steps on top of --muted-foreground (theme-aware vs ad-hoc text-white/*) */
+.text-muted-tier-secondary {
+  @apply text-muted-foreground;
+}
+.text-muted-tier-label {
+  @apply text-muted-foreground/55;
+}
+.text-muted-tier-faint {
+  @apply text-muted-foreground/35;
+}
+
+/* Subtle horizontal divider — inner section separator inside cards */
+/* Keeps literal white-alpha so dividers stay below --border intensity (panel edge uses border-border). */
+.divider-subtle {
+  @apply border-t border-white/[0.06];
+}
+
+/* Small icon-only button — 28×28 rounded, subtle hover */
+.icon-btn {
+  @apply size-7 cursor-pointer rounded-lg flex items-center justify-center text-white/40
+    hover:text-white/80 hover:bg-white/[0.05] transition-all duration-150
+    focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/50;
+}
+
+/* Base chip — inline pill label */
+.chip {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium;
+}
+
+/* Neutral chip — dimmed label for tags, categories */
+.chip-neutral {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-white/[0.05] text-white/60 border border-white/[0.06];
+}
+
+/* Primary chip — lime-accented label for active/selected state */
+.chip-primary {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-primary/15 text-primary border border-primary/20;
+}
+
+@keyframes slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in-up {
+  animation: slide-in-up 0.3s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+@keyframes panel-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-panel-enter {
+  animation: panel-enter 0.22s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.18s ease-out forwards;
+}
+
+@keyframes selectionBadgeIn {
+  from { opacity: 0; transform: translateX(-50%) scale(0.88); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -179,4 +301,515 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Tiptap task editor — dark theme */
+.tiptap-task-editor .ProseMirror {
+  outline: none;
+}
+.tiptap-task-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: rgba(255, 255, 255, 0.18);
+  font-style: italic;
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+.tiptap-task-editor .ProseMirror h1,
+.tiptap-task-editor .ProseMirror h2,
+.tiptap-task-editor .ProseMirror h3 {
+  color: rgba(255,255,255,0.85);
+  font-weight: 600;
+  margin-top: 1.2em;
+  margin-bottom: 0.4em;
+}
+.tiptap-task-editor .ProseMirror code {
+  background: rgba(255,255,255,0.07);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-size: 0.875em;
+  font-family: 'Geist Mono', monospace;
+}
+.tiptap-task-editor .ProseMirror pre {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  padding: 0.75em 1em;
+  overflow-x: auto;
+}
+.tiptap-task-editor .ProseMirror pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.85em;
+}
+.tiptap-task-editor .ProseMirror ul,
+.tiptap-task-editor .ProseMirror ol {
+  padding-left: 1.4em;
+}
+.tiptap-task-editor .ProseMirror blockquote {
+  border-left: 2px solid rgba(255,255,255,0.15);
+  padding-left: 0.9em;
+  color: rgba(255,255,255,0.45);
+  font-style: italic;
+}
+.tiptap-task-editor .ProseMirror hr {
+  border-color: rgba(255,255,255,0.08);
+  margin: 1.5em 0;
+}
+
+/* Shared Tiptap editor styles (used by TiptapEditor component) */
+.tiptap-editor .ProseMirror {
+  outline: none;
+  min-height: 120px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.72);
+}
+.tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: rgba(255,255,255,0.18);
+  font-style: italic;
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+.tiptap-editor .ProseMirror h1 { font-size: 1.5em; font-weight: 700; color: rgba(255,255,255,0.88); margin: 1.1em 0 0.35em; }
+.tiptap-editor .ProseMirror h2 { font-size: 1.25em; font-weight: 600; color: rgba(255,255,255,0.85); margin: 1em 0 0.3em; }
+.tiptap-editor .ProseMirror h3 { font-size: 1.1em; font-weight: 600; color: rgba(255,255,255,0.80); margin: 0.9em 0 0.25em; }
+.tiptap-editor .ProseMirror p { margin: 0.25em 0; }
+.tiptap-editor .ProseMirror strong { color: rgba(255,255,255,0.88); font-weight: 600; }
+.tiptap-editor .ProseMirror em { color: rgba(255,255,255,0.65); }
+.tiptap-editor .ProseMirror code {
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  padding: 0.1em 0.38em;
+  font-size: 0.85em;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  color: rgba(168,235,18,0.85);
+}
+.tiptap-editor .ProseMirror pre {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 0.85em 1em;
+  margin: 0.75em 0;
+  overflow-x: auto;
+}
+.tiptap-editor .ProseMirror pre code {
+  background: none; padding: 0; font-size: 1em; color: rgba(255,255,255,0.72);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
+/* NodeView code block — fix paragraph spacing inside code content */
+.tiptap-editor .code-block-wrapper pre {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  overflow-x: auto;
+}
+.tiptap-editor .code-block-wrapper .hljs-code-content,
+.comment-editor .code-block-wrapper .hljs-code-content {
+  display: block;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: rgba(255,255,255,0.72);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.tiptap-editor .code-block-wrapper .hljs-code-content p,
+.comment-editor .code-block-wrapper .hljs-code-content p {
+  margin: 0;
+  padding: 0;
+  min-height: 1em;
+}
+
+/* NodeView code block — reset pre inside wrapper */
+.tiptap-editor .code-block-wrapper > pre,
+.comment-editor .code-block-wrapper > pre {
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.tiptap-editor .code-block-wrapper .hljs-code-content,
+.comment-editor .code-block-wrapper .hljs-code-content {
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.72);
+}
+/* Lowlight / highlight.js syntax tokens — VS Code Dark+ inspired */
+.tiptap-editor .hljs-keyword,
+.tiptap-editor .hljs-selector-tag,
+.tiptap-editor .hljs-operator,
+.tiptap-editor .hljs-punctuation { color: #c678dd; }
+
+.tiptap-editor .hljs-string,
+.tiptap-editor .hljs-template-string,
+.tiptap-editor .hljs-template-tag,
+.tiptap-editor .hljs-regexp { color: #98c379; }
+
+.tiptap-editor .hljs-number,
+.tiptap-editor .hljs-literal { color: #d19a66; }
+
+.tiptap-editor .hljs-comment,
+.tiptap-editor .hljs-quote { color: #5c6370; font-style: italic; }
+
+.tiptap-editor .hljs-function,
+.tiptap-editor .hljs-title,
+.tiptap-editor .hljs-title.function_,
+.tiptap-editor .hljs-title.class_,
+.tiptap-editor .hljs-params { color: #61afef; }
+
+.tiptap-editor .hljs-built_in,
+.tiptap-editor .hljs-class,
+.tiptap-editor .hljs-variable.language_ { color: #e06c75; }
+
+.tiptap-editor .hljs-attr,
+.tiptap-editor .hljs-attribute { color: #d19a66; }
+
+.tiptap-editor .hljs-type,
+.tiptap-editor .hljs-selector-class,
+.tiptap-editor .hljs-selector-id { color: #e5c07b; }
+
+.tiptap-editor .hljs-variable,
+.tiptap-editor .hljs-property { color: rgba(255,255,255,0.72); }
+
+.tiptap-editor .hljs-meta { color: #56b6c2; }
+
+/* HTML/XML tokens */
+.tiptap-editor .hljs-tag,
+.comment-editor .hljs-tag,
+.comment-rendered .hljs-tag { color: rgba(255,255,255,0.40); }
+.tiptap-editor .hljs-tag .hljs-name,
+.comment-editor .hljs-tag .hljs-name,
+.comment-rendered .hljs-tag .hljs-name { color: #e06c75; }
+.tiptap-editor .hljs-tag .hljs-attr,
+.comment-editor .hljs-tag .hljs-attr,
+.comment-rendered .hljs-tag .hljs-attr { color: #d19a66; }
+.tiptap-editor .hljs-tag .hljs-string,
+.comment-editor .hljs-tag .hljs-string,
+.comment-rendered .hljs-tag .hljs-string { color: #98c379; }
+.tiptap-editor .hljs-name,
+.comment-editor .hljs-name,
+.comment-rendered .hljs-name { color: #e06c75; }
+
+/* Additional tokens */
+.tiptap-editor .hljs-type,
+.tiptap-editor .hljs-class,
+.comment-editor .hljs-type,
+.comment-editor .hljs-class { color: #e5c07b; }
+.tiptap-editor .hljs-params,
+.comment-editor .hljs-params { color: rgba(255,255,255,0.65); }
+.tiptap-editor .hljs-symbol,
+.comment-editor .hljs-symbol { color: #56b6c2; }
+.tiptap-editor .hljs-deletion,
+.comment-editor .hljs-deletion { color: #e06c75; background: rgba(224,108,117,0.1); }
+.tiptap-editor .hljs-addition,
+.comment-editor .hljs-addition { color: #98c379; background: rgba(152,195,121,0.1); }
+.tiptap-editor .hljs-link,
+.comment-editor .hljs-link { color: #61afef; text-decoration: underline; }
+
+/* Mirror base tokens for comment-editor + comment-rendered */
+.comment-editor .hljs-keyword,
+.comment-rendered .hljs-keyword,
+.comment-editor .hljs-selector-tag,
+.comment-rendered .hljs-selector-tag,
+.comment-editor .hljs-operator,
+.comment-rendered .hljs-operator { color: #c678dd; }
+.comment-editor .hljs-string,
+.comment-rendered .hljs-string,
+.comment-editor .hljs-template-string,
+.comment-rendered .hljs-template-string,
+.comment-editor .hljs-regexp,
+.comment-rendered .hljs-regexp { color: #98c379; }
+.comment-editor .hljs-number,
+.comment-rendered .hljs-number,
+.comment-editor .hljs-literal,
+.comment-rendered .hljs-literal { color: #d19a66; }
+.comment-editor .hljs-comment,
+.comment-rendered .hljs-comment,
+.comment-editor .hljs-quote,
+.comment-rendered .hljs-quote { color: #5c6370; font-style: italic; }
+.comment-editor .hljs-function,
+.comment-rendered .hljs-function,
+.comment-editor .hljs-title,
+.comment-rendered .hljs-title { color: #61afef; }
+.comment-editor .hljs-built_in,
+.comment-rendered .hljs-built_in { color: #e06c75; }
+.comment-editor .hljs-attr,
+.comment-rendered .hljs-attr { color: #d19a66; }
+.comment-editor .hljs-meta,
+.comment-rendered .hljs-meta { color: #56b6c2; }
+.comment-editor .hljs-selector-class,
+.comment-rendered .hljs-selector-class,
+.comment-editor .hljs-selector-id,
+.comment-rendered .hljs-selector-id { color: #e5c07b; }
+.tiptap-editor .ProseMirror ul, .tiptap-editor .ProseMirror ol { padding-left: 1.5em; margin: 0.4em 0; }
+.tiptap-editor .ProseMirror li { margin: 0.15em 0; }
+.tiptap-editor .ProseMirror blockquote {
+  border-left: 2px solid rgba(168,235,18,0.3);
+  padding-left: 1em;
+  margin: 0.75em 0;
+  color: rgba(255,255,255,0.45);
+  font-style: italic;
+}
+.tiptap-editor .ProseMirror hr {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  margin: 1.5em 0;
+}
+
+/* Table styles */
+.tiptap-editor .ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.75em 0;
+  font-size: 13px;
+}
+.tiptap-editor .ProseMirror th,
+.tiptap-editor .ProseMirror td {
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+  min-width: 60px;
+}
+.tiptap-editor .ProseMirror th {
+  background: rgba(255,255,255,0.04);
+  font-weight: 500;
+  color: rgba(255,255,255,0.65);
+  font-size: 11.5px;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.tiptap-editor .ProseMirror td {
+  color: rgba(255,255,255,0.60);
+}
+.tiptap-editor .ProseMirror .selectedCell::after {
+  background: rgba(255,255,255,0.06);
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 2;
+}
+
+/* Tippy slash menu — reset default styles */
+.tippy-box[data-theme~='none'] {
+  background: transparent;
+  box-shadow: none;
+}
+.tippy-box[data-theme~='none'] .tippy-content {
+  padding: 0;
+}
+
+/* Slash command menu entrance animation */
+@keyframes slash-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.slash-menu {
+  animation: slash-menu-in 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top left;
+}
+
+/* ── Sidebar dropdown / popup animations ─────────────────────────────────── */
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-5px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+@keyframes dropdown-in-up {
+  from { opacity: 0; transform: translateY(5px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)  scale(1);    }
+}
+@keyframes banner-in {
+  from { opacity: 0; transform: translateY(-8px); max-height: 0; }
+  to   { opacity: 1; transform: translateY(0);    max-height: 80px; }
+}
+@keyframes label-chip-in {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1);   }
+}
+
+.dropdown-animate {
+  animation: dropdown-in 0.14s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top center;
+}
+.dropdown-animate-up {
+  animation: dropdown-in-up 0.14s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: bottom center;
+}
+.banner-animate {
+  animation: banner-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.label-chip-animate {
+  animation: label-chip-in 0.12s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Comment editor */
+.comment-editor .ProseMirror { min-height: 72px; padding: 0; font-size: 13px; color: rgba(255,255,255,0.75); outline: none; }
+.comment-editor .ProseMirror p.is-editor-empty:first-child::before { color: rgba(255,255,255,0.2); content: attr(data-placeholder); float: left; height: 0; pointer-events: none; }
+
+/* Rendered comment HTML (dangerouslySetInnerHTML) — mirrors ProseMirror output */
+.comment-rendered ul,
+.comment-rendered .ProseMirror ul { list-style-type: disc; padding-left: 1.4em; margin: 0.3em 0; }
+.comment-rendered ol,
+.comment-rendered .ProseMirror ol { list-style-type: decimal; padding-left: 1.4em; margin: 0.3em 0; }
+.comment-rendered li,
+.comment-rendered .ProseMirror li { margin: 0.1em 0; }
+.comment-rendered p { margin: 0.2em 0; }
+.comment-rendered p:empty { display: none; }
+.comment-rendered code { background: rgba(163,230,53,0.08); color: rgba(163,230,53,0.8); border-radius: 3px; padding: 0.1em 0.35em; font-size: 11px; font-family: monospace; }
+/* Code block: pre > code */
+.comment-rendered pre {
+  background: var(--background);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  margin: 0.5em 0;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.comment-rendered pre code {
+  background: none;
+  color: rgba(255,255,255,0.75);
+  padding: 0;
+  font-size: inherit;
+  border-radius: 0;
+}
+.comment-rendered h1 { font-size: 1.2em; font-weight: 700; margin: 0.5em 0 0.2em; }
+.comment-rendered h2 { font-size: 1.05em; font-weight: 600; margin: 0.4em 0 0.2em; }
+.comment-rendered h3 { font-size: 0.95em; font-weight: 600; margin: 0.3em 0 0.15em; }
+.comment-rendered blockquote { border-left: 3px solid rgba(255,255,255,0.1); padding-left: 0.75em; color: rgba(255,255,255,0.45); margin: 0.3em 0; }
+.comment-rendered strong { font-weight: 600; color: rgba(255,255,255,0.9); }
+.comment-rendered em { font-style: italic; }
+
+/* Mention chip styles (fallback for static/serialized HTML) */
+span[data-mention] {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-size: 12px;
+  font-weight: 500;
+  vertical-align: middle;
+}
+span[data-mention][data-mention-type="agent"] {
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+span[data-mention][data-mention-type="task"],
+span[data-mention]:not([data-mention-type="agent"]) {
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.80);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Tooltip animation */
+@keyframes tooltip-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.tooltip-animate {
+  animation: tooltip-in 150ms ease forwards;
+  animation-delay: 100ms;
+  opacity: 0;
+}
+
+/* Onboarding ambient blob animation */
+@keyframes blob-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 15px) scale(0.97); }
+}
+
+/* ── Onboarding card — cinematic directional fly animation ──────────────── */
+@keyframes card-enter-from-right {
+  from { opacity: 0; transform: translateX(60px) scale(0.96); filter: blur(4px); }
+  to   { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
+}
+@keyframes card-enter-from-left {
+  from { opacity: 0; transform: translateX(-60px) scale(0.96); filter: blur(4px); }
+  to   { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
+}
+@keyframes card-exit-to-left {
+  from { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
+  to   { opacity: 0; transform: translateX(-60px) scale(0.94); filter: blur(6px); }
+}
+@keyframes card-exit-to-right {
+  from { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
+  to   { opacity: 0; transform: translateX(60px) scale(0.94); filter: blur(6px); }
+}
+.card-enter-forward { animation: card-enter-from-right 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.card-enter-back    { animation: card-enter-from-left  0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.card-exit-forward  { animation: card-exit-to-left     0.18s cubic-bezier(0.4, 0, 1, 1)     forwards; }
+.card-exit-back     { animation: card-exit-to-right    0.18s cubic-bezier(0.4, 0, 1, 1)     forwards; }
+
+/* ── Staggered content fade-up inside each step ──────────────────────────── */
+@keyframes fade-up-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.stagger-children > * { opacity: 0; }
+.stagger-children > *:nth-child(1) { animation: fade-up-in 0.25s ease forwards; animation-delay: 60ms; }
+.stagger-children > *:nth-child(2) { animation: fade-up-in 0.25s ease forwards; animation-delay: 100ms; }
+.stagger-children > *:nth-child(3) { animation: fade-up-in 0.25s ease forwards; animation-delay: 140ms; }
+.stagger-children > *:nth-child(4) { animation: fade-up-in 0.25s ease forwards; animation-delay: 180ms; }
+.stagger-children > *:nth-child(5) { animation: fade-up-in 0.25s ease forwards; animation-delay: 220ms; }
+.stagger-children > *:nth-child(6) { animation: fade-up-in 0.25s ease forwards; animation-delay: 260ms; }
+.stagger-children > *:nth-child(7) { animation: fade-up-in 0.25s ease forwards; animation-delay: 300ms; }
+
+/* AI thinking animated dots */
+@keyframes thinking-dot {
+  0%, 60%, 100% { opacity: 0.2; transform: scale(0.75); }
+  30%            { opacity: 1;   transform: scale(1);    }
+}
+.thinking-dot-1 { animation: thinking-dot 1.4s ease-in-out infinite 0ms;   }
+.thinking-dot-2 { animation: thinking-dot 1.4s ease-in-out infinite 220ms; }
+.thinking-dot-3 { animation: thinking-dot 1.4s ease-in-out infinite 440ms; }
+
+/* Key input loading pulse */
+@keyframes input-loading-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+.key-input-loading { animation: input-loading-pulse 1.6s ease-in-out infinite; }
+
+/* Onboarding prose (soul summary) */
+.onboarding-prose h2 {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 1.4em;
+  margin-bottom: 0.35em;
+  font-family: var(--font-geist-mono, monospace);
+}
+.onboarding-prose h2:first-child { margin-top: 0; }
+.onboarding-prose p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.65;
+  margin: 0;
 }

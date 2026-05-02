@@ -1,5 +1,7 @@
 import { auth } from "@/lib/auth/server";
 import { countPendingApprovalsForUser } from "@/lib/approvals/queries";
+import { loadUserBusinesses } from "@/lib/dashboard/business-scope";
+import { listTeamsByBusiness } from "@/lib/teams/actions";
 
 import { AppSidebar } from "./sidebar";
 
@@ -12,12 +14,34 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
     typeof uid === "string" ? await countPendingApprovalsForUser(uid) : 0;
   const userEmail = session?.user?.email ?? null;
 
+  let sidebarTeams: { id: string; name: string }[] = [];
+  let primaryBusinessId: string | null = null;
+
+  if (typeof uid === "string") {
+    try {
+      const businesses = await loadUserBusinesses();
+      primaryBusinessId = businesses[0]?.id ?? null;
+      if (primaryBusinessId) {
+        const teams = await listTeamsByBusiness(primaryBusinessId);
+        sidebarTeams = teams.map((t) => ({ id: t.id, name: t.name }));
+      }
+    } catch {
+      // gracefully skip sidebar teams if fetch fails
+    }
+  }
+
   return (
-    <div className="bg-background flex min-h-svh flex-col md:flex-row">
-      <AppSidebar pendingApprovalsCount={pending} userEmail={userEmail} />
-      <div className="flex min-h-svh min-w-0 flex-1 flex-col pt-12 md:pt-0">
-        <div className="flex flex-1 flex-col">{children}</div>
-      </div>
+    <div className="flex h-svh overflow-hidden bg-background">
+      <AppSidebar
+        pendingApprovalsCount={pending}
+        userEmail={userEmail}
+        teams={sidebarTeams}
+        businessId={primaryBusinessId}
+      />
+      {/* Only this area scrolls — sidebar stays locked */}
+      <main className="min-w-0 flex-1 overflow-y-auto pt-12 lg:pt-0">
+        {children}
+      </main>
     </div>
   );
 }

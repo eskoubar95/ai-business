@@ -1,15 +1,15 @@
 import Link from "next/link";
+import { GitFork } from "lucide-react";
 
-import type { TaskRow } from "@/lib/tasks/task-tree";
+import { cn } from "@/lib/utils";
+import type { TaskRow, TaskStatus } from "@/lib/tasks/task-tree";
 
-import type { TaskStatus } from "@/lib/tasks/actions";
-
-const STATUS_LABEL: Record<TaskStatus, string> = {
-  backlog: "Backlog",
-  in_progress: "In progress",
-  blocked: "Blocked",
-  in_review: "In review",
-  done: "Done",
+const STATUS_DOT: Record<TaskStatus, string> = {
+  backlog: "bg-muted-foreground/40",
+  in_progress: "bg-primary animate-pulse",
+  blocked: "bg-destructive",
+  in_review: "bg-amber-400",
+  done: "bg-emerald-500",
 };
 
 export function TaskCard({
@@ -17,11 +17,13 @@ export function TaskCard({
   businessId,
   agentName,
   teamName,
+  showLabels = true,
 }: {
   task: TaskRow;
   businessId: string;
   agentName: string | null;
   teamName: string | null;
+  showLabels?: boolean;
 }) {
   const href = `/dashboard/tasks/${task.id}?businessId=${encodeURIComponent(businessId)}`;
 
@@ -29,24 +31,56 @@ export function TaskCard({
     <Link
       href={href}
       data-testid={`task-card-${task.id}`}
-      className="border-border bg-card hover:border-primary/40 block rounded-lg border p-3 text-sm shadow-sm transition-colors"
+      className={cn(
+        "group block rounded-md border border-border bg-card px-3 py-2.5",
+        "hover:border-white/[0.14] hover:bg-white/[0.02] transition-all duration-150 cursor-pointer",
+      )}
     >
-      <span className="text-foreground block font-medium leading-snug">{task.title}</span>
-      <span className="text-muted-foreground mt-2 block text-xs">
-        {agentName ? <>Assigned: {agentName}</> : <>Unassigned</>}
-        {teamName ? (
-          <>
-            {" · "}
-            Team: {teamName}
-          </>
-        ) : null}
-      </span>
-      <span className="text-muted-foreground mt-1 block text-[10px] uppercase tracking-wide">
-        {STATUS_LABEL[task.status]}
-      </span>
-      {task.status === "blocked" && task.blockedReason ? (
-        <span className="text-destructive mt-2 line-clamp-2 block text-xs">{task.blockedReason}</span>
-      ) : null}
+      {/* Row 1: status dot + title + agent monogram */}
+      <div className="flex items-start gap-2">
+        <span className={cn("mt-[5px] size-1.5 shrink-0 rounded-full", STATUS_DOT[task.status])} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="block truncate text-[13px] font-medium leading-snug text-foreground/90 tracking-[-0.01em]">
+              {task.title}
+            </span>
+            {agentName ? (
+              <span className="shrink-0 inline-flex size-5 items-center justify-center rounded bg-white/[0.08] font-mono text-[9px] font-semibold text-foreground/50">
+                {agentName.slice(0, 2).toUpperCase()}
+              </span>
+            ) : null}
+          </div>
+
+          {/* Row 2: meaningful chips */}
+          {showLabels ? (
+            <div className="mt-1.5 flex flex-wrap items-center gap-1">
+              {task.teamId && teamName ? (
+                <span className="flex items-center gap-1 font-mono text-[10px] border border-border bg-white/[0.04] rounded px-1.5 py-0.5 text-muted-foreground/45">
+                  <span className="size-1 rounded-full bg-blue-400/50 shrink-0" />
+                  {teamName.slice(0, 3).toUpperCase()}
+                </span>
+              ) : (
+                <span className="font-mono text-[10px] border border-border bg-white/[0.04] rounded px-1.5 py-0.5 text-muted-foreground/45">
+                  Feature
+                </span>
+              )}
+              {task.approvalId ? (
+                <span className="flex items-center gap-0.5 font-mono text-[10px] border border-border bg-white/[0.04] rounded px-1.5 py-0.5 text-primary/60">
+                  <GitFork className="size-2.5" />
+                  ↑ 1 PR
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+
+          {/* Blocked reason */}
+          {task.status === "blocked" && task.blockedReason ? (
+            <span className="mt-1.5 block text-[11px] text-destructive/70 line-clamp-2 leading-snug">
+              {task.blockedReason}
+            </span>
+          ) : null}
+        </div>
+      </div>
     </Link>
   );
 }

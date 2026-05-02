@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import {
   AlertCircle,
   Bot,
@@ -8,24 +8,14 @@ import {
   ShieldAlert,
 } from "lucide-react";
 
-import { PendingApprovalsQueueClient } from "@/components/dashboard/pending-approvals-queue-client";
-import { PageWrapper } from "@/components/ui/page-wrapper";
 import { PageHeader } from "@/components/ui/page-header";
-import { StatCard } from "@/components/ui/stat-card";
-import { Button } from "@/components/ui/button";
+import { PendingApprovalsQueueClient } from "@/components/dashboard/pending-approvals-queue-client";
 import { auth } from "@/lib/auth/server";
-import { getDb } from "@/db/index";
-import { businesses, userBusinesses } from "@/db/schema";
 import {
   getDashboardActivityFeed,
   getDashboardSummaryStats,
-  getTaskStatusBreakdownForUser,
   listPendingApprovalsPreviewForUser,
 } from "@/lib/dashboard/home-data";
-import {
-  getAgentDashboardStatsForUserBusinesses,
-} from "@/lib/tasks/dashboard-queries";
-import { eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -38,32 +28,62 @@ function formatRelativeTime(iso: Date): string {
   if (hours < 48) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   if (days < 14) return `${days}d ago`;
-  return iso.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return iso.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function TaskStatusBar({
-  b,
+function Stat({
+  icon: Icon,
+  label,
+  value,
+  accent,
 }: {
-  b: { backlog: number; inProgress: number; blocked: number; inReview: number; done: number };
+  icon: typeof PlayCircle;
+  label: string;
+  value: number;
+  accent?: "lime" | "amber" | "red";
 }) {
-  const total = b.backlog + b.inProgress + b.blocked + b.inReview + b.done;
-  if (total === 0) {
-    return <div className="bg-muted mt-2 h-2 w-full rounded-full" />;
-  }
-  const pct = (n: number) => `${Math.max(8, Math.round((n / total) * 100))}%`;
+  const valueColor =
+    accent === "lime"
+      ? "text-primary"
+      : accent === "amber"
+        ? "text-warning"
+        : accent === "red" && value > 0
+          ? "text-destructive"
+          : "text-foreground";
+
+  const iconColor =
+    accent === "lime"
+      ? "text-primary/60"
+      : accent === "amber"
+        ? "text-warning/60"
+        : accent === "red" && value > 0
+          ? "text-destructive/60"
+          : "text-muted-foreground/40";
 
   return (
-    <div className="mt-2 flex h-2 w-full overflow-hidden rounded-full">
-      <div className="h-full bg-slate-500/60" style={{ width: pct(b.backlog) }} title="Backlog" />
-      <div className="bg-primary h-full" style={{ width: pct(b.inProgress) }} title="In progress" />
-      <div className="h-full bg-amber-500" style={{ width: pct(b.blocked) }} title="Blocked" />
-      <div className="h-full bg-sky-500" style={{ width: pct(b.inReview) }} title="In review" />
-      <div className="h-full bg-emerald-500" style={{ width: pct(b.done) }} title="Done" />
+    <div className="flex flex-col gap-3 rounded-md border border-border bg-card px-4 py-3.5">
+      <div className="flex items-center justify-between">
+        <p className="section-label">{label}</p>
+        <Icon className={`size-3.5 ${iconColor}`} aria-hidden />
+      </div>
+      <p className={`text-2xl font-semibold tabular-nums tracking-tight ${valueColor}`}>
+        {value}
+      </p>
     </div>
+  );
+}
+
+function ActivityKindBadge({ kind }: { kind: string }) {
+  const map: Record<string, { label: string; cls: string }> = {
+    task: { label: "TASK", cls: "text-primary/70 bg-primary/10" },
+    approval: { label: "APPR", cls: "text-warning/70 bg-warning/10" },
+    agent_event: { label: "AGNT", cls: "text-blue-400/70 bg-blue-400/10" },
+  };
+  const { label, cls } = map[kind] ?? { label: kind.slice(0, 4).toUpperCase(), cls: "text-muted-foreground bg-white/[0.05]" };
+  return (
+    <span className={`inline-flex items-center rounded px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-widest ${cls}`}>
+      {label}
+    </span>
   );
 }
 
@@ -72,193 +92,133 @@ export default async function DashboardPage() {
   const userId = session?.user?.id;
   if (!userId || typeof userId !== "string") redirect("/auth/sign-in");
 
-  const db = getDb();
-  const rows = await db
-    .select({
-      id: businesses.id,
-      name: businesses.name,
-      createdAt: businesses.createdAt,
-    })
-    .from(userBusinesses)
-    .innerJoin(businesses, eq(userBusinesses.businessId, businesses.id))
-    .where(eq(userBusinesses.userId, userId));
-
-  const [stats, activity, pendingPreview, agentStats, breakdown] = await Promise.all([
+  const [stats, activity, pendingPreview] = await Promise.all([
     getDashboardSummaryStats(userId),
-    getDashboardActivityFeed(userId, 10),
+    getDashboardActivityFeed(userId, 20),
     listPendingApprovalsPreviewForUser(userId, 5),
-    getAgentDashboardStatsForUserBusinesses(),
-    getTaskStatusBreakdownForUser(),
   ]);
 
   return (
-    <PageWrapper className="mx-auto max-w-screen-2xl px-6 py-6">
-      <PageHeader
-        breadcrumb={
-          <div>
-            <h1 className="text-foreground text-lg font-semibold">Dashboard</h1>
-            <p className="text-muted-foreground mt-0.5 text-xs">
-              Signed in as{" "}
-              <span className="text-foreground font-medium">
-                {session?.user?.email ?? session?.user?.name ?? "user"}
-              </span>
-            </p>
-          </div>
-        }
-        actions={
-          <Button asChild className="cursor-pointer" data-testid="dashboard-new-business">
-            <Link href="/dashboard/onboarding">New business</Link>
-          </Button>
-        }
-        className="px-0 pt-0"
-      />
+    <div className="flex min-h-full flex-col">
+      <PageHeader title="Command Center" />
 
-      <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          icon={PlayCircle}
-          label="Tasks in progress"
-          value={stats.tasksInProgress}
-        />
-        <StatCard
-          icon={AlertCircle}
-          label="Blocked tasks"
-          value={stats.blockedTasks}
-        />
-        <StatCard
-          icon={ShieldAlert}
-          label="Pending approvals"
-          value={stats.pendingApprovals}
-          className={
-            stats.pendingApprovals > 0 ? "ring-destructive/40 ring-2" : undefined
-          }
-        />
-        <StatCard icon={Bot} label="Active agents" value={stats.activeAgents} />
-      </section>
-
-      <section className="mt-10 grid gap-6 lg:grid-cols-2">
-        <div className="border-border bg-card rounded-lg border p-4">
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold">Activity</h2>
-            <Link
-              href="/dashboard/tasks"
-              className="text-primary cursor-pointer text-xs font-medium hover:underline"
-            >
-              View all
-            </Link>
+      <div className="flex-1 px-6 py-5 space-y-5">
+        {/* Stat row — Supabase style with section label above */}
+        <div>
+          <p className="section-label mb-3">Overview</p>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Stat icon={PlayCircle} label="Tasks in progress" value={stats.tasksInProgress} accent="lime" />
+            <Stat icon={AlertCircle} label="Blocked tasks" value={stats.blockedTasks} accent="amber" />
+            <Stat icon={ShieldAlert} label="Pending approvals" value={stats.pendingApprovals} accent="red" />
+            <Stat icon={Bot} label="Active agents" value={stats.activeAgents} accent="lime" />
           </div>
-          {activity.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No recent activity yet.</p>
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {activity.map((item) => (
-                <li key={item.id} className="flex gap-3 text-sm">
-                  <span
-                    className="bg-accent text-primary mt-0.5 size-8 shrink-0 rounded-full text-center text-xs leading-8 font-semibold"
-                    aria-hidden
+        </div>
+
+        {/* Activity + Approvals — two columns, stretch to fill */}
+        <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
+          {/* Activity feed — dense log table à la Supabase */}
+          <div className="flex flex-col rounded-md border border-border bg-card overflow-hidden">
+            <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3">
+              <div>
+                <h2 className="text-[13px] font-medium text-foreground">Activity</h2>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  Recent events across all workspaces
+                </p>
+              </div>
+              <Link
+                href="/dashboard/tasks"
+                className="cursor-pointer text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                View tasks →
+              </Link>
+            </div>
+
+            {activity.length === 0 ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-2 py-16 text-center">
+                <div className="size-8 rounded-full border border-border flex items-center justify-center">
+                  <PlayCircle className="size-4 text-muted-foreground/40" />
+                </div>
+                <p className="text-[13px] text-muted-foreground">No activity yet</p>
+                <p className="text-[11px] text-muted-foreground/50">
+                  Activity appears here when tasks and agents are active
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                {/* Table header */}
+                <div className="grid grid-cols-[80px_1fr_80px] border-b border-white/[0.05] px-4 py-1.5">
+                  <span className="section-label">Type</span>
+                  <span className="section-label">Event</span>
+                  <span className="section-label text-right">Time</span>
+                </div>
+                {/* Rows */}
+                {activity.map((item, i) => (
+                  <div
+                    key={item.id}
+                    className={`grid grid-cols-[80px_1fr_80px] items-center gap-2 px-4 py-2 ${
+                      i < activity.length - 1 ? "border-b border-white/[0.04]" : ""
+                    } hover:bg-white/[0.02] transition-colors`}
                   >
-                    {item.kind === "task" ? "T" : item.kind === "approval" ? "A" : "●"}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-foreground leading-snug">{item.label}</p>
-                    {item.sublabel ? (
-                      <p className="text-muted-foreground mt-0.5 text-xs">{item.sublabel}</p>
-                    ) : null}
-                    <p className="text-muted-foreground mt-1 text-[11px] tabular-nums">
+                    <div>
+                      <ActivityKindBadge kind={item.kind} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-[12px] text-foreground/90 leading-snug">
+                        {item.label}
+                      </p>
+                      {item.sublabel && (
+                        <p className="truncate font-mono text-[10px] text-muted-foreground/50 mt-0.5">
+                          {item.sublabel}
+                        </p>
+                      )}
+                    </div>
+                    <p className="text-right font-mono text-[10px] text-muted-foreground/40 tabular-nums">
                       {formatRelativeTime(item.at)}
                     </p>
                   </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="border-border bg-card rounded-lg border p-4">
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold">Approvals</h2>
-              {stats.pendingApprovals > 0 ? (
-                <span className="bg-destructive text-destructive-foreground rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums">
-                  {stats.pendingApprovals > 99 ? "99+" : stats.pendingApprovals}
-                </span>
-              ) : null}
-            </div>
-            <Link
-              href="/dashboard/approvals"
-              className="text-primary cursor-pointer text-xs font-medium hover:underline"
-            >
-              View all
-            </Link>
+                ))}
+              </div>
+            )}
           </div>
-          {stats.pendingApprovals === 0 ? (
-            <div className="text-muted-foreground flex items-center gap-2 py-6 text-sm">
-              <CheckCircle2 className="size-5 shrink-0 text-emerald-500" aria-hidden />
-              All caught up
-            </div>
-          ) : (
-            <PendingApprovalsQueueClient items={pendingPreview} />
-          )}
-        </div>
-      </section>
 
-      <section className="mt-10">
-        <h2 className="mb-4 text-sm font-semibold">Businesses</h2>
-        {rows.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            No businesses yet.{" "}
-            <Link href="/dashboard/onboarding" className="text-primary underline">
-              Create one
-            </Link>{" "}
-            to get started.
-          </p>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {rows.map((b) => {
-              const a = agentStats.get(b.id);
-              const agentCount = a?.agentCount ?? 0;
-              const bd = breakdown.get(b.id) ?? {
-                backlog: 0,
-                inProgress: 0,
-                blocked: 0,
-                inReview: 0,
-                done: 0,
-              };
-              const last = a?.lastAgentActivityAt;
-              return (
-                <div
-                  key={b.id}
-                  data-testid={`dashboard-business-${b.id}`}
-                  className="border-border bg-card hover:border-primary/30 flex flex-col rounded-lg border p-4 transition-[transform,box-shadow] duration-150 hover:-translate-y-px hover:shadow-md"
-                >
-                  <div className="text-foreground font-medium">{b.name}</div>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    {agentCount} agent{agentCount === 1 ? "" : "s"}
-                    {last ? ` · last activity ${formatRelativeTime(last)}` : ""}
-                  </p>
-                  <TaskStatusBar b={bd} />
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Button asChild size="sm" variant="secondary" className="cursor-pointer">
-                      <Link
-                        href={`/dashboard/agents?businessId=${encodeURIComponent(b.id)}`}
-                      >
-                        Open
-                      </Link>
-                    </Button>
-                    <Button asChild size="sm" variant="ghost" className="cursor-pointer">
-                      <Link
-                        href={`/dashboard/tasks?businessId=${encodeURIComponent(b.id)}`}
-                        data-testid={`dashboard-business-tasks-${b.id}`}
-                      >
-                        Tasks
-                      </Link>
-                    </Button>
-                  </div>
+          {/* Approvals queue */}
+          <div className="flex flex-col rounded-md border border-border bg-card overflow-hidden">
+            <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-[13px] font-medium text-foreground">Approvals</h2>
+                  {stats.pendingApprovals > 0 && (
+                    <span className="rounded-full bg-destructive/90 px-1.5 py-0.5 font-mono text-[9px] font-semibold text-white tabular-nums">
+                      {stats.pendingApprovals > 99 ? "99+" : stats.pendingApprovals}
+                    </span>
+                  )}
                 </div>
-              );
-            })}
+                <p className="mt-0.5 text-[11px] text-muted-foreground">Human approval gates</p>
+              </div>
+              <Link
+                href="/dashboard/approvals"
+                className="cursor-pointer text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                View all →
+              </Link>
+            </div>
+
+            {stats.pendingApprovals === 0 ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-2 py-12 text-center">
+                <CheckCircle2 className="size-5 text-success/60" aria-hidden />
+                <p className="text-[13px] text-muted-foreground">All caught up</p>
+                <p className="text-[11px] text-muted-foreground/50">
+                  No approvals waiting for review
+                </p>
+              </div>
+            ) : (
+              <div className="p-3">
+                <PendingApprovalsQueueClient items={pendingPreview} />
+              </div>
+            )}
           </div>
-        )}
-      </section>
-    </PageWrapper>
+        </div>
+      </div>
+    </div>
   );
 }

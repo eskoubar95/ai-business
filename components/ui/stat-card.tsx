@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export function StatCard({
@@ -7,30 +8,55 @@ export function StatCard({
   label,
   value,
   className,
+  accent = "default",
 }: {
   icon: LucideIcon;
   label: string;
   value: React.ReactNode;
   className?: string;
+  accent?: "default" | "lime" | "amber" | "red";
 }) {
+  const iconColor =
+    accent === "lime"
+      ? "text-primary"
+      : accent === "amber"
+        ? "text-warning"
+        : accent === "red"
+          ? "text-destructive"
+          : "text-muted-foreground";
+
+  const iconBg =
+    accent === "lime"
+      ? "bg-primary/10"
+      : accent === "amber"
+        ? "bg-warning/10"
+        : accent === "red"
+          ? "bg-destructive/10"
+          : "bg-white/[0.04]";
+
   return (
-    <div
-      className={cn(
-        "border-border bg-card hover:border-primary/30 group cursor-default rounded-lg border p-4 shadow-xs transition-[transform,box-shadow] duration-150 ease-out hover:-translate-y-px hover:shadow-md",
-        className,
-      )}
+    <Card
+      padding="px-4 py-3.5"
+      interactive
+      className={cn("group relative overflow-hidden", className)}
     >
-      <div className="flex items-start gap-3">
-        <span className="bg-accent text-primary ring-border/50 flex size-10 items-center justify-center rounded-md ring-1">
-          <Icon className="size-5" aria-hidden />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="text-foreground text-2xl font-semibold tabular-nums tracking-tight">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="section-label">{label}</div>
+          <div className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
             {value}
           </div>
-          <div className="text-muted-foreground mt-1 text-xs font-medium">{label}</div>
         </div>
+        <span
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-md",
+            iconBg,
+            iconColor,
+          )}
+        >
+          <Icon className="size-4" aria-hidden />
+        </span>
       </div>
-    </div>
+    </Card>
   );
 }

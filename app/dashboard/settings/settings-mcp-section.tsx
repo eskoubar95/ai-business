@@ -35,14 +35,8 @@ export function SettingsMcpSection({ businessId }: { businessId: string }) {
 
   return (
     <section className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-medium">MCP Library</h2>
-        <p className="text-muted-foreground text-sm">
-          Connect MCP servers and map credentials to agents for this business.
-        </p>
-      </div>
       {integrationsLoading ? (
-        <p className="text-muted-foreground text-sm">Loading MCP library…</p>
+        <p className="text-[12px] text-muted-foreground/40">Loading MCP library…</p>
       ) : integrations ? (
         <McpLibrary
           businessId={businessId}
@@ -50,7 +44,7 @@ export function SettingsMcpSection({ businessId }: { businessId: string }) {
           onChanged={() => loadSettingsIntegrationsPanel(businessId).then(setIntegrations)}
         />
       ) : (
-        <p className="text-muted-foreground text-sm">Could not load MCP library.</p>
+        <p className="text-[12px] text-muted-foreground/40">Could not load MCP library.</p>
       )}
     </section>
   );

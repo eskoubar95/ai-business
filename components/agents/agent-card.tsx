@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Suspense } from "react";
 
-import { AgentStatusBadge } from "@/components/agents/agent-status-badge";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import type { AgentLifecycleStatus } from "@/lib/orchestration/events";
 
 export type AgentCardAgent = {
   id: string;
@@ -9,42 +10,86 @@ export type AgentCardAgent = {
   role: string;
 };
 
+function statusDot(status: AgentLifecycleStatus) {
+  switch (status) {
+    case "working":
+      return "bg-status-active animate-pulse";
+    case "awaiting_approval":
+      return "bg-warning";
+    case "idle":
+    default:
+      return "bg-status-idle";
+  }
+}
+
+function statusLabel(status: AgentLifecycleStatus) {
+  switch (status) {
+    case "working":
+      return { text: "Working", cls: "text-status-active" };
+    case "awaiting_approval":
+      return { text: "Awaiting approval", cls: "text-warning" };
+    default:
+      return { text: "Idle", cls: "text-muted-foreground" };
+  }
+}
+
 export function AgentCard(props: {
   agent: AgentCardAgent;
   businessId: string;
   skillCount: number;
   mcpCount: number;
+  status: AgentLifecycleStatus;
 }) {
-  const { agent: a, businessId, skillCount, mcpCount } = props;
+  const { agent: a, businessId, skillCount, mcpCount, status } = props;
+  const dot = statusDot(status);
+  const lbl = statusLabel(status);
 
   return (
-    <li>
+    <Card as="li" padding="p-4" interactive className="group flex flex-col">
       <Link
         href={`/dashboard/agents/${a.id}?businessId=${encodeURIComponent(businessId)}`}
         data-testid={`agent-card-${a.id}`}
-        className="border-border hover:bg-muted/40 flex flex-col gap-2 rounded-lg border p-4"
+        className="flex flex-col"
       >
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="font-medium">{a.name}</span>
-          <Suspense
-            fallback={
-              <span
-                data-testid={`agent-status-${a.id}`}
-                className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs uppercase"
-              >
-                …
-              </span>
-            }
+        {/* Top row: monogram + name/role + status */}
+        <div className="flex items-start gap-3">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.07] font-mono text-[11px] font-semibold text-foreground/60 mt-0.5">
+            {a.name.slice(0, 2).toUpperCase()}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[13px] font-medium tracking-[-0.01em] text-foreground">
+              {a.name}
+            </p>
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{a.role}</p>
+          </div>
+          <span
+            data-testid={`agent-status-${a.id}`}
+            className="flex shrink-0 items-center gap-1.5 pt-0.5"
           >
-            <AgentStatusBadge agentId={a.id} />
-          </Suspense>
+            <span className={cn("size-1.5 rounded-full", dot)} />
+            <span className={cn("text-[10px] font-medium tracking-widest uppercase", lbl.cls)}>
+              {lbl.text}
+            </span>
+          </span>
         </div>
-        <p className="text-muted-foreground text-sm">{a.role}</p>
-        <div className="text-muted-foreground flex gap-3 text-xs">
-          <span data-testid={`agent-skills-count-${a.id}`}>{skillCount} skills</span>
-          <span data-testid={`agent-mcp-count-${a.id}`}>{mcpCount} MCP</span>
+
+        {/* Bottom: skills + MCP metadata */}
+        <div className="mt-4 flex items-center gap-3 border-t border-white/[0.05] pt-3">
+          <span
+            data-testid={`agent-skills-count-${a.id}`}
+            className="font-mono text-[11px] text-muted-foreground/70"
+          >
+            {skillCount} skills
+          </span>
+          <span className="text-white/[0.15]">·</span>
+          <span
+            data-testid={`agent-mcp-count-${a.id}`}
+            className="font-mono text-[11px] text-muted-foreground/70"
+          >
+            {mcpCount} MCP
+          </span>
         </div>
       </Link>
-    </li>
+    </Card>
   );
 }

@@ -2,15 +2,12 @@ import { redirect } from "next/navigation";
 
 import type { SettingsSectionId } from "@/components/settings/settings-subnav";
 import { SettingsSubNav } from "@/components/settings/settings-subnav";
-import { BusinessSelector } from "@/components/business-selector";
-import { PageHeader } from "@/components/ui/page-header";
-import { PageWrapper } from "@/components/ui/page-wrapper";
 import { auth } from "@/lib/auth/server";
 import { resolveBusinessIdParam } from "@/lib/dashboard/business-scope";
 import { getSettingsPageState } from "@/lib/settings/actions";
 
-import { NotionSettingsSection } from "./notion-settings-section";
 import { SettingsAccountSection } from "./settings-account-section";
+import { SettingsBusinessProfileSection } from "./settings-business-profile-section";
 import { SettingsBusinessSection } from "./settings-business-section";
 import { SettingsMcpSection } from "./settings-mcp-section";
 import { SettingsWebhooksSection } from "./settings-webhooks-section";
@@ -21,9 +18,9 @@ function parseSection(raw: string | undefined): SettingsSectionId {
   if (
     raw === "account" ||
     raw === "business" ||
+    raw === "workspace" ||
     raw === "mcp" ||
-    raw === "webhooks" ||
-    raw === "notion"
+    raw === "webhooks"
   ) {
     return raw;
   }
@@ -45,65 +42,87 @@ export default async function SettingsPage({
 
   if (businesses.length === 0) {
     return (
-      <PageWrapper className="mx-auto max-w-screen-2xl px-6 py-6">
-        <PageHeader
-          breadcrumb={
-            <div>
-              <h1 className="text-foreground text-lg font-semibold">Settings</h1>
-              <p className="text-muted-foreground mt-0.5 text-xs">
-                Account credentials and per-business workspace defaults.
-              </p>
-            </div>
-          }
-          className="px-0 pt-0"
-        />
-        <p className="text-muted-foreground mt-6 text-sm">
-          Create a business from “New business” before configuring workspace paths.
-        </p>
-      </PageWrapper>
+      <div className="flex h-svh flex-col overflow-hidden">
+        <header className="flex h-14 shrink-0 items-center border-b border-white/[0.07] px-6">
+          <h1 className="text-[14px] font-semibold tracking-[-0.01em] text-foreground">Settings</h1>
+        </header>
+        <div className="flex flex-1 items-center justify-center">
+          <p className="text-[13px] text-muted-foreground/50">
+            Create a workspace from &ldquo;New business&rdquo; before configuring settings.
+          </p>
+        </div>
+      </div>
     );
   }
 
   const businessRow = businesses.find((b) => b.id === businessId)!;
-  const selectorBusinesses = businesses.map((b) => ({ id: b.id, name: b.name }));
 
-  const sectionIntro =
-    section === "account"
-      ? "User-level credentials and encrypted keys."
-      : section === "business"
-        ? "Paths and metadata for the selected business."
-        : section === "mcp"
-          ? "Model Context Protocol integrations for agents."
-          : section === "webhooks"
-            ? "Inbound webhooks and delivery audit log."
-            : "Notion MCP connection and task sync history.";
+  const SECTION_META: Record<SettingsSectionId, { title: string; description: string }> = {
+    account: {
+      title: "Cursor Integration",
+      description:
+        "Connect your Cursor API key to enable local runner integration. The key is encrypted and stored securely.",
+    },
+    business: {
+      title: "Business",
+      description: "Manage your business profile, name, and identity.",
+    },
+    workspace: {
+      title: "Workspace",
+      description: "Configure paths and metadata so Cursor CLI can find this project locally.",
+    },
+    mcp: {
+      title: "MCP Library",
+      description: "Connect MCP servers and map credentials to agents for this workspace.",
+    },
+    webhooks: {
+      title: "Webhooks",
+      description: "Inbound webhooks and delivery audit log for this workspace.",
+    },
+  };
+
+  const meta = SECTION_META[section];
 
   return (
-    <PageWrapper className="mx-auto max-w-screen-2xl px-6 py-6">
-      <PageHeader
-        breadcrumb={
-          <div>
-            <h1 className="text-foreground text-lg font-semibold">Settings</h1>
-            <p className="text-muted-foreground mt-0.5 text-xs">{sectionIntro}</p>
+    <div className="flex h-svh flex-col overflow-hidden">
+      {/* Flush header */}
+      <header className="flex h-14 shrink-0 items-center border-b border-white/[0.07] px-6">
+        <h1 className="text-[14px] font-semibold tracking-[-0.01em] text-foreground">Settings</h1>
+      </header>
+
+      {/* Two-panel layout */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left subnav panel */}
+        <div className="w-[220px] shrink-0 overflow-y-auto border-r border-white/[0.07]">
+          {/* Nav items */}
+          <nav aria-label="Settings sections" className="flex flex-col gap-0.5 p-2 pt-3">
+            <SettingsSubNav businessId={businessId} active={section} />
+          </nav>
+        </div>
+
+        {/* Right content area */}
+        <div key={section} className="animate-panel-enter flex-1 overflow-y-auto px-8 py-7">
+          {/* Section header */}
+          <div className="mb-6">
+            <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
+              {meta.title}
+            </h2>
+            <p className="mt-1 text-[12px] text-muted-foreground/50">{meta.description}</p>
           </div>
-        }
-        className="px-0 pt-0"
-      />
 
-      <BusinessSelector businesses={selectorBusinesses} currentBusinessId={businessId} />
-
-      <div className="mt-6 grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10">
-        <SettingsSubNav businessId={businessId} active={section} />
-        <div className="min-w-0">
-          {section === "account" ? <SettingsAccountSection hasCursorApiKey={hasCursorApiKey} /> : null}
+          {section === "account" ? (
+            <SettingsAccountSection hasCursorApiKey={hasCursorApiKey} />
+          ) : null}
           {section === "business" ? (
+            <SettingsBusinessProfileSection businessId={businessId} business={businessRow} />
+          ) : null}
+          {section === "workspace" ? (
             <SettingsBusinessSection businessId={businessId} business={businessRow} />
           ) : null}
           {section === "mcp" ? <SettingsMcpSection businessId={businessId} /> : null}
           {section === "webhooks" ? <SettingsWebhooksSection businessId={businessId} /> : null}
-          {section === "notion" ? <NotionSettingsSection businessId={businessId} /> : null}
         </div>
       </div>
-    </PageWrapper>
+    </div>
   );
 }

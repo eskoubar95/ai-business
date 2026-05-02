@@ -2,19 +2,14 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 
-export type SettingsSectionId =
-  | "account"
-  | "business"
-  | "mcp"
-  | "webhooks"
-  | "notion";
+export type SettingsSectionId = "account" | "business" | "workspace" | "mcp" | "webhooks";
 
-const ITEMS: { id: SettingsSectionId; label: string }[] = [
-  { id: "account", label: "Account" },
-  { id: "business", label: "Business" },
-  { id: "mcp", label: "MCP Library" },
-  { id: "webhooks", label: "Webhooks" },
-  { id: "notion", label: "Notion" },
+const ITEMS: { id: SettingsSectionId; label: string; description: string }[] = [
+  { id: "account", label: "Cursor", description: "API key & runner integration" },
+  { id: "business", label: "Business", description: "Profile, name & identity" },
+  { id: "workspace", label: "Workspace", description: "Local path & GitHub" },
+  { id: "mcp", label: "MCP", description: "GitHub, Notion, Context7" },
+  { id: "webhooks", label: "Webhooks", description: "Inbound triggers & log" },
 ];
 
 export function SettingsSubNav({
@@ -27,10 +22,7 @@ export function SettingsSubNav({
   const prefix = `/dashboard/settings?businessId=${encodeURIComponent(businessId)}`;
 
   return (
-    <nav
-      aria-label="Settings sections"
-      className="border-border flex flex-col gap-1 border-b pb-4 lg:border-b-0 lg:pb-0"
-    >
+    <>
       {ITEMS.map((item) => {
         const href = `${prefix}&section=${item.id}`;
         const isActive = active === item.id;
@@ -40,14 +32,24 @@ export function SettingsSubNav({
             href={href}
             data-testid={`settings-nav-${item.id}`}
             className={cn(
-              "hover:bg-accent rounded-md px-3 py-2 text-sm transition-colors duration-150",
-              isActive && "bg-accent text-primary font-medium",
+              "flex flex-col gap-0.5 rounded-md px-3 py-2.5 transition-all duration-150",
+              isActive
+                ? "bg-white/[0.07] text-foreground"
+                : "text-muted-foreground/60 hover:bg-white/[0.04] hover:text-foreground/80",
             )}
           >
-            {item.label}
+            <span className="text-[12.5px] font-medium tracking-[-0.01em]">{item.label}</span>
+            <span
+              className={cn(
+                "text-[11px]",
+                isActive ? "text-muted-tier-label" : "text-muted-tier-faint",
+              )}
+            >
+              {item.description}
+            </span>
           </Link>
         );
       })}
-    </nav>
+    </>
   );
 }

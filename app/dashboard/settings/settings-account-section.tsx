@@ -3,8 +3,8 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import { saveUserSettings } from "@/lib/settings/actions";
+import { PrimaryButton } from "@/components/ui/primary-button";
 
 export function SettingsAccountSection({ hasCursorApiKey }: { hasCursorApiKey: boolean }) {
   const [apiKey, setApiKey] = useState("");
@@ -24,36 +24,35 @@ export function SettingsAccountSection({ hasCursorApiKey }: { hasCursorApiKey: b
   }
 
   return (
-    <section className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-medium">Account</h2>
-        <p className="text-muted-foreground text-sm">
-          Cursor API key for local runner integration. API key is encrypted and stored securely.
-        </p>
-      </div>
+    <section className="flex max-w-md flex-col gap-5">
       {hasCursorApiKey ? (
-        <p className="text-muted-foreground text-sm" data-testid="settings-api-key-saved">
-          A Cursor API key is saved for your account. Enter a new key below to replace it, or clear the
-          field and save to remove the stored key.
+        <p className="text-[12px] text-muted-foreground/50" data-testid="settings-api-key-saved">
+          A Cursor API key is already saved. Enter a new key below to replace it, or clear the field
+          and save to remove it.
         </p>
       ) : null}
       <form onSubmit={onSaveAccount} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-2 text-sm font-medium">
-          Cursor API key
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="cursorApiKey" className="label-upper">
+            Cursor API key
+          </label>
           <input
+            id="cursorApiKey"
             type="password"
             name="cursorApiKey"
             autoComplete="off"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            className="border-input bg-background rounded-md border px-3 py-2 text-sm"
+            className="h-9 rounded-md border border-border bg-white/[0.04] px-3 text-[13px] text-foreground/80 placeholder:text-muted-foreground/30 focus:border-white/[0.16] focus:outline-none transition-colors disabled:opacity-50"
             placeholder="••••••••"
             disabled={accountPending}
           />
-        </label>
-        <Button type="submit" disabled={accountPending} className="cursor-pointer">
-          Save account settings
-        </Button>
+        </div>
+        <div>
+          <PrimaryButton type="submit" disabled={accountPending} loading={accountPending}>
+            {accountPending ? "Saving…" : "Save account settings"}
+          </PrimaryButton>
+        </div>
       </form>
     </section>
   );
