@@ -34,10 +34,11 @@ function monogram(name: string) {
     .toUpperCase();
 }
 
-function AgentNode({ data }: NodeProps) {
+function AgentNode({ id, data }: NodeProps) {
   const d = data as AgentData;
   return (
     <div
+      data-testid={`org-node-${id}`}
       className={cn(
         "min-w-[160px] rounded-lg border px-4 py-3 shadow-lg transition-shadow",
         d.isLead
@@ -208,6 +209,7 @@ export function TeamOrgChart({ members, leadAgentId }: Props) {
   return (
     <div
       className="h-full overflow-hidden"
+      data-testid="org-chart"
       style={{ fontFamily: "inherit" }}
     >
       <style>{`

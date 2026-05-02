@@ -260,7 +260,7 @@ export function McpInstaller({ businessId, agentId, meta }: Props) {
           const isLast = i === configs.length - 1;
 
           return (
-            <div key={c.id}>
+            <div key={c.id} data-testid={`mcp-integration-${c.id}`}>
               <div
                 className={cn(
                   "flex items-center gap-3 px-4 py-3",

@@ -33,7 +33,12 @@ export function TeamOverviewSection({ team }: { team: TeamDetailTeam }) {
             className="rounded-md border border-border bg-card px-4 py-3"
           >
             <p className="section-label mb-1">{s.label}</p>
-            <p className="truncate text-[15px] font-medium text-foreground">{s.value}</p>
+            <p
+              className="truncate text-[15px] font-medium text-foreground"
+              data-testid={s.label === "Lead Agent" ? "team-lead-label" : undefined}
+            >
+              {s.value}
+            </p>
           </div>
         ))}
       </div>

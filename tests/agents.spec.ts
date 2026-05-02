@@ -6,7 +6,8 @@ const hasAuth =
   !!process.env.E2E_EMAIL?.trim() && !!process.env.E2E_PASSWORD?.trim();
 
 test.describe("agent roster and teams", () => {
-  test.describe.configure({ timeout: 15 * 60_000 });
+  // Suite stays generous for cold webpack; individual steps use shorter expect timeouts.
+  test.describe.configure({ timeout: 8 * 60_000 });
 
   test.skip(
     !hasAuth,
@@ -14,7 +15,7 @@ test.describe("agent roster and teams", () => {
   );
 
   test("agents, skills, MCP badge, team org chart", async ({ page }) => {
-    test.setTimeout(15 * 60_000);
+    test.setTimeout(8 * 60_000);
     await signInWithCredentials(
       page,
       process.env.E2E_EMAIL!,
@@ -61,6 +62,7 @@ test.describe("agent roster and teams", () => {
     }
 
     await createAgentViaForm("E2E Lead", "Lead");
+    await page.getByRole("tab", { name: "Instructions" }).click();
     await page.getByTestId("agent-doc-editor-soul").fill(
       "Updated lead instructions for E2E.",
     );
@@ -68,6 +70,7 @@ test.describe("agent roster and teams", () => {
     await expect(page.getByRole("status").filter({ hasText: /soul saved/i })).toBeVisible({
       timeout: 30_000,
     });
+    await page.getByRole("tab", { name: "Skills" }).click();
     await expect(page.getByTestId("skill-create-toggle")).toBeVisible({ timeout: 30_000 });
 
     await page.getByTestId("skill-create-toggle").click();
@@ -81,12 +84,16 @@ test.describe("agent roster and teams", () => {
       timeout: 30_000,
     });
 
-    await page.getByTestId("mcp-install-open").click();
-    await expect(page.getByTestId("mcp-install-modal")).toBeVisible();
+    await page.getByRole("tab", { name: "MCP" }).click();
+    await expect(page.getByTestId("mcp-installer")).toBeVisible();
+    await page.getByTestId("mcp-configure-github").click();
+    await expect(page.getByTestId("mcp-field-token")).toBeVisible();
     await page.getByTestId("mcp-field-token").fill("ghp_dummy_token_for_e2e");
     await page.getByTestId("mcp-field-defaultOrg").fill("acme");
     await page.getByTestId("mcp-install-submit").click();
-    await expect(page.getByTestId("mcp-badge-github")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("mcp-integration-github")).toContainText("Active", {
+      timeout: 30_000,
+    });
 
     await createAgentViaForm("E2E Member One", "Member");
     await createAgentViaForm("E2E Member Two", "Member");
@@ -102,7 +109,8 @@ test.describe("agent roster and teams", () => {
 
     await page.goto(`/dashboard/teams/new?businessId=${businessId}`);
     await page.getByTestId("team-name").fill(`E2E Team ${Date.now()}`);
-    await page.getByTestId("team-lead").selectOption({ label: "E2E Lead" });
+    await page.getByTestId("team-lead").getByRole("button").click();
+    await page.getByRole("option", { name: "E2E Lead" }).click();
     const memberList = page.getByTestId("team-member-list");
     await memberList.getByRole("button", { name: /Add E2E Member One/i }).click();
     await memberList.getByRole("button", { name: /Add E2E Member Two/i }).click();
@@ -112,6 +120,7 @@ test.describe("agent roster and teams", () => {
       waitUntil: "domcontentloaded",
     });
 
+    await page.getByRole("button", { name: "Org Chart" }).click();
     await expect(page.getByTestId("org-chart")).toBeVisible();
     const orgChart = page.getByTestId("org-chart");
     await expect(orgChart.locator('[data-testid^="org-node-"]').first()).toBeVisible();
