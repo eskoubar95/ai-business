@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { TaskTreeNode } from "../actions";
+import type { TaskTreeNode } from "../task-tree";
 import { flattenTaskTree } from "../flatten-task-tree";
 
 function row(
@@ -21,6 +21,9 @@ function row(
     title: overrides.title ?? "Task",
     description: "",
     status: overrides.status ?? "backlog",
+    priority: "medium" as string | null,
+    labels: [] as string[],
+    project: null as string | null,
     blockedReason: null as string | null,
     approvalId: null as string | null,
     createdAt: new Date(),

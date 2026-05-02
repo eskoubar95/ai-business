@@ -3,20 +3,17 @@
 import { assertUserBusinessAccess } from "@/lib/grill-me/access";
 import { assertUserOwnsAgent } from "@/lib/agents/actions";
 import { getDb } from "@/db/index";
-import { approvals, tasks } from "@/db/schema";
+import { approvals, tasks, taskRelations } from "@/db/schema";
 import { requireSessionUserId } from "@/lib/roster/session";
-import { asc, eq, inArray } from "drizzle-orm";
+import { asc, desc, eq, inArray, or } from "drizzle-orm";
 
 import {
   buildDeleteOrderForSubtree,
   collectSubtreeIds,
   type TaskRow,
+  type TaskStatus,
+  type TaskTreeNode,
 } from "./task-tree";
-
-export type TaskStatus = (typeof tasks.$inferSelect)["status"];
-
-export type TaskTreeNode = TaskRow & { children: TaskTreeNode[] };
-export type { TaskRow };
 
 export async function getTaskById(taskId: string): Promise<TaskRow | null> {
   const userId = await requireSessionUserId();
@@ -74,6 +71,8 @@ export async function createTask(
     teamId?: string | null;
     agentId?: string | null;
     parentTaskId?: string | null;
+    status?: TaskStatus;
+    blockedReason?: string | null;
   },
 ): Promise<{ id: string }> {
   const userId = await requireSessionUserId();
@@ -83,6 +82,8 @@ export async function createTask(
   if (!title) throw new Error("Title is required");
 
   await assertParentInSameBusiness(businessId, input.parentTaskId ?? null);
+
+  const status = input.status ?? "backlog";
 
   const db = getDb();
   const [row] = await db
@@ -94,7 +95,8 @@ export async function createTask(
       teamId: input.teamId ?? null,
       agentId: input.agentId ?? null,
       parentTaskId: input.parentTaskId ?? null,
-      status: "backlog",
+      status,
+      blockedReason: status === "blocked" ? (input.blockedReason?.trim() ?? null) : null,
     })
     .returning({ id: tasks.id });
 
@@ -204,6 +206,124 @@ export async function getTasksByAgent(agentId: string): Promise<TaskRow[]> {
     where: eq(tasks.agentId, agentId),
     orderBy: [asc(tasks.updatedAt)],
   });
+}
+
+export async function updateTaskLabels(taskId: string, labels: string[]): Promise<void> {
+  await assertTaskInBusinessForUser(taskId);
+  const db = getDb();
+  await db.update(tasks).set({ labels, updatedAt: new Date() }).where(eq(tasks.id, taskId));
+}
+
+export async function updateTaskPriority(taskId: string, priority: string): Promise<void> {
+  await assertTaskInBusinessForUser(taskId);
+  const db = getDb();
+  await db.update(tasks).set({ priority, updatedAt: new Date() }).where(eq(tasks.id, taskId));
+}
+
+export async function updateTaskProject(taskId: string, project: string | null): Promise<void> {
+  await assertTaskInBusinessForUser(taskId);
+  const db = getDb();
+  await db.update(tasks).set({ project, updatedAt: new Date() }).where(eq(tasks.id, taskId));
+}
+
+export async function updateTaskAssignee(taskId: string, agentId: string | null): Promise<void> {
+  await assertTaskInBusinessForUser(taskId);
+  const db = getDb();
+  await db.update(tasks).set({ agentId, updatedAt: new Date() }).where(eq(tasks.id, taskId));
+}
+
+export async function updateTaskTeam(taskId: string, teamId: string | null): Promise<void> {
+  await assertTaskInBusinessForUser(taskId);
+  const db = getDb();
+  await db.update(tasks).set({ teamId, updatedAt: new Date() }).where(eq(tasks.id, taskId));
+}
+
+export async function addTaskRelation(
+  businessId: string,
+  fromTaskId: string,
+  toTaskId: string,
+  relationType: string,
+): Promise<{ id: string }> {
+  const userId = await requireSessionUserId();
+  await assertUserBusinessAccess(userId, businessId);
+  const db = getDb();
+  const [row] = await db
+    .insert(taskRelations)
+    .values({ businessId, fromTaskId, toTaskId, relationType })
+    .returning({ id: taskRelations.id });
+  if (!row) throw new Error("Failed to create relation");
+  return row;
+}
+
+export async function removeTaskRelation(id: string): Promise<void> {
+  const userId = await requireSessionUserId();
+  const db = getDb();
+  const rel = await db.query.taskRelations.findFirst({
+    where: eq(taskRelations.id, id),
+    columns: { businessId: true },
+  });
+  if (!rel) return;
+  await assertUserBusinessAccess(userId, rel.businessId);
+  await db.delete(taskRelations).where(eq(taskRelations.id, id));
+}
+
+export type TaskRelationRow = {
+  id: string;
+  relationType: string;
+  linkedTaskId: string;
+  linkedTaskTitle: string;
+  linkedTaskStatus: string;
+};
+
+export async function getTaskRelations(
+  taskId: string,
+  businessId: string,
+): Promise<TaskRelationRow[]> {
+  const userId = await requireSessionUserId();
+  await assertUserBusinessAccess(userId, businessId);
+  const db = getDb();
+
+  const rows = await db.query.taskRelations.findMany({
+    where: or(eq(taskRelations.fromTaskId, taskId), eq(taskRelations.toTaskId, taskId)),
+  });
+
+  const linkedIds = rows.map((r) => (r.fromTaskId === taskId ? r.toTaskId : r.fromTaskId));
+  if (linkedIds.length === 0) return [];
+
+  const linkedTasks = await db.query.tasks.findMany({
+    where: inArray(tasks.id, linkedIds),
+    columns: { id: true, title: true, status: true },
+  });
+
+  const taskMap = new Map(linkedTasks.map((t) => [t.id, t]));
+
+  return rows.map((r) => {
+    const linkedId = r.fromTaskId === taskId ? r.toTaskId : r.fromTaskId;
+    const linked = taskMap.get(linkedId);
+    return {
+      id: r.id,
+      relationType: r.relationType,
+      linkedTaskId: linkedId,
+      linkedTaskTitle: linked?.title ?? "(unknown)",
+      linkedTaskStatus: linked?.status ?? "backlog",
+    };
+  });
+}
+
+export async function getRecentTasksForBusiness(
+  businessId: string,
+  limit = 50,
+): Promise<{ id: string; title: string; status: string; priority: string | null; project: string | null }[]> {
+  const userId = await requireSessionUserId();
+  await assertUserBusinessAccess(userId, businessId);
+  const db = getDb();
+  const rows = await db.query.tasks.findMany({
+    where: eq(tasks.businessId, businessId),
+    columns: { id: true, title: true, status: true, priority: true, project: true },
+    orderBy: [desc(tasks.createdAt)],
+    limit,
+  });
+  return rows;
 }
 
 function buildTree(rows: TaskRow[]): TaskTreeNode[] {

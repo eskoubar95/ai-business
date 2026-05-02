@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
   Select,
@@ -23,6 +23,7 @@ export function BusinessSelector({
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const value = currentBusinessId ?? "";
 
   return (
@@ -31,7 +32,10 @@ export function BusinessSelector({
       <Select
         value={value}
         onValueChange={(id) => {
-          router.push(`${pathname}?${paramName}=${encodeURIComponent(id)}`);
+          const p = new URLSearchParams(searchParams?.toString() ?? "");
+          p.set(paramName, id);
+          const qs = p.toString();
+          router.push(qs ? `${pathname}?${qs}` : pathname);
         }}
       >
         <SelectTrigger className="w-[220px]" data-testid="business-selector">

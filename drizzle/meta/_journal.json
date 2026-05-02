@@ -43,6 +43,13 @@
       "when": 1777536278224,
       "tag": "0005_slimy_cerebro",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777674248762,
+      "tag": "0006_clean_robin_chapel",
+      "breakpoints": true
     }
   ]
 }

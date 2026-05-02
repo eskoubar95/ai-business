@@ -73,7 +73,7 @@ export function AgentForm(props: Props) {
           });
           toast.success("Agent created.");
           router.push(
-            `/dashboard/agents/${created.id}/edit?businessId=${encodeURIComponent(props.businessId)}`,
+            `/dashboard/agents/${created.id}?businessId=${encodeURIComponent(props.businessId)}`,
           );
           router.refresh();
           return;

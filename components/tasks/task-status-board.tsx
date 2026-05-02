@@ -1,4 +1,4 @@
-import type { TaskStatus } from "@/lib/tasks/actions";
+import type { TaskStatus } from "@/lib/tasks/task-tree";
 import type { TaskRow } from "@/lib/tasks/task-tree";
 
 import { TaskCard } from "./task-card";

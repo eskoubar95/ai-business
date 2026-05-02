@@ -407,6 +407,9 @@ export const tasks = pgTable(
     title: text("title").notNull(),
     description: text("description").notNull().default(""),
     status: taskStatusEnum("status").notNull().default("backlog"),
+    priority: text("priority").default("medium"),
+    labels: jsonb("labels").$type<string[]>().default([]),
+    project: text("project"),
     blockedReason: text("blocked_reason"),
     approvalId: uuid("approval_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -453,6 +456,26 @@ export const taskLogs = pgTable(
   (t) => [index("task_logs_task_id_idx").on(t.taskId)],
 );
 
+export const taskRelations = pgTable(
+  "task_relations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    fromTaskId: uuid("from_task_id").notNull(),
+    toTaskId: uuid("to_task_id").notNull(),
+    /** "blocks" | "blocked_by" | "related" */
+    relationType: text("relation_type").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("task_relations_from_idx").on(t.fromTaskId),
+    index("task_relations_to_idx").on(t.toTaskId),
+    index("task_relations_business_id_idx").on(t.businessId),
+  ],
+);
+
 // --- Relations ---
 
 export const businessesRelations = relations(businesses, ({ many }) => ({
@@ -467,6 +490,7 @@ export const businessesRelations = relations(businesses, ({ many }) => ({
   approvalsMany: many(approvals),
   mcpCredentialsMany: many(mcpCredentials),
   tasksMany: many(tasks),
+  taskRelationsMany: many(taskRelations),
 }));
 
 export const userSettingsRelations = relations(userSettings, () => ({}));
@@ -656,11 +680,30 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
     references: [approvals.id],
   }),
   logs: many(taskLogs),
+  relationsFrom: many(taskRelations, { relationName: "task_relations_from" }),
+  relationsTo: many(taskRelations, { relationName: "task_relations_to" }),
 }));
 
 export const taskLogsRelations = relations(taskLogs, ({ one }) => ({
   task: one(tasks, {
     fields: [taskLogs.taskId],
     references: [tasks.id],
+  }),
+}));
+
+export const taskRelationsRelations = relations(taskRelations, ({ one }) => ({
+  business: one(businesses, {
+    fields: [taskRelations.businessId],
+    references: [businesses.id],
+  }),
+  fromTask: one(tasks, {
+    fields: [taskRelations.fromTaskId],
+    references: [tasks.id],
+    relationName: "task_relations_from",
+  }),
+  toTask: one(tasks, {
+    fields: [taskRelations.toTaskId],
+    references: [tasks.id],
+    relationName: "task_relations_to",
   }),
 }));

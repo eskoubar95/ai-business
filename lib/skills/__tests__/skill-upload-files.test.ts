@@ -12,7 +12,9 @@ describe("skill-upload-files", () => {
     zip.file("SKILL.md", "# Hello");
     zip.file("reference/note.md", "body");
     const raw = await zip.generateAsync({ type: "uint8array" });
-    const file = new File([raw], "skill.zip", { type: "application/zip" });
+    const file = new File([new Uint8Array(raw)], "skill.zip", {
+      type: "application/zip",
+    });
     const got = await collectSkillFilesFromZip(file);
     const paths = new Set(got.map((g) => g.path));
     expect(paths.has("SKILL.md")).toBe(true);

@@ -126,6 +126,23 @@ export async function listTeamsByBusiness(businessId: string) {
   });
 }
 
+export async function updateTeamName(teamId: string, name: string): Promise<void> {
+  const nm = name.trim();
+  if (!nm) throw new Error("Team name is required");
+  await requireTeamAccess(teamId);
+  const db = getDb();
+  await db
+    .update(teams)
+    .set({ name: nm, updatedAt: new Date() })
+    .where(eq(teams.id, teamId));
+}
+
+export async function deleteTeam(teamId: string): Promise<void> {
+  const { team } = await requireTeamAccess(teamId);
+  const db = getDb();
+  await db.delete(teams).where(eq(teams.id, team.id));
+}
+
 export async function getTeamWithMembers(teamId: string) {
   await requireTeamAccess(teamId);
 

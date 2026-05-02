@@ -6,25 +6,14 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { approveArtifact, rejectArtifact } from "@/lib/approvals/actions";
+import { summarizeArtifactRef } from "@/lib/approvals/artifact-summary";
+import type { SerializableApprovalCard } from "@/lib/approvals/queries";
 
-export type SerializablePendingApproval = {
-  id: string;
-  artifactRef: Record<string, unknown>;
-  createdAt: string;
-  agentId: string | null;
-  agentName: string | null;
-};
-
-function summarizeRef(ref: Record<string, unknown>): string {
-  const title = ref.title;
-  if (typeof title === "string" && title.trim()) return title.trim();
-  const keys = Object.keys(ref);
-  if (keys.length === 0) return "(no reference)";
-  return keys.slice(0, 3).join(", ") + (keys.length > 3 ? "…" : "");
-}
+/** @deprecated Use SerializableApprovalCard from queries */
+export type SerializablePendingApproval = SerializableApprovalCard;
 
 export function ApprovalCard(props: {
-  approval: SerializablePendingApproval;
+  approval: SerializableApprovalCard;
   businessId: string;
 }) {
   const router = useRouter();
@@ -64,7 +53,7 @@ export function ApprovalCard(props: {
           <p className="text-muted-foreground text-xs">
             {new Date(a.createdAt).toLocaleString()}
           </p>
-          <p className="font-medium">{summarizeRef(a.artifactRef)}</p>
+          <p className="font-medium">{summarizeArtifactRef(a.artifactRef)}</p>
           {a.agentName ? (
             <p className="text-muted-foreground text-sm">Agent: {a.agentName}</p>
           ) : null}

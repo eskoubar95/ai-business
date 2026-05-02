@@ -2,6 +2,10 @@ import type { tasks } from "@/db/schema";
 
 export type TaskRow = typeof tasks.$inferSelect;
 
+export type TaskStatus = TaskRow["status"];
+
+export type TaskTreeNode = TaskRow & { children: TaskTreeNode[] };
+
 export type TaskEdge = { id: string; parentTaskId: string | null };
 
 /** All task ids in the subtree rooted at `rootId` (including root). */

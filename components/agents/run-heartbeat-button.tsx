@@ -25,21 +25,23 @@ export function RunHeartbeatButton({ agentId }: { agentId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex items-center gap-3">
+      {lastMessage && !pending ? (
+        <p className="text-[11px] text-muted-foreground" role="status">
+          {lastMessage}
+        </p>
+      ) : null}
       <Button
         type="button"
         data-testid="run-heartbeat"
         disabled={pending}
-        variant="secondary"
+        variant="outline"
+        size="sm"
+        className="cursor-pointer gap-1.5"
         onClick={onRun}
       >
-        {pending ? "Running heartbeat…" : "Run Heartbeat"}
+        {pending ? "Running…" : "Run Heartbeat"}
       </Button>
-      {lastMessage && !pending ? (
-        <p className="text-muted-foreground text-sm" role="status">
-          {lastMessage}
-        </p>
-      ) : null}
     </div>
   );
 }

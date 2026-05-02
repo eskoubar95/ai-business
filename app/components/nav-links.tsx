@@ -11,8 +11,6 @@ const links = [
   { href: "/dashboard/skills", label: "Skills" },
   { href: "/dashboard/approvals", label: "Approvals" },
   { href: "/dashboard/settings", label: "Settings" },
-  { href: "/dashboard/notion", label: "Notion" },
-  { href: "/dashboard/webhooks", label: "Webhooks" },
 ] as const;
 
 export function NavLinks({ pendingApprovalsCount = 0 }: { pendingApprovalsCount?: number }) {
@@ -27,7 +25,9 @@ export function NavLinks({ pendingApprovalsCount = 0 }: { pendingApprovalsCount?
         const isActive =
           href === "/dashboard"
             ? pathname === "/dashboard"
-            : pathname === href || pathname.startsWith(`${href}/`);
+            : pathname === href ||
+              pathname.startsWith(`${href}/`) ||
+              (href === "/dashboard/settings" && pathname.startsWith("/dashboard/settings"));
 
         return (
           <Link

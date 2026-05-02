@@ -1,27 +1,47 @@
-import { getAgentStatus } from "@/lib/orchestration/events";
+import { cn } from "@/lib/utils";
+import type { AgentLifecycleStatus } from "@/lib/orchestration/events";
 
-function badgeClass(status: string) {
+function dotClass(status: string) {
   switch (status) {
-    case "idle":
-      return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400";
     case "working":
-      return "bg-amber-500/15 text-amber-800 dark:text-amber-400";
+      return "bg-status-active animate-pulse";
     case "awaiting_approval":
-      return "bg-red-500/15 text-red-700 dark:text-red-400";
+      return "bg-warning";
+    case "idle":
     default:
-      return "bg-muted text-muted-foreground";
+      return "bg-status-idle";
   }
 }
 
-export async function AgentStatusBadge({ agentId }: { agentId: string }) {
-  const status = await getAgentStatus(agentId);
-  const label = status.replaceAll("_", " ");
+function labelClass(status: string) {
+  switch (status) {
+    case "working":
+      return "text-status-active";
+    case "awaiting_approval":
+      return "text-warning";
+    default:
+      return "text-muted-foreground";
+  }
+}
+
+/** Client- and server-safe: status must be loaded by the parent (e.g. RSC or props). */
+export function AgentStatusBadge({
+  agentId,
+  status,
+}: {
+  agentId: string;
+  status: AgentLifecycleStatus;
+}) {
+  const label = status === "awaiting_approval" ? "Awaiting approval" : status;
   return (
     <span
       data-testid={`agent-status-${agentId}`}
-      className={`rounded-full px-2 py-0.5 text-xs uppercase ${badgeClass(status)}`}
+      className="flex items-center gap-1.5"
     >
-      {label}
+      <span className={cn("size-1.5 rounded-full", dotClass(status))} />
+      <span className={cn("text-[11px] font-medium uppercase tracking-wide", labelClass(status))}>
+        {label}
+      </span>
     </span>
   );
 }

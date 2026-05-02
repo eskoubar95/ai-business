@@ -1,11 +1,6 @@
-import Link from "next/link";
-
-import { BusinessSelector } from "@/components/business-selector";
-import { ApprovalCard } from "@/components/approvals/approval-card";
-import { PageEmptyState } from "@/components/page-empty-state";
-import { Button } from "@/components/ui/button";
-import { listPendingApprovalsForBusiness } from "@/lib/approvals/queries";
-import { loadUserBusinesses, resolveBusinessIdParam } from "@/lib/dashboard/business-scope";
+import { ApprovalsBoardClient } from "@/components/approvals/approvals-board-client";
+import { listApprovalsGroupedForBusiness } from "@/lib/approvals/queries";
+import { resolveBusinessIdParam } from "@/lib/dashboard/business-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -16,53 +11,25 @@ export default async function ApprovalsPage({
 }) {
   const sp = await searchParams;
   const businessId = await resolveBusinessIdParam(sp.businessId, "/dashboard/approvals");
-  const businesses = await loadUserBusinesses();
-  const pending = await listPendingApprovalsForBusiness(businessId);
-
-  const serialized = pending.map((p) => ({
-    id: p.id,
-    artifactRef: p.artifactRef as Record<string, unknown>,
-    createdAt: p.createdAt.toISOString(),
-    agentId: p.agentId,
-    agentName: p.agentName,
-  }));
+  const grouped = await listApprovalsGroupedForBusiness(businessId);
 
   return (
-    <div className="bg-background text-foreground flex flex-col gap-6 p-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Approvals</h1>
-          <p className="text-muted-foreground text-sm">
-            Pending human gates for artifacts and agent output.
-          </p>
+    <div className="flex h-svh flex-col overflow-hidden">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/[0.07] px-6">
+        <div className="flex items-center gap-3">
+          <h1 className="text-[14px] font-semibold tracking-[-0.01em] text-foreground">
+            Approvals
+          </h1>
+          {grouped.pending.length > 0 && (
+            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400/15 px-1 font-mono text-[10px] text-amber-400 tabular-nums">
+              {grouped.pending.length}
+            </span>
+          )}
         </div>
+      </header>
+      <div className="flex-1 overflow-auto px-6 py-6">
+        <ApprovalsBoardClient businessId={businessId} grouped={grouped} />
       </div>
-
-      <BusinessSelector businesses={businesses} currentBusinessId={businessId} />
-
-      <section data-testid="approvals-queue" className="flex flex-col gap-3">
-        {serialized.length === 0 ? (
-          <PageEmptyState
-            title="Nothing waiting for approval"
-            description="When agents pause for a human gate, pending items land here so you can approve, reject, or add a comment. The queue stays empty while everything is auto-approved or idle."
-            testId="approvals-empty"
-          >
-            <Button variant="outline" asChild>
-              <Link href={`/dashboard/tasks?businessId=${encodeURIComponent(businessId)}`}>
-                View tasks
-              </Link>
-            </Button>
-          </PageEmptyState>
-        ) : (
-          <ul className="flex flex-col gap-4">
-            {serialized.map((item) => (
-              <li key={item.id}>
-                <ApprovalCard approval={item} businessId={businessId} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
     </div>
   );
 }
