@@ -6,6 +6,7 @@ import {
 } from "ai";
 import { useEffect, useMemo, useState } from "react";
 
+import { extractGrillQuickReplies } from "@/lib/grill-me/extract-quick-replies";
 import { GRILL_ME_COMPLETE_MARKER } from "@/lib/grill-me/markers";
 import { getBusinessSoulMemory } from "@/lib/grill-me/memory-read";
 import type { GrillMeMessage } from "@/lib/grill-me/session-queries";
@@ -13,7 +14,7 @@ import { grillMessagesToUIMessages } from "@/lib/grill-me/ui-messages";
 import type { GrillBusinessType } from "@/lib/grill-me/grill-prompt";
 
 import { InputForm } from "./input-form";
-import { MessageList } from "./message-list";
+import { MessageList, messagePlainText } from "./message-list";
 import { SoulFilePreview } from "./soul-file-preview";
 
 export function Chat({
@@ -91,6 +92,14 @@ export function Chat({
 
   const pending = status !== "ready";
 
+  const quickReplies = useMemo(() => {
+    if (pending || soulMarkdown) return [];
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== "assistant") return [];
+    const text = messagePlainText(last);
+    return extractGrillQuickReplies(text);
+  }, [messages, pending, soulMarkdown]);
+
   const wrapClass = embedded
     ? "flex min-h-0 flex-1 flex-col gap-4 px-4 py-4"
     : "flex flex-col gap-6 p-8";
@@ -118,9 +127,21 @@ export function Chat({
           {error.message}
         </p>
       ) : null}
-      <MessageList messages={messages} className={messageListClassName} />
+      <MessageList
+        messages={messages}
+        className={messageListClassName}
+        embedded={embedded}
+        assistantBusy={pending && !soulMarkdown}
+      />
       <InputForm
+        embedded={embedded}
+        quickReplies={quickReplies}
         disabled={pending}
+        placeholder={
+          embedded
+            ? "Reply here (Shift+Enter for newline). Use chips when offered."
+            : "Describe your business…"
+        }
         onSend={(text) => {
           void sendMessage({ text });
         }}

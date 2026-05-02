@@ -1,10 +1,9 @@
 # Cursor SDK wrapper
 
-`lib/cursor/agent.ts` exposes `runCursorAgent(prompt)` which shells out to the local Cursor CLI runtime:
+`agent.ts` exposes `runCursorAgent(prompt, options?)` for the local Cursor runtime (`Agent.create` + streaming). Optional **`apiKey`** comes from decrypted `user_settings` (see Grill-Me) or **`CURSOR_API_KEY`** fallback for workers. Options may include **`model`** (`ModelSelection`) and **`localSettingSources`** (`SettingSource[]`) so callers (e.g. Grill-Me) can pick model + which Cursor filesystem setting layers attach to the repo `cwd`.
 
-- `Agent.create({ model: { id: "composer-2" }, local: { cwd: process.cwd() } })`
-- Streams assistant `text` deltas from `Run.stream()` and yields them as async-iterable strings.
+`verify-api-key.ts` calls **`Cursor.me({ apiKey })`** (official SDK — no agent run) to validate onboarding / stored keys server-side before persisting ciphertext to `user_settings`.
 
-For unit tests, use `setRunCursorAgentImpl` / `resetRunCursorAgentImpl`, or `mockCursorAgent` stub from the same module — avoid talking to the real Cursor binary in CI.
+For tests, stub `verifyCursorApiKey`, or set **`CURSOR_API_VERIFY_SKIP=1`** with **`NODE_ENV !== "production"`** only (documented in `.env.example`; never ship that in prod).
 
-See official SDK types under `node_modules/@cursor/sdk/dist/esm/stubs.d.ts` if the API evolves.
+Official SDK surface (local copy): `node_modules/@cursor/sdk/dist/esm/stubs.d.ts`.

@@ -1,13 +1,15 @@
 import { dispatchOrchestrationEvent } from "./dispatch";
 import {
+  finishOrchestrationEvent,
   getOrchestrationEventById,
   listPendingOrchestrationEvents,
+  resolveRunnerCursorApiKey,
   tryClaimOrchestrationEvent,
 } from "./queries";
 
 const inFlight = new Set<string>();
 
-export async function pollOnce(apiKey: string): Promise<void> {
+export async function pollOnce(): Promise<void> {
   const pending = await listPendingOrchestrationEvents(8);
   for (const row of pending) {
     if (inFlight.has(row.id)) continue;
@@ -21,6 +23,20 @@ export async function pollOnce(apiKey: string): Promise<void> {
         full.payload && typeof full.payload === "object" && full.payload !== null
           ? (full.payload as Record<string, unknown>)
           : {};
+
+      const apiKey = await resolveRunnerCursorApiKey(full.businessId);
+      if (!apiKey) {
+        await finishOrchestrationEvent(full.id, {
+          status: "failed",
+          payload: {
+            ...payload,
+            runnerError:
+              "No Cursor API key: save a validated key under Settings/onboarding for a business member linked to this business, or set CURSOR_API_KEY for this runner process.",
+          },
+        });
+        continue;
+      }
+
       await dispatchOrchestrationEvent(
         full.id,
         {

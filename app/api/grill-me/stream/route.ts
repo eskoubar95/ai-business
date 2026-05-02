@@ -1,8 +1,10 @@
 import { auth } from "@/lib/auth/server";
 import { assertUserBusinessAccess } from "@/lib/grill-me/access";
+import { mergeGrillMeCursorAgentOptions } from "@/lib/grill-me/grill-cursor-runtime";
 import { getDb } from "@/db/index";
 import { grillMeSessions } from "@/db/schema";
 import { runCursorAgent } from "@/lib/cursor/agent";
+import { getUserCursorApiKeyDecrypted } from "@/lib/settings/cursor-api-key";
 import { desc, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 
@@ -40,7 +42,11 @@ export async function GET(req: NextRequest) {
     `# Grill-Me SSE\nStream small progress deltas for UI; repeat context only if needed.\n\n` +
     `## Conversation\n${transcript || "(empty)"}\n`;
 
-  const chunks = await runCursorAgent(prompt);
+  const cursorApiKey = await getUserCursorApiKeyDecrypted();
+  const chunks = await runCursorAgent(
+    prompt,
+    mergeGrillMeCursorAgentOptions(cursorApiKey),
+  );
   const encoder = new TextEncoder();
 
   const body = new ReadableStream({

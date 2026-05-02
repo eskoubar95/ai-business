@@ -23,6 +23,11 @@ export const businesses = pgTable(
     description: text("description"),
     githubRepoUrl: text("github_repo_url"),
     localPath: text("local_path"),
+    /** Structured gap analysis JSON from Grill-Me reasoning phase (Prompt 1); drives chat interviewer. */
+    grillReasoningContext: jsonb("grill_reasoning_context"),
+    /** Last Prompt 1 failure message (shown in UI diagnostics). Cleared on success. */
+    grillReasoningLastError: text("grill_reasoning_last_error"),
+    grillReasoningUpdatedAt: timestamp("grill_reasoning_updated_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("businesses_created_at_idx").on(t.createdAt)],

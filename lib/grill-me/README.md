@@ -1,20 +1,20 @@
 # Grill-Me backend
 
-Server actions in `actions.ts` orchestrate the onboarding loop:
+Two-phase onboarding (wizard → silent reasoning → streamed chat → soul markdown):
 
-1. `createBusiness(name)` / `createBusinessWithDetails({ name, description?, githubRepoUrl? })` — authenticated; inserts into `businesses` (+ optional profile fields) and `user_businesses`.
-2. `startGrillMeTurn(businessId, userMessage, businessType?)` — loads the `businesses` row to **seed** the Cursor prompt with wizard facts (name, summary, repo). `businessType` is `'existing' | 'new'` (default `'existing'`).
-3. When the assistant output contains `[[GRILL_ME_COMPLETE]]`, `extractAndStoreSoulFile` writes/updates the markdown **soul blob** in `memory` with `scope = 'business'` (no `agentId`).
-4. `saveBusinessSoulFromOnboarding(businessId, markdown)` — overwrites business soul after the landing onboarding editor step (validated access).
+1. **`runGrillReasoningPhase(businessId, businessType)`** (`reasoning-actions.ts`) — **Prompt 1**: builds `reasoning-prompt.ts` using the `businesses` row plus optional **GitHub snapshot** (`github-repo-snapshot.ts`), streams once via **`mergeGrillMeReasoningAgentOptions`** (model from **`CURSOR_GRILL_REASONING_MODEL_ID`** and params), parses **JSON-only** output (`extract-json-from-model.ts`), coerces with `grill-reasoning-types.ts`, persists **`businesses.grill_reasoning_context`** (+ `grill_reasoning_last_error`, `grill_reasoning_updated_at`). On failure, persists **`minimalFallbackReasoningContext`**.
+2. **`createBusiness` / `createBusinessWithDetails`** — inserts `businesses` + `user_businesses`; onboarding UI calls **`runGrillReasoningPhase`** during the preparing step before the Grill chat opens. If that step returns **`ok: false`**, the client calls **`deleteOnboardingDraftBusiness`** to remove the tenant when it has no Grill turns and no memory (safe rollback).
+3. **`startGrillMeTurn(businessId, userMessage, businessType?)`** — runs Prompt 1 if **`grill_reasoning_context`** is still null; **`buildGrillChatTurnPrompt`** assembles **Prompt 2** (`grill-me-chat-system.md` + injected reasoning JSON + **`grill-me-soul-output-template.md`**) plus transcript and optional skill appendix (**`GRILL_ME_SKILL_PATHS`** / default skill file). **`mergeGrillMeCursorAgentOptions`** wires **`CURSOR_GRILL_ME_*`** (chat model + `local.settingSources`).
+4. **`[[GRILL_ME_COMPLETE]]`** in the assistant reply → **`extractAndStoreSoulFile`** (fenced `markdown` body via `soul-markdown-from-response.ts`) → **`memory`** row with `scope = business`, no `agentId`.
+5. **`saveBusinessSoulFromOnboarding`** / **`getBusinessSoulMemory`** — editor handoff & reads.
+6. **`getGrillInterviewTranscript(businessId)`** — returns ordered **`grill_me_sessions`** for the authenticated user (hydrates onboarding Soul editor interview column).
 
-5. `getBusinessSoulMemory(businessId)` (`memory-read.ts`) — authenticated server action; returns latest business-scoped markdown soul row or `null`.
+SSE: **`app/api/grill-me/stream/route.ts`** (**GET**) streams Cursor progress for the UI; **`grill_me_sessions`** persists chat turns via server actions.
 
-Completion marker (must match product copy exactly):
+Completion marker:
 
 ```text
 [[GRILL_ME_COMPLETE]]
 ```
 
-Any text after removing the marker is stored as markdown in `memory`.
-
-`app/api/grill-me/stream/route.ts` exposes **GET** SSE (`?businessId=`). It streams from the SDK for EventSource progress without writing new `grill_me_sessions` rows — main writes still go through the server actions above.
+Env names: **`CURSOR_GRILL_REASONING_*`**, **`CURSOR_GRILL_ME_*`**, **`GRILL_ME_SKILL_PATHS`**, **`GRILL_ME_E2E_MOCK`** — see **`.env.example`**.

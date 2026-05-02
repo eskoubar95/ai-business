@@ -1,5 +1,6 @@
 "use server";
 
+import { verifyCursorApiKey } from "@/lib/cursor/verify-api-key";
 import { assertUserBusinessAccess } from "@/lib/grill-me/access";
 import { getDb } from "@/db/index";
 import { businesses, userBusinesses, userSettings } from "@/db/schema";
@@ -10,14 +11,12 @@ import { encryptCredential } from "@/lib/mcp/encryption";
 /** Payload field name inside encrypted JSON `{ cursorApiKey: string }`. */
 const CURSOR_KEY_FIELD = "cursorApiKey";
 
-/**
- * Persist the user's Cursor API key (AES-256-GCM, shared pattern with MCP credentials).
- * Pass an empty string to clear stored credentials.
- */
-export async function saveUserSettings(cursorApiKey: string): Promise<{ success: true }> {
-  const userId = await requireSessionUserId();
+async function persistEncryptedCursorApiKey(
+  userId: string,
+  plainCursorKey: string,
+): Promise<void> {
   const db = getDb();
-  const trimmed = cursorApiKey.trim();
+  const trimmed = plainCursorKey.trim();
   const now = new Date();
 
   if (!trimmed) {
@@ -36,7 +35,7 @@ export async function saveUserSettings(cursorApiKey: string): Promise<{ success:
           updatedAt: now,
         },
       });
-    return { success: true };
+    return;
   }
 
   const envelope = encryptCredential({ [CURSOR_KEY_FIELD]: trimmed });
@@ -56,8 +55,48 @@ export async function saveUserSettings(cursorApiKey: string): Promise<{ success:
         updatedAt: now,
       },
     });
+}
 
+export type VerifyAndSaveCursorApiKeyResult =
+  | { success: true }
+  | { success: false; message: string };
+
+/**
+ * Validates non-empty keys with Cursor (`Cursor.me`), then persists encrypted to `user_settings`.
+ * Empty / whitespace clears stored credentials — no Cursor call (matches Settings UX).
+ */
+export async function verifyAndSaveCursorApiKey(
+  cursorApiKey: string,
+): Promise<VerifyAndSaveCursorApiKeyResult> {
+  const userId = await requireSessionUserId();
+  const trimmed = cursorApiKey.trim();
+  if (!trimmed) {
+    await persistEncryptedCursorApiKey(userId, "");
+    return { success: true };
+  }
+
+  const verified = await verifyCursorApiKey(trimmed);
+  if (!verified.ok) {
+    const byReason = {
+      invalid_credentials: "That key was rejected by Cursor. Check paste and permissions.",
+      rate_limited: "Cursor rate limited this check. Wait a minute and try again.",
+      network: "Could not reach Cursor. Check your connection and try again.",
+      unknown: "Could not validate the key. Try again.",
+    } as const;
+    return { success: false, message: byReason[verified.reason] };
+  }
+
+  await persistEncryptedCursorApiKey(userId, trimmed);
   return { success: true };
+}
+
+/**
+ * Same as `verifyAndSaveCursorApiKey` — Settings Account form entry point.
+ */
+export async function saveUserSettings(
+  cursorApiKey: string,
+): Promise<VerifyAndSaveCursorApiKeyResult> {
+  return verifyAndSaveCursorApiKey(cursorApiKey);
 }
 
 export async function saveBusinessSettings(

@@ -1,4 +1,5 @@
 import { getDb } from "@/db/index";
+import { resolveCursorApiKeyForBusiness } from "@/lib/settings/cursor-api-key";
 import {
   agentDocuments,
   agentSkills,
@@ -12,6 +13,16 @@ import {
 } from "@/db/schema";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 
+export async function resolveRunnerCursorApiKey(
+  businessId: string | null,
+): Promise<string | null> {
+  if (businessId) {
+    const fromWorkspace = await resolveCursorApiKeyForBusiness(businessId);
+    if (fromWorkspace?.trim()) return fromWorkspace.trim();
+  }
+  const env = process.env.CURSOR_API_KEY?.trim();
+  return env && env.length > 0 ? env : null;
+}
 export async function tryClaimOrchestrationEvent(eventId: string) {
   const db = getDb();
   const rows = await db

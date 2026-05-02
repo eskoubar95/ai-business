@@ -2,13 +2,13 @@ import { getDb } from "@/db/index";
 import { memory } from "@/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
 
-import { stripCompletionMarkers } from "@/lib/grill-me/markers";
+import { extractSoulMarkdownBody } from "@/lib/grill-me/soul-markdown-from-response";
 
 export async function extractAndStoreSoulFile(
   businessId: string,
   rawResponse: string,
 ): Promise<void> {
-  const trimmed = stripCompletionMarkers(rawResponse);
+  const trimmed = extractSoulMarkdownBody(rawResponse);
   if (!trimmed.length) return;
 
   const db = getDb();

@@ -63,17 +63,23 @@ export function PrimaryBtn({
   children,
   onClick,
   disabled,
+  type = "button",
   className = "",
+  "aria-busy": ariaBusy,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
   disabled?: boolean;
+  type?: "button" | "submit";
   className?: string;
+  "aria-busy"?: boolean;
 }) {
   return (
     <button
+      type={type}
       onClick={onClick}
       disabled={disabled}
+      aria-busy={ariaBusy === true ? true : undefined}
       className={`group relative flex h-9 items-center gap-1.5 rounded-lg px-5 text-[13px] font-medium text-white transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed ${className}`}
       style={{
         border: "1px solid transparent",

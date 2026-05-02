@@ -3,11 +3,17 @@
 import {
   useEffect,
   useRef,
+  useState,
   type Dispatch,
   type SetStateAction,
 } from "react";
-import { Check, Eye, EyeOff, Loader2, X } from "lucide-react";
-import { LOADING_MESSAGES, ROLES } from "@/lib/onboarding/constants";
+import { Check, Loader2, X } from "lucide-react";
+import { verifyAndSaveCursorApiKey } from "@/lib/settings/actions";
+import {
+  LOADING_MESSAGES,
+  PREPARING_GRILL_STEPS,
+  ROLES,
+} from "@/lib/onboarding/constants";
 import type { BizType, KeyStatus, Role } from "@/lib/onboarding/types";
 import {
   Body,
@@ -170,37 +176,46 @@ export function Step4({
   onNext: () => void;
   progressPct: number;
 }) {
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const verifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
   const autoAdvanceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const validationSeqRef = useRef(0);
+  const pasteTriggersValidationRef = useRef(false);
 
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (verifyTimerRef.current) clearTimeout(verifyTimerRef.current);
+    try {
+      localStorage.removeItem("cursor_api_key");
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
-    if (!apiKey.trim()) {
+  const runValidation = (raw: string) => {
+    const trimmed = raw.trim();
+    if (!trimmed) {
       setKeyStatus("idle");
+      setVerificationMessage(null);
       return;
     }
-
-    setKeyStatus("idle");
-
-    debounceRef.current = setTimeout(() => {
-      setKeyStatus("loading");
-      verifyTimerRef.current = setTimeout(() => {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("cursor_api_key", apiKey);
+    const seq = ++validationSeqRef.current;
+    setKeyStatus("loading");
+    setVerificationMessage(null);
+    void verifyAndSaveCursorApiKey(trimmed)
+      .then((result) => {
+        if (seq !== validationSeqRef.current) return;
+        if (result.success) {
+          setVerificationMessage(null);
+          setKeyStatus("connected");
+        } else {
+          setVerificationMessage(result.message);
+          setKeyStatus("error");
         }
-        const isValid = apiKey.startsWith("sk-") || apiKey.length > 10;
-        setKeyStatus(isValid ? "connected" : "error");
-      }, 1500);
-    }, 800);
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      if (verifyTimerRef.current) clearTimeout(verifyTimerRef.current);
-    };
-  }, [apiKey, setKeyStatus]);
+      })
+      .catch(() => {
+        if (seq !== validationSeqRef.current) return;
+        setVerificationMessage("Could not validate the key. Try again.");
+        setKeyStatus("error");
+      });
+  };
 
   useEffect(() => {
     if (keyStatus !== "connected") return;
@@ -221,69 +236,78 @@ export function Step4({
       ? "border-primary/40 key-input-loading"
       : "border-border focus:border-primary/50";
 
+  const canValidate = apiKey.trim().length > 0 && keyStatus !== "loading";
+
   return (
     <div className="stagger-children">
       <Label>Required</Label>
       <Heading>Connect Cursor</Heading>
       <ProgressBar pct={progressPct} />
       <Body>
-        Enter your Cursor API key to enable agent execution. Paste it below — we&apos;ll verify automatically.
+        Enter your Cursor API key so Grill-Me and agents can run. We check it with Cursor&apos;s API
+        (no agent run) and store it encrypted on your account.
       </Body>
 
-      <div className="mb-1 relative">
+      <p className="text-[12px] text-muted-foreground/55 leading-snug -mt-2 mb-3">
+        Pasting the key runs validation automatically. If you type it yourself, press{" "}
+        <span className="text-foreground/70 font-medium">Validate</span> when you&apos;re done.
+      </p>
+
+      <div className="mb-2">
         <input
           type={showKey ? "text" : "password"}
           value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
+          onPaste={() => {
+            pasteTriggersValidationRef.current = true;
+          }}
+          onChange={(e) => {
+            const v = e.target.value;
+            setApiKey(v);
+            if (pasteTriggersValidationRef.current) {
+              pasteTriggersValidationRef.current = false;
+              runValidation(v);
+              return;
+            }
+            if (keyStatus !== "idle" || verificationMessage) {
+              setKeyStatus("idle");
+              setVerificationMessage(null);
+            }
+          }}
           placeholder="sk-cursor-..."
-          className={`bg-white/[0.04] border rounded-lg px-4 py-2.5 pr-[76px] text-[14px] text-foreground placeholder:text-muted-foreground/30 focus:outline-none transition-all w-full font-mono ${inputBorderClass}`}
+          autoComplete="off"
+          spellCheck={false}
+          aria-invalid={keyStatus === "error"}
+          aria-busy={keyStatus === "loading"}
+          className={`bg-white/[0.04] border rounded-lg px-4 py-2.5 text-[14px] text-foreground placeholder:text-muted-foreground/30 focus:outline-none transition-all w-full font-mono ${inputBorderClass}`}
         />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-          <button
-            onClick={() => setShowKey((v) => !v)}
-            className="text-white/30 hover:text-white/60 transition-colors"
-            aria-label={showKey ? "Hide key" : "Show key"}
-          >
-            {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
-          </button>
-          {apiKey.trim() && (
-            <>
-              <div className="w-px h-3.5 bg-white/[0.12] shrink-0" />
-              {keyStatus === "loading" && (
-                <Loader2 size={14} className="animate-spin text-primary/70 shrink-0" />
-              )}
-              {keyStatus === "connected" && (
-                <Check size={14} className="text-green-400 shrink-0" />
-              )}
-              {keyStatus === "error" && (
-                <X size={14} className="text-red-400 shrink-0" />
-              )}
-              {keyStatus === "idle" && (
-                <span className="inline-block w-3.5 shrink-0" />
-              )}
-            </>
-          )}
-        </div>
       </div>
 
-      <div className="min-h-[20px] mb-3">
+      <div
+        className="rounded-lg border border-border/60 bg-white/[0.02] px-3 py-2.5 mb-3 min-h-[44px] flex items-start gap-2.5"
+        role="status"
+        aria-live="polite"
+      >
+        {keyStatus === "idle" && (
+          <p className="text-[12px] text-muted-foreground/50 leading-relaxed pt-0.5">
+            Ready — paste your key or type it, then use Validate.
+          </p>
+        )}
         {keyStatus === "loading" && (
-          <p className="text-[11px] text-primary/50 font-mono flex items-center gap-1.5">
-            <span className="thinking-dot-1 inline-block size-1 rounded-full bg-primary/60" />
-            <span className="thinking-dot-2 inline-block size-1 rounded-full bg-primary/60" />
-            <span className="thinking-dot-3 inline-block size-1 rounded-full bg-primary/60" />
-            <span className="ml-1">Verifying...</span>
+          <p className="text-[12px] text-primary/80 flex items-center gap-2 leading-relaxed">
+            <Loader2 size={14} className="animate-spin shrink-0 mt-0.5" />
+            <span>Contacting Cursor to verify your key…</span>
           </p>
         )}
         {keyStatus === "connected" && (
-          <p className="text-[11px] text-green-400/80 font-mono flex items-center gap-1.5 animate-fade-in">
-            <Check size={11} />
-            Connected — continuing in a moment...
+          <p className="text-[12px] text-green-400/90 flex items-start gap-2 leading-relaxed">
+            <Check size={14} className="shrink-0 mt-0.5" strokeWidth={2.25} />
+            <span>Verified and saved. Continuing in a moment…</span>
           </p>
         )}
         {keyStatus === "error" && (
-          <p className="text-[11px] text-red-400/70 animate-fade-in">
-            Invalid key — try again
+          <p className="text-[12px] text-red-400/85 flex items-start gap-2 leading-relaxed">
+            <X size={14} className="shrink-0 mt-0.5" strokeWidth={2.25} />
+            <span>{verificationMessage ?? "That key did not work. Try again."}</span>
           </p>
         )}
       </div>
@@ -292,13 +316,27 @@ export function Step4({
         href="https://cursor.com/settings"
         target="_blank"
         rel="noopener noreferrer"
-        className="text-[11px] text-muted-foreground/30 underline hover:text-muted-foreground/50 transition-colors mb-6 inline-block"
+        className="text-[11px] text-muted-foreground/30 underline hover:text-muted-foreground/50 transition-colors mb-4 inline-block"
       >
         Where do I find my API key?
       </a>
 
       <StepFooter>
-        <span />
+        <button
+          type="button"
+          onClick={() => setShowKey((v) => !v)}
+          className="text-[12px] text-muted-foreground/45 hover:text-foreground/70 underline underline-offset-2 transition-colors"
+        >
+          {showKey ? "Hide key" : "Show key"}
+        </button>
+        <PrimaryBtn
+          type="button"
+          disabled={!canValidate}
+          onClick={() => runValidation(apiKey)}
+          aria-busy={keyStatus === "loading"}
+        >
+          {keyStatus === "loading" ? "Validating…" : "Validate"}
+        </PrimaryBtn>
       </StepFooter>
     </div>
   );
@@ -406,13 +444,84 @@ export function Step5({
   );
 }
 
-export function Step6({ msgIdx }: { msgIdx: number }) {
+export function Step6({
+  phase,
+  creatingMsgIdx,
+  preparingStepIdx,
+}: {
+  phase: "creating" | "preparing";
+  creatingMsgIdx: number;
+  preparingStepIdx: number;
+}) {
+  const safeCreate = Math.min(
+    creatingMsgIdx,
+    Math.max(0, LOADING_MESSAGES.length - 1),
+  );
+  const safePrep = Math.min(
+    preparingStepIdx,
+    Math.max(0, PREPARING_GRILL_STEPS.length - 1),
+  );
+
+  if (phase === "creating") {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 px-6 gap-5 text-center">
+        <div className="relative size-12">
+          <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
+          <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin" />
+        </div>
+        <div>
+          <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground/45 mb-2">
+            Creating business
+          </p>
+          <p className="font-mono text-[12px] text-muted-foreground/70 min-h-[2.5em] max-w-sm transition-all">
+            {LOADING_MESSAGES[safeCreate]}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center py-10 gap-4 text-center">
-      <div className="size-2 rounded-full bg-primary animate-pulse" />
-      <p className="font-mono text-[12px] text-muted-foreground/40 min-h-[1.5em] transition-all">
-        {LOADING_MESSAGES[msgIdx]}
-      </p>
+    <div className="flex flex-col py-8 px-6 gap-6 max-w-lg mx-auto">
+      <div className="flex items-start gap-3">
+        <div className="relative size-10 shrink-0 mt-0.5">
+          <div className="absolute inset-0 rounded-full bg-primary/10" />
+          <div className="absolute inset-1 rounded-full border border-primary/40 animate-pulse" />
+        </div>
+        <div className="min-w-0 text-left">
+          <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground/45 mb-1">
+            Priming Grill-Me
+          </p>
+          <h3 className="text-[15px] font-semibold text-foreground leading-snug">
+            Reasoning over your signup context
+          </h3>
+          <p className="text-[12px] text-muted-foreground/60 mt-2 leading-relaxed">
+            Using the name, description and repository link you provided so the interviewer starts in the right
+            context — powered by your saved Cursor workspace key when the chat opens.
+          </p>
+        </div>
+      </div>
+      <ol className="space-y-3">
+        {PREPARING_GRILL_STEPS.map((label, i) => {
+          const done = i < safePrep;
+          const active = i === safePrep;
+          return (
+            <li
+              key={label}
+              className={`flex gap-3 text-left text-[12px] leading-snug rounded-lg border px-3 py-2.5 transition-colors ${
+                done
+                  ? "border-green-500/25 bg-green-500/[0.06] text-green-400/95"
+                  : active
+                  ? "border-primary/35 bg-primary/[0.07] text-foreground/90"
+                  : "border-border/40 bg-muted/10 text-muted-foreground/40"
+              }`}
+            >
+              <span className="shrink-0 font-mono text-[11px] w-5">{done ? "✓" : active ? "…" : "○"}</span>
+              <span>{label}</span>
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }
