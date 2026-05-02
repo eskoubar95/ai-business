@@ -102,8 +102,9 @@ test.describe("agent roster and teams", () => {
     await page.goto(`/dashboard/teams/new?businessId=${businessId}`);
     await page.getByTestId("team-name").fill(`E2E Team ${Date.now()}`);
     await page.getByTestId("team-lead").selectOption({ label: "E2E Lead" });
-    await page.getByTestId("team-member-a").selectOption({ label: "E2E Member One" });
-    await page.getByTestId("team-member-b").selectOption({ label: "E2E Member Two" });
+    const memberList = page.getByTestId("team-member-list");
+    await memberList.getByRole("button", { name: /Add E2E Member One/i }).click();
+    await memberList.getByRole("button", { name: /Add E2E Member Two/i }).click();
     await page.getByTestId("team-create-submit").click();
     await page.waitForURL(/\/dashboard\/teams\/[0-9a-f-]+/i, {
       timeout: 120_000,

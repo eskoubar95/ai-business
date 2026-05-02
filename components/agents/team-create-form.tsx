@@ -141,13 +141,17 @@ export function TeamCreateForm({
             </p>
           </div>
         ) : (
-          <div className="rounded-md border border-border overflow-hidden">
+          <div
+            data-testid="team-member-list"
+            className="rounded-md border border-border overflow-hidden"
+          >
             {memberCandidates.map((a, i) => {
               const checked = memberIds.has(a.id);
               return (
                 <button
                   key={a.id}
                   type="button"
+                  aria-label={`Add ${a.name} as team member`}
                   onClick={() => toggleMember(a.id)}
                   className={cn(
                     "flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-colors",
