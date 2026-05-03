@@ -22,6 +22,10 @@ vi.mock("@/lib/cursor/agent", () => ({
   }),
 }));
 
+vi.mock("@/lib/settings/cursor-api-key", () => ({
+  getUserCursorApiKeyDecrypted: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("@/db/index", () => ({
   getDb: () => ({
     select: vi.fn(() => ({

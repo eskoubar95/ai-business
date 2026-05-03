@@ -13,6 +13,7 @@ const agentsPublicColumns = {
   id: true,
   businessId: true,
   archetypeId: true,
+  systemRoleId: true,
   name: true,
   role: true,
   reportsToAgentId: true,
@@ -113,7 +114,7 @@ export async function createAgent(params: {
 export async function updateAgent(
   agentId: string,
   patch: Partial<
-    Pick<typeof agents.$inferSelect, "name" | "role" | "reportsToAgentId"> & {
+    Pick<typeof agents.$inferSelect, "name" | "role" | "reportsToAgentId" | "systemRoleId"> & {
       instructions?: string;
     }
   >,
@@ -147,9 +148,15 @@ export async function updateAgent(
     );
     payload.reportsToAgentId = validated;
   }
+  if (patch.systemRoleId !== undefined) {
+    payload.systemRoleId = patch.systemRoleId;
+  }
 
   const shouldPatchAgentRow =
-    patch.name !== undefined || patch.role !== undefined || patch.reportsToAgentId !== undefined;
+    patch.name !== undefined ||
+    patch.role !== undefined ||
+    patch.reportsToAgentId !== undefined ||
+    patch.systemRoleId !== undefined;
 
   // Neon HTTP driver does not support `db.transaction()`; run steps sequentially.
   if (patch.instructions !== undefined) {

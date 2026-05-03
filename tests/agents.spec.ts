@@ -66,6 +66,17 @@ test.describe("agent roster and teams", () => {
     }
 
     await createAgentViaForm("E2E Lead", "Lead");
+
+    await page.getByRole("tab", { name: "Settings" }).click();
+    await expect(page.locator("#system-role")).toBeVisible({ timeout: 30_000 });
+    await page.locator("#system-role").click();
+    await page
+      .getByRole("option", { name: "Engineer (Full-Stack)", exact: true })
+      .click();
+    await page.getByTestId("agent-save").click();
+    // Sonner may mount multiple toast nodes with the same text; strict mode needs a single match.
+    await expect(page.getByText("Settings saved.").first()).toBeVisible({ timeout: 30_000 });
+
     await page.getByRole("tab", { name: "Instructions" }).click();
     // Wizard persists onboarding instructions to soul.md; default selected tab is agent.md.
     await page

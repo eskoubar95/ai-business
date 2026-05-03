@@ -27,7 +27,10 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={`${GeistSans.variable} ${GeistMono.variable}`}
     >
-      <body className={`${GeistSans.className} min-h-svh antialiased`}>
+      <body
+        className={`${GeistSans.className} min-h-svh antialiased`}
+        suppressHydrationWarning
+      >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <NeonAuthUIProvider authClient={authClient}>
             <AppProgressBar />

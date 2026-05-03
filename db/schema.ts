@@ -1,5 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
+  boolean,
+  date,
   foreignKey,
   index,
   integer,
@@ -21,6 +23,11 @@ export const businesses = pgTable(
     description: text("description"),
     githubRepoUrl: text("github_repo_url"),
     localPath: text("local_path"),
+    /** Structured gap analysis JSON from Grill-Me reasoning phase (Prompt 1); drives chat interviewer. */
+    grillReasoningContext: jsonb("grill_reasoning_context"),
+    /** Last Prompt 1 failure message (shown in UI diagnostics). Cleared on success. */
+    grillReasoningLastError: text("grill_reasoning_last_error"),
+    grillReasoningUpdatedAt: timestamp("grill_reasoning_updated_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("businesses_created_at_idx").on(t.createdAt)],
@@ -56,6 +63,23 @@ export const agentArchetypes = pgTable(
   (t) => [uniqueIndex("agent_archetypes_slug_unique").on(t.slug)],
 );
 
+/** Platform-seeded orchestration behaviour (instructions + optional business memory injection). */
+export const systemRoles = pgTable(
+  "system_roles",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    description: text("description").notNull(),
+    /** Base behavioural instructions appended before agent docs. */
+    baseSystemPrompt: text("base_system_prompt").notNull(),
+    /** When true, runners include business-scope memory markdown in prompts. */
+    includeBusinessContext: boolean("include_business_context").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("system_roles_slug_unique").on(t.slug)],
+);
+
 /** Neon Auth user id (opaque string); links authenticated users to businesses. */
 export const userBusinesses = pgTable(
   "user_businesses",
@@ -86,6 +110,9 @@ export const agents = pgTable(
     archetypeId: uuid("archetype_id").references(() => agentArchetypes.id, {
       onDelete: "set null",
     }),
+    systemRoleId: uuid("system_role_id").references(() => systemRoles.id, {
+      onDelete: "set null",
+    }),
     name: text("name").notNull(),
     /** Job / roster role label (distinct from DB role names). */
     role: text("role").notNull(),
@@ -102,6 +129,7 @@ export const agents = pgTable(
     index("agents_business_id_idx").on(t.businessId),
     index("agents_reports_to_agent_id_idx").on(t.reportsToAgentId),
     index("agents_archetype_id_idx").on(t.archetypeId),
+    index("agents_system_role_id_idx").on(t.systemRoleId),
   ],
 );
 
@@ -258,6 +286,47 @@ export const teamMembers = pgTable(
   ],
 );
 
+/** Business-scoped initiatives with PRD and sprint breakdown. */
+export const projects = pgTable(
+  "projects",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    /** Markdown / rich-text PRD (aligned with Novel editor conventions). */
+    prd: text("prd").notNull().default(""),
+    /** draft | active | completed | archived */
+    status: text("status").notNull().default("draft"),
+    notionId: text("notion_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("projects_business_id_idx").on(t.businessId),
+    index("projects_status_idx").on(t.status),
+  ],
+);
+
+export const sprints = pgTable(
+  "sprints",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    goal: text("goal"),
+    /** planning | active | completed */
+    status: text("status").notNull().default("planning"),
+    startDate: date("start_date"),
+    endDate: date("end_date"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("sprints_project_id_idx").on(t.projectId)],
+);
+
 /** Encrypted MCP credentials library per business; agents opt in via `agent_mcp_access`. */
 export const mcpCredentials = pgTable(
   "mcp_credentials",
@@ -410,6 +479,9 @@ export const tasks = pgTable(
     priority: text("priority").default("medium"),
     labels: jsonb("labels").$type<string[]>().default([]),
     project: text("project"),
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+    sprintId: uuid("sprint_id").references(() => sprints.id, { onDelete: "set null" }),
+    storyPoints: integer("story_points"),
     blockedReason: text("blocked_reason"),
     approvalId: uuid("approval_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -438,6 +510,8 @@ export const tasks = pgTable(
     index("tasks_team_id_idx").on(t.teamId),
     index("tasks_parent_task_id_idx").on(t.parentTaskId),
     index("tasks_status_idx").on(t.status),
+    index("tasks_project_id_idx").on(t.projectId),
+    index("tasks_sprint_id_idx").on(t.sprintId),
   ],
 );
 
@@ -491,12 +565,34 @@ export const businessesRelations = relations(businesses, ({ many }) => ({
   mcpCredentialsMany: many(mcpCredentials),
   tasksMany: many(tasks),
   taskRelationsMany: many(taskRelations),
+  projectsMany: many(projects),
 }));
 
 export const userSettingsRelations = relations(userSettings, () => ({}));
 
 export const agentArchetypesRelations = relations(agentArchetypes, ({ many }) => ({
   agents: many(agents),
+}));
+
+export const systemRolesRelations = relations(systemRoles, ({ many }) => ({
+  agents: many(agents),
+}));
+
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  business: one(businesses, {
+    fields: [projects.businessId],
+    references: [businesses.id],
+  }),
+  sprintsMany: many(sprints),
+  tasksMany: many(tasks),
+}));
+
+export const sprintsRelations = relations(sprints, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [sprints.projectId],
+    references: [projects.id],
+  }),
+  tasksMany: many(tasks),
 }));
 
 export const userBusinessesRelations = relations(userBusinesses, ({ one }) => ({
@@ -514,6 +610,10 @@ export const agentsRelations = relations(agents, ({ one, many }) => ({
   archetype: one(agentArchetypes, {
     fields: [agents.archetypeId],
     references: [agentArchetypes.id],
+  }),
+  systemRole: one(systemRoles, {
+    fields: [agents.systemRoleId],
+    references: [systemRoles.id],
   }),
   reportsTo: one(agents, {
     fields: [agents.reportsToAgentId],
@@ -678,6 +778,14 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
   approval: one(approvals, {
     fields: [tasks.approvalId],
     references: [approvals.id],
+  }),
+  projectLink: one(projects, {
+    fields: [tasks.projectId],
+    references: [projects.id],
+  }),
+  sprint: one(sprints, {
+    fields: [tasks.sprintId],
+    references: [sprints.id],
   }),
   logs: many(taskLogs),
   relationsFrom: many(taskRelations, { relationName: "task_relations_from" }),

@@ -144,6 +144,9 @@ export function TaskCreateModal({
           priority: "medium",
           labels: [],
           project: null,
+          projectId: null,
+          sprintId: null,
+          storyPoints: null,
           blockedReason:
             status === "blocked" ? blockedReason.trim() || null : null,
           approvalId: null,

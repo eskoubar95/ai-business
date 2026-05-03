@@ -115,8 +115,8 @@ export function TiptapCodeBlockView({ node, updateAttributes }: NodeViewProps) {
           lineHeight: "1.65",
         }}
       >
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <NodeViewContent as={"code" as any} className="hljs-code-content" />
+        {/* TipTap types only allow `as="div"`; runtime accepts `code` inside <pre> for semantics/highlight.js. */}
+        <NodeViewContent as={"code" as never} className="hljs-code-content" />
       </pre>
     </NodeViewWrapper>
   );

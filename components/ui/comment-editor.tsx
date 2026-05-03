@@ -177,8 +177,7 @@ export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>
     });
 
     useEffect(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (editorRef as any).current = editor;
+      editorRef.current = editor;
     }, [editor]);
 
     useImperativeHandle(ref, () => ({

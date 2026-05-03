@@ -1,8 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GRILL_ME_COMPLETE_MARKER } from "@/lib/grill-me/markers";
+import {
+  minimalFallbackReasoningContext,
+  type GrillReasoningContext,
+} from "@/lib/grill-me/grill-reasoning-types";
 
 const businessId = "00000000-0000-4000-8000-000000000042";
+
+const completeSoulMock = [
+  GRILL_ME_COMPLETE_MARKER,
+  "",
+  "Here is your Soul Document — you can edit it directly in the next step.",
+  "",
+  "```markdown",
+  "# Soul Document Framework",
+  "Hello world",
+  "```",
+  "",
+].join("\n");
 
 const store = vi.hoisted(() => ({
   grillRows: [] as Array<{
@@ -14,7 +30,23 @@ const store = vi.hoisted(() => ({
   memoryInserts: [] as Array<Record<string, unknown>>,
   selectPass: 0,
   lastCursorPrompt: "",
+  persistedReasoning: null as GrillReasoningContext | null,
 }));
+
+function defaultPersistedReasoning(): GrillReasoningContext {
+  const r = minimalFallbackReasoningContext(
+    "existing",
+    "Wizard Test Biz",
+    "We ship widgets",
+  );
+  return {
+    ...r,
+    knownFields: {
+      ...r.knownFields,
+      githubRepo: "https://github.com/acme/public",
+    },
+  };
+}
 
 vi.mock("@/lib/auth/server", () => ({
   auth: {
@@ -24,11 +56,15 @@ vi.mock("@/lib/auth/server", () => ({
   },
 }));
 
+vi.mock("@/lib/settings/cursor-api-key", () => ({
+  getUserCursorApiKeyDecrypted: vi.fn(async () => null),
+}));
+
 vi.mock("@/lib/cursor/agent", () => ({
   runCursorAgent: vi.fn(async (prompt: string) => {
     store.lastCursorPrompt = prompt;
     async function* gen() {
-      yield `${GRILL_ME_COMPLETE_MARKER}\n\n# Soul\nHello world`;
+      yield completeSoulMock;
     }
     return gen();
   }),
@@ -38,6 +74,16 @@ vi.mock("@/db/index", () => ({
   getDb() {
     return {
       query: {
+        businesses: {
+          findFirst: vi.fn(async () => ({
+            id: businessId,
+            name: "Wizard Test Biz",
+            description: "We ship widgets",
+            githubRepoUrl: "https://github.com/acme/public",
+            grillReasoningContext:
+              store.persistedReasoning ?? defaultPersistedReasoning(),
+          })),
+        },
         userBusinesses: {
           findFirst: vi.fn(async () => ({
             userId: "test-user-id",
@@ -105,6 +151,10 @@ describe("startGrillMeTurn", () => {
     store.memoryInserts = [];
     store.selectPass = 0;
     store.lastCursorPrompt = "";
+    store.persistedReasoning = defaultPersistedReasoning();
+    delete process.env.CURSOR_GRILL_ME_SETTING_SOURCES;
+    delete process.env.CURSOR_GRILL_ME_MODEL_ID;
+    delete process.env.CURSOR_GRILL_ME_MODEL_PARAMS_JSON;
     vi.clearAllMocks();
   });
 
@@ -137,18 +187,53 @@ describe("startGrillMeTurn", () => {
     expect((mem.content as string).includes(GRILL_ME_COMPLETE_MARKER)).toBe(false);
   });
 
-  it("default Grill-Me path uses existing-business system instructions", async () => {
+  it("default Grill-Me path uses Prompt 2 chat system instructions", async () => {
     const { startGrillMeTurn } = await import("../actions.js");
     await startGrillMeTurn(businessId, "Hi");
-    expect(store.lastCursorPrompt).toContain("Existing business");
-    expect(store.lastCursorPrompt).not.toContain("New project");
-    expect(store.lastCursorPrompt).toContain("# What We Build");
+    expect(store.lastCursorPrompt).toContain(
+      "# Grill-Me — chat system (Prompt 2)",
+    );
+    expect(store.lastCursorPrompt).toContain(
+      "intelligent onboarding agent for the Conduro platform",
+    );
+    expect(store.lastCursorPrompt).toContain("## Your context");
   });
 
-  it("passes new-project Grill path when businessType is new", async () => {
+  it("injects persisted reasoning JSON (wizard seed) into Prompt 2", async () => {
     const { startGrillMeTurn } = await import("../actions.js");
+    await startGrillMeTurn(businessId, "Hi");
+    expect(store.lastCursorPrompt).toContain('"businessType": "existing"');
+    expect(store.lastCursorPrompt).toContain("Wizard Test Biz");
+    expect(store.lastCursorPrompt).toContain(
+      "https://github.com/acme/public",
+    );
+    expect(store.lastCursorPrompt).toContain("We ship widgets");
+  });
+
+  it("passes stored businessType new when reasoning snapshot is new", async () => {
+    const { startGrillMeTurn } = await import("../actions.js");
+    store.persistedReasoning = minimalFallbackReasoningContext(
+      "new",
+      "Wizard Test Biz",
+      "We ship widgets",
+    );
     await startGrillMeTurn(businessId, "Hi", "new");
-    expect(store.lastCursorPrompt).toContain("New project");
-    expect(store.lastCursorPrompt).not.toContain("Existing business");
+    expect(store.lastCursorPrompt).toContain('"businessType": "new"');
+    expect(store.lastCursorPrompt).not.toContain('"businessType": "existing"');
+  });
+  it("injects onboarding skill appendix from repo default path", async () => {
+    const { startGrillMeTurn } = await import("../actions.js");
+    const { runCursorAgent } = await import("@/lib/cursor/agent");
+    await startGrillMeTurn(businessId, "Hi");
+    expect(store.lastCursorPrompt).toContain(
+      "# Optional interviewer style notes",
+    );
+    expect(store.lastCursorPrompt).toContain("Grill-Me onboarding interviewer");
+    expect(runCursorAgent).toHaveBeenCalledWith(
+      expect.stringContaining("# Optional interviewer style notes"),
+      expect.objectContaining({
+        localSettingSources: ["project"],
+      }),
+    );
   });
 });

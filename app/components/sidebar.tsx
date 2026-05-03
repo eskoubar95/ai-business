@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsUpDown,
+  FolderKanban,
   HelpCircle,
   Inbox,
   LayoutDashboard,
@@ -256,6 +257,13 @@ export function AppSidebar({
             icon={Bot}
             collapsed={collapsed}
             isActive={isActive("/dashboard/agents")}
+          />
+          <NavItem
+            href="/dashboard/projects"
+            label="Projects"
+            icon={FolderKanban}
+            collapsed={collapsed}
+            isActive={isActive("/dashboard/projects")}
           />
           <NavItem
             href="/dashboard/approvals"

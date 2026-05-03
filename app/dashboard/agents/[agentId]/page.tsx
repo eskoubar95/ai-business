@@ -10,6 +10,7 @@ import { McpInstaller } from "@/components/mcp/mcp-installer";
 import { RunHeartbeatButton } from "@/components/agents/run-heartbeat-button";
 import { SkillManager } from "@/components/agents/skill-manager";
 import { getAgentsByBusiness } from "@/lib/agents/actions";
+import { listSystemRoles } from "@/lib/system-roles/queries";
 import { getAgentDocuments } from "@/lib/agents/document-actions";
 import { getMcpCredentialsForAgent } from "@/lib/mcp/actions";
 import { getSkillsByAgent, listSkillsByBusiness } from "@/lib/skills/actions";
@@ -80,14 +81,16 @@ export default async function AgentDetailPage({
   const agent = peers.find((a) => a.id === agentId);
   if (!agent) notFound();
 
-  const [attached, library, mcpMeta, agentDocs, tasks, lifecycle] = await Promise.all([
-    getSkillsByAgent(agentId),
-    listSkillsByBusiness(businessId),
-    getMcpCredentialsForAgent(agentId),
-    getAgentDocuments(agentId),
-    getTasksByAgent(agentId),
-    getAgentStatus(agentId),
-  ]);
+  const [attached, library, mcpMeta, agentDocs, tasks, lifecycle, platformSystemRoles] =
+    await Promise.all([
+      getSkillsByAgent(agentId),
+      listSkillsByBusiness(businessId),
+      getMcpCredentialsForAgent(agentId),
+      getAgentDocuments(agentId),
+      getTasksByAgent(agentId),
+      getAgentStatus(agentId),
+      listSystemRoles(),
+    ]);
 
   const recentTasks = tasks.slice(-10).reverse();
 
@@ -216,6 +219,7 @@ export default async function AgentDetailPage({
               businessId={businessId}
               agent={agent}
               peerAgents={peers}
+              platformSystemRoles={platformSystemRoles}
             />
           }
         />

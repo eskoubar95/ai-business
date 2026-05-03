@@ -29,18 +29,20 @@ Database scripts:
 | --------------------- | --------------------------------------- |
 | `npm run db:generate` | Generate SQL from `db/schema.ts`        |
 | `npm run db:migrate`  | Apply migrations (needs `DATABASE_URL`) |
+| `npm run db:reset-app-data` | **Wipes all businesses + tenant data** (needs `ALLOW_APP_DATA_RESET=1`; see `[scripts/README.md](scripts/README.md)`) |
 | `npm run db:push`     | Push schema to DB (dev convenience)     |
 | `npm run db:studio`   | Open Drizzle Studio                     |
 
 
-## CI: Playwright E2E (GitHub Actions)
+## CI (GitHub Actions)
 
-Workflow: `[.github/workflows/e2e.yml](.github/workflows/e2e.yml)`.
+Workflow: `[.github/workflows/e2e.yml](.github/workflows/e2e.yml)` (job **quality**: Vitest + ESLint + `next build`; job **playwright**: migrate + Playwright).
 
 
 | Behavior                                 | When                                                                                   |
 | ---------------------------------------- | -------------------------------------------------------------------------------------- |
-| Smoke (`/`, sign-in)                     | Always runs on PRs and pushes to `main`.                                               |
+| **quality** gate                         | Always on PR/`main`: Vitest, ESLint, production build — no DB secrets required.        |
+| Smoke (`/`, sign-in, projects, webhooks)  | Part of Playwright on every run; unauthenticated routes only check HTTP status.        |
 | Full Grill-Me (`tests/grill-me.spec.ts`) | Runs when **all** repository secrets below are set; otherwise that spec stays skipped. |
 | Agents (`tests/agents.spec.ts`)          | Needs **`ENCRYPTION_KEY`** (64 hex chars) so MCP install Server Actions can encrypt credentials; without it the MCP badge assertion fails. |
 | Approvals (`tests/approvals.spec.ts`)    | **Optional:** set **`E2E_SETUP_SECRET`**; if missing, that spec is skipped.            |
