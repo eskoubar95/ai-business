@@ -13,7 +13,8 @@ export type ParsedSoulSection = {
   confidence: SoulConfidence;
 };
 
-const HEADING_RE = /^##\s+(\d+)\.\s+(.+)$/gm;
+/** Numbered soul sections: `## 1. Title` or `### 1. Title` (model sometimes emits h3). */
+const HEADING_RE = /^#{2,3}\s+(\d+)\.\s+(.+)$/gm;
 
 export function inferSectionConfidence(sectionMarkdown: string): SoulConfidence {
   const t = sectionMarkdown;
@@ -58,6 +59,42 @@ export function shortenNavTitle(title: string, max = 20): string {
   return `${t.slice(0, max - 1)}…`;
 }
 
+/**
+ * When the model pastes the full soul twice, a second `## 1.` appears after a full numbered run.
+ * Keeps the first copy only (common failure mode from refine).
+ */
+export function truncateAppendedSoulDocumentDuplicate(md: string): string {
+  const n = md.replace(/\r\n/g, "\n");
+  const re = /^#{2,3}\s+1\.\s+/gm;
+  const matches = [...n.matchAll(re)];
+  if (matches.length < 2) return md;
+  const firstIdx = matches[0].index ?? 0;
+  const secondIdx = matches[1].index ?? 0;
+  if (secondIdx <= firstIdx) return md;
+  const between = n.slice(firstIdx, secondIdx);
+  const numberedHeadings = between.match(/^#{2,3}\s+\d+\.\s+/gm) ?? [];
+  const gap = secondIdx - firstIdx;
+  const looksLikeFullSoulPaste =
+    numberedHeadings.length >= 3 ||
+    gap >= 1500 ||
+    /^#{2,3}\s+10\.\s+/m.test(between) ||
+    /^#{2,3}\s+9\.\s+/m.test(between);
+  if (looksLikeFullSoulPaste) {
+    return n.slice(0, secondIdx).trimEnd();
+  }
+  return md;
+}
+
+/** Nav-safe label (model/HTML sometimes leaves entities in headings). */
+export function decodeSoulNavTitle(title: string): string {
+  return title
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
 export function parseSoulMarkdownSections(source: string): ParsedSoulSection[] {
   const out: ParsedSoulSection[] = [];
   const matches = [...source.matchAll(HEADING_RE)];
@@ -69,7 +106,8 @@ export function parseSoulMarkdownSections(source: string): ParsedSoulSection[] {
     const title = (m[2] ?? "").trim();
     const num = Number(numStr);
     if (!Number.isFinite(num) || num < 0) continue;
-    const slug = `soul-section-${numStr}`;
+    // Occurrence index keeps keys/DOM ids unique when the doc has two `## 1.` blocks.
+    const slug = `soul-section-${numStr}-${i}`;
     const markdown = source.slice(idx, endIdx);
     const confidence = inferSectionConfidence(markdown);
     out.push({
@@ -83,4 +121,15 @@ export function parseSoulMarkdownSections(source: string): ParsedSoulSection[] {
     });
   }
   return out;
+}
+
+/** Non-validated sections (for AI / refine prompts). */
+export function formatSoulNavGapSummary(source: string): string {
+  const secs = parseSoulMarkdownSections(source);
+  const gaps = secs.filter((s) => s.confidence !== "validated");
+  if (gaps.length === 0) return "";
+  const body = gaps
+    .map((s) => `- ${s.num}. ${s.title}: **${s.confidence}** (check [HYPOTHESIS] / [UNKNOWN] markers in body)`)
+    .join("\n");
+  return `\n## Section confidence overview (sidebar)\n${body}\n`;
 }

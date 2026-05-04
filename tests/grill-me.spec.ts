@@ -23,7 +23,7 @@ test.describe("grill-me flow", () => {
       { timeout: 90_000 },
     );
 
-    await page.goto("/dashboard/onboarding");
+    await page.goto("/onboarding?quick=1");
     await expect(page.getByTestId("onboarding-path-existing")).toBeVisible({
       timeout: 30_000,
     });

@@ -4,6 +4,7 @@ Business-scoped UI under `/dashboard/*`. Pages use `resolveBusinessIdParam` from
 
 | Path | Purpose |
 |------|---------|
+| `onboarding/` | Create **another** business (quick form). First-time users belong on `/onboarding` instead. |
 | `approvals/` | Pending approval queue + `[approvalId]` detail |
 | `skills/` | Skills library: ZIP/folder/GitHub install, agent assignment |
 | `notion/` | Notion MCP credential form per agent + recent sync table |

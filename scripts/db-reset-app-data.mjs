@@ -58,7 +58,7 @@ try {
   // CASCADE truncates dependents (agents, tasks, MCP, approvals, webhook rows, Grill-Me, etc.).
   // Does not truncate user_settings, agent_archetypes, or system_roles.
   await sql`TRUNCATE TABLE businesses CASCADE`;
-  console.log("OK — businesses and dependent rows truncated. Restart dev and visit /dashboard/onboarding.");
+  console.log("OK — businesses and dependent rows truncated. Restart dev and visit /onboarding.");
 } catch (e) {
   console.error(e);
   process.exit(1);

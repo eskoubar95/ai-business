@@ -194,7 +194,7 @@ describe("startGrillMeTurn", () => {
       "# Grill-Me — chat system (Prompt 2)",
     );
     expect(store.lastCursorPrompt).toContain(
-      "intelligent onboarding agent for the Conduro platform",
+      "sharp, friendly interviewer",
     );
     expect(store.lastCursorPrompt).toContain("## Your context");
   });

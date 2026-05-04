@@ -6,6 +6,9 @@ import {
   parseSoulDocTitle,
   clipAssistantTranscriptSnippet,
   extractSoulSubtitleLine,
+  formatSoulNavGapSummary,
+  truncateAppendedSoulDocumentDuplicate,
+  decodeSoulNavTitle,
 } from "@/lib/grill-me/soul-section-parser";
 
 describe("parseSoulMarkdownSections", () => {
@@ -14,10 +17,34 @@ describe("parseSoulMarkdownSections", () => {
     const s = parseSoulMarkdownSections(md);
     expect(s).toHaveLength(2);
     expect(s[0].num).toBe(1);
-    expect(s[0].slug).toBe("soul-section-1");
+    expect(s[0].slug).toBe("soul-section-1-0");
     expect(s[0].title).toBe("Identity");
     expect(s[0].markdown).toContain("## 1.");
     expect(s[1].num).toBe(2);
+    expect(s[1].slug).toBe("soul-section-2-1");
+  });
+
+  it("treats numbered ### as a section (AI sometimes uses h3)", () => {
+    const md = "### 1. Identity\nA\n### 2. Offer\nB\n";
+    const s = parseSoulMarkdownSections(md);
+    expect(s).toHaveLength(2);
+    expect(s[0].num).toBe(1);
+    expect(s[0].title).toBe("Identity");
+    expect(s[1].num).toBe(2);
+  });
+
+  it("gives unique slugs when ## 1. appears twice (duplicate paste)", () => {
+    const md = "## 1. Identity\nA\n## 1. Identity\nB\n";
+    const s = parseSoulMarkdownSections(md);
+    expect(s).toHaveLength(2);
+    expect(s[0].slug).toBe("soul-section-1-0");
+    expect(s[1].slug).toBe("soul-section-1-1");
+  });
+
+  it("preserves leading zeros in section slug for scroll targets", () => {
+    const md = `## 01. First\nBody\n`;
+    const s = parseSoulMarkdownSections(md);
+    expect(s[0]?.slug).toBe("soul-section-01-0");
   });
 });
 
@@ -46,6 +73,38 @@ describe("parseSoulDocTitle", () => {
       "Acme — Soul Document",
     );
     expect(parseSoulDocTitle("", "Bee")).toBe("Bee — Soul Document");
+  });
+});
+
+describe("formatSoulNavGapSummary", () => {
+  it("lists sections that are not validated", () => {
+    const md = `## 1. A\nSolid.\n\n## 2. B\n[HYPOTHESIS] guess\n\n## 3. C\n[UNKNOWN — x]\n`;
+    const s = formatSoulNavGapSummary(md);
+    expect(s).toContain("2. B");
+    expect(s).toContain("hypothesis");
+    expect(s).toContain("3. C");
+    expect(s).toContain("unknown");
+    expect(s).not.toContain("1. A");
+  });
+});
+
+describe("truncateAppendedSoulDocumentDuplicate", () => {
+  it("removes a second full copy starting at duplicate ## 1.", () => {
+    const first =
+      "## 1. A\nx\n## 2. B\ny\n## 3. C\nz\n";
+    const doubled = `${first}\n${first}`;
+    expect(truncateAppendedSoulDocumentDuplicate(doubled)).toBe(first.trimEnd());
+  });
+
+  it("does not truncate two early ## 1. with no full run between", () => {
+    const md = "## 1. A\n## 1. B\n";
+    expect(truncateAppendedSoulDocumentDuplicate(md)).toBe(md);
+  });
+});
+
+describe("decodeSoulNavTitle", () => {
+  it("decodes basic entities in headings", () => {
+    expect(decodeSoulNavTitle("P &amp; Q")).toBe("P & Q");
   });
 });
 

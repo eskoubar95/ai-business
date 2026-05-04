@@ -28,6 +28,14 @@ export const businesses = pgTable(
     /** Last Prompt 1 failure message (shown in UI diagnostics). Cleared on success. */
     grillReasoningLastError: text("grill_reasoning_last_error"),
     grillReasoningUpdatedAt: timestamp("grill_reasoning_updated_at", { withTimezone: true }),
+    /**
+     * Onboarding wizard phase for this business:
+     *   "grill_chat"   — Grill-Me interview in progress
+     *   "grill_editor" — soul editor review in progress
+     *   "complete"     — onboarding finished; soul persisted
+     *   null           — not yet started (created outside onboarding wizard)
+     */
+    onboardingPhase: text("onboarding_phase").$type<"grill_chat" | "grill_editor" | "complete">(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("businesses_created_at_idx").on(t.createdAt)],

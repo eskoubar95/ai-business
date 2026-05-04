@@ -74,7 +74,7 @@ The JSON schema:
       "id": "string (matches Soul Document section, e.g. '2.1')",
       "field": "string (human-readable name, e.g. 'Core Problem')",
       "priority": "critical" | "high" | "medium" | "low",
-      "question": "string (the exact question to ask — phrased naturally, not like a form field)",
+      "question": "string — phrased the way you would ask a founder face-to-face. Short, plain words. No jargon. Example: 'How do you charge for this?' not 'What is your revenue model?'. Example: 'Who has to say yes before something goes live?' not 'Who is the concrete escalation owner?'.",
       "followUpIf": "string or null (condition under which a follow-up question makes sense)",
       "skipIf": "string or null (condition under which this can be skipped)"
     }

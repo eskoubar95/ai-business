@@ -1,12 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 
 import { Chat } from "@/components/grill-me/chat";
 import { GrillSoulEditor } from "@/components/grill-me/grill-soul-editor";
 import LetterGlitch from "@/components/ui/letter-glitch";
-import { createBusinessWithDetails, deleteOnboardingDraftBusiness, saveBusinessSoulFromOnboarding } from "@/lib/grill-me/actions";
+import {
+  createBusinessWithDetails,
+  deleteOnboardingDraftBusiness,
+  getActiveOnboardingBusiness,
+  getSoulEditorOpeningGuidance,
+  refineGrillSoulDocument,
+  saveBusinessSoulFromOnboarding,
+  updateOnboardingPhase,
+} from "@/lib/grill-me/actions";
+import type { GrillMeMessage } from "@/lib/grill-me/session-queries";
+import { normalizeSoulMarkdownForEditor } from "@/lib/grill-me/soul-markdown-normalize";
 import { runGrillReasoningPhase } from "@/lib/grill-me/reasoning-actions";
 import { LOADING_MESSAGES, PREPARING_GRILL_STEPS, TOTAL_STEPS } from "@/lib/onboarding/constants";
 import type { BizType, ChatMessage, KeyStatus, Role } from "@/lib/onboarding/types";
@@ -20,9 +29,41 @@ import {
 } from "./onboarding-steps-1-6";
 import { Step7, Step8 } from "./onboarding-steps-grill";
 
-export function OnboardingClient() {
-  const router = useRouter();
+function soulEditorSideChatStorageKey(businessId: string): string {
+  return `onboarding-soul-editor-sidechat:${businessId}`;
+}
 
+/** Restore side-panel refinement thread after refresh (same browser tab/session). */
+function parseStoredEditorChat(raw: string): {
+  messages: ChatMessage[];
+  input: string;
+} | null {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object") return null;
+    const messages = (parsed as { messages?: unknown }).messages;
+    const input = (parsed as { input?: unknown }).input;
+    if (!Array.isArray(messages) || messages.length === 0) return null;
+    const cleaned: ChatMessage[] = [];
+    for (const m of messages) {
+      if (!m || typeof m !== "object") return null;
+      const r = (m as { role?: unknown }).role;
+      const c = (m as { content?: unknown }).content;
+      if ((r !== "ai" && r !== "user") || typeof c !== "string") return null;
+      const msg: ChatMessage = { role: r, content: c };
+      const thinking = (m as { thinking?: unknown }).thinking;
+      const quote = (m as { quote?: unknown }).quote;
+      if (typeof thinking === "string") msg.thinking = thinking;
+      if (typeof quote === "string") msg.quote = quote;
+      cleaned.push(msg);
+    }
+    return { messages: cleaned, input: typeof input === "string" ? input : "" };
+  } catch {
+    return null;
+  }
+}
+
+export function OnboardingClient() {
   const [step, setStep] = useState(1);
   const [cardAnim, setCardAnim] = useState<string>("");
 
@@ -53,16 +94,92 @@ export function OnboardingClient() {
   const [celebrationMarkdown, setCelebrationMarkdown] = useState("");
   const [editorPersisting, setEditorPersisting] = useState(false);
 
-  const [editorMessages, setEditorMessages] = useState<ChatMessage[]>([
-    {
-      role: "ai",
-      content:
-        "Her kan du se og rette dokumentet fra Grill-Me. Brug tekstfeltet nedenunder, når du er klar til at finpusse.",
-    },
-  ]);
+  // Resumed session data — loaded from DB when restoring a saved session
+  const [resumedTurns, setResumedTurns] = useState<GrillMeMessage[]>([]);
+  const [resumedSoulMarkdown, setResumedSoulMarkdown] = useState<string | null>(null);
+  const [resuming, setResuming] = useState(false);
+  const resumeAttemptedRef = useRef(false);
+
+  const [editorMessages, setEditorMessages] = useState<ChatMessage[]>([]);
+  const [editorOpeningLoading, setEditorOpeningLoading] = useState(false);
   const [editorInput, setEditorInput] = useState("");
 
   const createInFlightRef = useRef(false);
+
+  // ── Resume in-progress onboarding from DB on mount ────────────────────────
+  useEffect(() => {
+    if (resumeAttemptedRef.current) return;
+    resumeAttemptedRef.current = true;
+
+    setResuming(true);
+    void (async () => {
+      try {
+        const active = await getActiveOnboardingBusiness();
+        if (!active) return;
+
+        setBusinessId(active.businessId);
+        setBizName(active.bizName);
+        setResumedTurns(active.turns);
+        setResumedSoulMarkdown(active.soulMarkdown);
+
+        if (active.soulMarkdown) {
+          setSoulCaptured(true);
+          setCapturedSoulMarkdown(active.soulMarkdown);
+          setSoulMarkdownDraft(active.soulMarkdown);
+        }
+
+        if (active.onboardingPhase === "grill_editor") {
+          setChatPhase("editor");
+          if (typeof window !== "undefined") {
+            const raw = window.sessionStorage.getItem(
+              soulEditorSideChatStorageKey(active.businessId),
+            );
+            const restored = raw ? parseStoredEditorChat(raw) : null;
+            if (restored) {
+              setEditorMessages(restored.messages);
+              setEditorInput(restored.input);
+            } else if (
+              active.soulMarkdown &&
+              active.businessId &&
+              active.soulMarkdown.trim().length > 0
+            ) {
+              setEditorOpeningLoading(true);
+              setEditorMessages([]);
+              void (async () => {
+                try {
+                  const { guidance } = await getSoulEditorOpeningGuidance(
+                    active.businessId!,
+                    active.soulMarkdown!,
+                    {
+                      businessProfile:
+                        active.businessProfile === "new" ? "new" : "existing",
+                    },
+                  );
+                  setEditorMessages([{ role: "ai", content: guidance }]);
+                } catch {
+                  setEditorMessages([
+                    {
+                      role: "ai",
+                      content:
+                        "Kunne ikke hente AI-vejledning. Skriv i feltet nedenfor, eller prøv at genindlæse siden.",
+                    },
+                  ]);
+                } finally {
+                  setEditorOpeningLoading(false);
+                }
+              })();
+            }
+          }
+        }
+
+        setStep(7);
+      } catch {
+        // auth not ready yet — proceed normally from step 1
+      } finally {
+        setResuming(false);
+      }
+    })();
+  }, []);
 
   function goTo(s: number) {
     const dir = s > step ? "forward" : "back";
@@ -87,12 +204,16 @@ export function OnboardingClient() {
 
   useEffect(() => {
     if (step !== 6 || loaderPhase !== "preparing") return;
+    const hasGithub = githubUrl.trim().length > 0;
+    const steps = PREPARING_GRILL_STEPS.filter(
+      (s) => hasGithub || !s.toLowerCase().includes("github"),
+    );
     setPrepStepIdx(0);
     const interval = setInterval(() => {
-      setPrepStepIdx((prev) => Math.min(prev + 1, PREPARING_GRILL_STEPS.length - 1));
-    }, 700);
+      setPrepStepIdx((prev) => Math.min(prev + 1, steps.length - 1));
+    }, 1800);
     return () => clearInterval(interval);
-  }, [step, loaderPhase]);
+  }, [step, loaderPhase, githubUrl]);
 
   async function handleCreateBusinessAndOpenGrill() {
     if (!bizName.trim() || createInFlightRef.current) return;
@@ -143,41 +264,99 @@ export function OnboardingClient() {
     }
   }
 
-  function sendEditorMessage(quote?: string) {
-    const text = editorInput.trim();
-    if (!text) return;
+  const grillBusinessType = bizType === "new" ? "new" : "existing";
+
+  const [editorBusy, setEditorBusy] = useState(false);
+
+  async function sendEditorMessage(quote?: string, forcedUserMessage?: string) {
+    const text = (forcedUserMessage ?? editorInput).trim();
+    if (!text || editorBusy || !businessId) return;
     setEditorMessages((prev) => [...prev, { role: "user", content: text, quote }]);
-    setEditorInput("");
-    setTimeout(() => {
+    if (!forcedUserMessage) setEditorInput("");
+    setEditorBusy(true);
+    try {
+      const { reply, updatedMarkdown } = await refineGrillSoulDocument(
+        businessId,
+        soulMarkdownDraft,
+        text,
+        quote,
+        { businessProfile: grillBusinessType },
+      );
+      if (updatedMarkdown) {
+        setSoulMarkdownDraft(normalizeSoulMarkdownForEditor(updatedMarkdown));
+      }
+      setEditorMessages((prev) => [...prev, { role: "ai", content: reply }]);
+    } catch (e) {
       setEditorMessages((prev) => [
         ...prev,
         {
           role: "ai",
-          content: quote
-            ? "Auto-redigering af dokumentet er ikke koblet på endnu — opdatér venligst selve markdown i midterfeltet ud fra dit uddrag. Jeg kan stadig hjælpe med formuleringer i chatten."
-            : "Redigér gerne direkte i dokumentet til venstre. Sig til, hvis du vil have et udkast til en sektion.",
+          content:
+            e instanceof Error
+              ? `Error: ${e.message}`
+              : "Could not contact the AI — please try again.",
         },
       ]);
-    }, 900);
+    } finally {
+      setEditorBusy(false);
+    }
   }
 
-  function proceedToSoulEditor() {
+  async function proceedToSoulEditor() {
     setSoulMarkdownDraft(capturedSoulMarkdown);
-    setEditorMessages([
-      {
-        role: "ai",
-        content:
-          "Velkommen til soul-editoren. Markér tekst og brug «+ Tilføj til chat» for at citere et uddrag, eller skriv frit i side-chatten. Du kan slå versioner op under «Versioner» og skifte «Forhåndsvis» for at se sektioner med scroll-spy.",
-      },
-    ]);
+    setEditorMessages([]);
+    setEditorOpeningLoading(true);
     setChatPhase("editor");
+    if (businessId) {
+      try {
+        await updateOnboardingPhase(businessId, "grill_editor");
+      } catch {
+        // phase is best-effort for telemetry; editor UX still works
+      }
+      void (async () => {
+        try {
+          const { guidance } = await getSoulEditorOpeningGuidance(businessId, capturedSoulMarkdown, {
+            businessProfile: grillBusinessType,
+          });
+          setEditorMessages([{ role: "ai", content: guidance }]);
+        } catch (e) {
+          setEditorMessages([
+            {
+              role: "ai",
+              content:
+                e instanceof Error
+                  ? `Kunne ikke hente vejledning: ${e.message}`
+                  : "Kunne ikke hente AI-vejledning. Skriv i chatten for at fortsætte.",
+            },
+          ]);
+        } finally {
+          setEditorOpeningLoading(false);
+        }
+      })();
+    } else {
+      setEditorOpeningLoading(false);
+      setEditorMessages([
+        {
+          role: "ai",
+          content:
+            "Ingen virksomhed fundet — genåbn onboarding for at få personlig finpudsnings-vejledning.",
+        },
+      ]);
+    }
   }
 
   async function finalizeEditorAndCelebrate() {
     if (!businessId || !soulMarkdownDraft.trim()) return;
     setEditorPersisting(true);
     try {
-      await saveBusinessSoulFromOnboarding(businessId, soulMarkdownDraft);
+      await saveBusinessSoulFromOnboarding(businessId, soulMarkdownDraft, {
+        completeOnboarding: true,
+      });
+      try {
+        window.sessionStorage.removeItem(soulEditorSideChatStorageKey(businessId));
+      } catch {
+        /* ignore */
+      }
       setCelebrationMarkdown(soulMarkdownDraft);
       goTo(8);
     } catch (e) {
@@ -201,14 +380,32 @@ export function OnboardingClient() {
 
   const isStep7 = step === 7;
   const cardMaxW = isStep7
-    ? "max-w-3xl"
+    ? "max-w-[860px]"
     : step === 8
       ? "max-w-[600px]"
       : "max-w-[520px]";
   const cardPadding = isStep7 ? "p-0 overflow-hidden" : step === 8 ? "p-8" : "p-8";
   const progressPct = Math.round(((step - 1) / (TOTAL_STEPS - 1)) * 100);
 
-  const grillBusinessType = bizType === "new" ? "new" : "existing";
+  if (resuming) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="relative size-10">
+            <div className="absolute inset-0 rounded-full border border-primary/20" />
+            <div
+              className="absolute inset-0 rounded-full border border-primary/50 border-t-primary animate-spin"
+              style={{ animationDuration: "1s" }}
+            />
+          </div>
+          <div>
+            <p className="text-[14px] font-medium text-foreground/80">Resuming your session…</p>
+            <p className="mt-1 text-[12px] text-muted-foreground/50">Loading your Grill-Me conversation</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -239,7 +436,9 @@ export function OnboardingClient() {
           refinementMessages={editorMessages}
           editorInput={editorInput}
           setEditorInput={setEditorInput}
-          onRefinementSend={sendEditorMessage}
+          onRefinementSend={(q, forced) => void sendEditorMessage(q, forced)}
+          refinementBusy={editorBusy}
+          openingGuidanceLoading={editorOpeningLoading}
           onDone={() => void finalizeEditorAndCelebrate()}
           doneLoading={editorPersisting}
           doneDisabled={!soulMarkdownDraft.trim()}
@@ -295,7 +494,12 @@ export function OnboardingClient() {
               />
             )}
             {step === 6 && (
-              <Step6 phase={loaderPhase} creatingMsgIdx={loadingMsgIdx} preparingStepIdx={prepStepIdx} />
+              <Step6
+                phase={loaderPhase}
+                creatingMsgIdx={loadingMsgIdx}
+                preparingStepIdx={prepStepIdx}
+                hasGithub={githubUrl.trim().length > 0}
+              />
             )}
             {step === 7 && businessId && (
               <Step7
@@ -304,11 +508,11 @@ export function OnboardingClient() {
                     key={businessId}
                     businessId={businessId}
                     businessType={grillBusinessType}
-                    initialTurns={[]}
-                    initialSoulMarkdown={null}
+                    initialTurns={resumedTurns}
+                    initialSoulMarkdown={resumedSoulMarkdown}
                     embedded
                     showSoulPreview={false}
-                    messageListClassName="max-h-[min(42vh,380px)] min-h-[200px] flex-1 border-border/50 bg-background/30"
+                    messageListClassName="flex-1 min-h-[200px] border-border/50 bg-background/30"
                     onSoulCaptured={(md) => {
                       setCapturedSoulMarkdown(md);
                       setSoulCaptured(true);
@@ -320,11 +524,7 @@ export function OnboardingClient() {
               />
             )}
             {step === 8 && (
-              <Step8
-                bizName={bizName}
-                soulMarkdown={celebrationMarkdown}
-                onEnter={() => router.push("/dashboard")}
-              />
+              <Step8 bizName={bizName} soulMarkdown={celebrationMarkdown} />
             )}
           </div>
         </div>

@@ -17,7 +17,8 @@ Route-driven UI for the AI Business Platform Next.js app.
 | `/dashboard/teams`                   | Teams for selected `businessId`; member counts and lead name.                                                      |
 | `/dashboard/teams/new`             | Create team with lead plus **two** additional members (requires ≥3 agents).                                        |
 | `/dashboard/teams/[teamId]`        | Team detail: org chart from `reportsToAgentId`, member list, lead highlighted.                                      |
-| `/dashboard/onboarding`            | Create business (`createBusiness`) → redirect to Grill-Me chat.                                                   |
+| `/onboarding`                      | First-time onboarding (wizard by default); `?quick=1` short form for tests / fast path. Users with **no** business are sent here from dashboard. |
+| `/dashboard/onboarding`            | Add an **additional** business from the dashboard (sidebar “New workspace”, nav `+`). Requires ≥1 existing business; otherwise you are redirected to `/onboarding`. |
 | `/dashboard/grill-me/[businessId]` | Grill-Me chat — **Vercel AI SDK UI** (`useChat`) + streaming `POST /api/grill-me/ui` wrapping `startGrillMeTurn`. |
 | `/api/grill-me/ui`                 | UI message stream for Grill-Me (AI SDK data stream protocol).                                                     |
 | `/api/grill-me/stream`             | Optional SSE transcript stream (separate from chat UI).                                                           |

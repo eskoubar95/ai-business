@@ -1,9 +1,13 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { Heading, Label, PrimaryBtn } from "./onboarding-steps-ui";
-import ReactMarkdown from "react-markdown";
 
 export function Step7({
   grillChatPhase,
@@ -15,34 +19,38 @@ export function Step7({
   canProceedFromChat: boolean;
 }) {
   return (
-    <div className="flex h-[620px] flex-col overflow-hidden">
-      <div className="shrink-0 border-b border-white/[0.06] px-6 pt-6 pb-4">
-        <Label>Grill Me</Label>
-        <h2 className="text-[18px] font-semibold text-foreground leading-tight">
-          Fortæl om din forretning
-        </h2>
-        <p className="mt-1 text-[12px] text-muted-foreground/60">
-          Samme agent som i dashboard. Bliv ved, indtil dit soul-dokument er gemt — så åbner editoren i
-          fuld skærm.
-        </p>
-      </div>
-
-      <div className="flex min-h-0 flex-1 flex-col">{grillChatPhase}</div>
-
-      <div className="shrink-0 border-t border-white/[0.05] px-6 py-4">
-        {!canProceedFromChat ? (
-          <p className="text-[12px] text-muted-foreground/50">
-            Svar assistenten til den er færdig. Når du ser bekræftelse på at soul-filen er gemt, kan du
-            fortsætte til editoren.
-          </p>
-        ) : (
-          <div className="flex justify-end">
-            <PrimaryBtn onClick={onProceedToSoulEditor} className="px-6">
-              Gennemgå / rediger soul →
-            </PrimaryBtn>
+    <div className="flex h-[min(88vh,860px)] flex-col overflow-hidden">
+      {/* Header — compact */}
+      <div className="shrink-0 flex items-center justify-between border-b border-white/[0.06] px-5 py-3.5">
+        <div className="flex items-center gap-2.5">
+          <div className="size-5 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
+            <span className="font-mono text-[9px] text-primary/90 font-bold leading-none">G</span>
           </div>
+          <div>
+            <p className="text-[13px] font-medium text-foreground/90 leading-none">Grill-Me</p>
+            <p className="text-[11px] text-muted-foreground/50 mt-0.5 leading-none">
+              Tell us about your business
+            </p>
+          </div>
+        </div>
+        {canProceedFromChat && (
+          <PrimaryBtn onClick={onProceedToSoulEditor} className="px-4 text-[12px] h-8">
+            Review soul →
+          </PrimaryBtn>
         )}
       </div>
+
+      {/* Chat — fills all remaining space */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{grillChatPhase}</div>
+
+      {/* Footer hint — only when not done */}
+      {!canProceedFromChat && (
+        <div className="shrink-0 border-t border-white/[0.04] px-5 py-2.5">
+          <p className="text-[11px] text-muted-foreground/35 text-center">
+            Stay in chat until your soul file is saved, then continue.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -50,13 +58,20 @@ export function Step7({
 export function Step8({
   bizName,
   soulMarkdown,
-  onEnter,
+  workspaceHref = "/dashboard",
 }: {
   bizName: string;
   soulMarkdown: string;
-  onEnter: () => void;
+  /** Next.js route to open after onboarding (prefetched on mount). */
+  workspaceHref?: string;
 }) {
+  const router = useRouter();
+  const [workspaceNavPending, startWorkspaceNav] = useTransition();
   const md = soulMarkdown.trim();
+
+  useEffect(() => {
+    void router.prefetch(workspaceHref);
+  }, [router, workspaceHref]);
 
   return (
     <div className="stagger-children">
@@ -67,10 +82,10 @@ export function Step8({
         og bruges i agent-kørsler.
       </p>
 
-      <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-6 py-5 mb-8 max-h-[min(48vh,440px)] overflow-y-auto">
+      <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-6 py-5 mb-8 max-h-[min(48vh,440px)] overflow-y-auto overflow-x-hidden">
         {md ? (
-          <div className="onboarding-prose text-[13px] leading-relaxed text-foreground/85">
-            <ReactMarkdown>{md}</ReactMarkdown>
+          <div className="onboarding-prose text-[13px] leading-relaxed text-foreground/85 min-w-0 overflow-x-auto">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{md}</ReactMarkdown>
           </div>
         ) : (
           <p className="text-[13px] text-muted-foreground/50">
@@ -80,8 +95,20 @@ export function Step8({
       </div>
 
       <div className="flex justify-center">
-        <PrimaryBtn onClick={onEnter} className="px-8 py-3 text-[15px]">
-          Gå til workspace →
+        <PrimaryBtn
+          onClick={() => startWorkspaceNav(() => router.push(workspaceHref))}
+          disabled={workspaceNavPending}
+          aria-busy={workspaceNavPending}
+          className="px-8 py-3 text-[15px]"
+        >
+          {workspaceNavPending ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+              Åbner workspace…
+            </span>
+          ) : (
+            "Gå til workspace →"
+          )}
         </PrimaryBtn>
       </div>
     </div>

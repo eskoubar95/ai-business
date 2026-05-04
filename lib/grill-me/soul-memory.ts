@@ -3,12 +3,13 @@ import { memory } from "@/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { extractSoulMarkdownBody } from "@/lib/grill-me/soul-markdown-from-response";
+import { normalizeSoulMarkdownForEditor } from "@/lib/grill-me/soul-markdown-normalize";
 
 export async function extractAndStoreSoulFile(
   businessId: string,
   rawResponse: string,
 ): Promise<void> {
-  const trimmed = extractSoulMarkdownBody(rawResponse);
+  const trimmed = normalizeSoulMarkdownForEditor(extractSoulMarkdownBody(rawResponse));
   if (!trimmed.length) return;
 
   const db = getDb();
@@ -44,8 +45,8 @@ export async function upsertBusinessSoulMarkdown(
   businessId: string,
   markdown: string,
 ): Promise<void> {
-  const trimmed = markdown.trim();
-  if (!trimmed.length) return;
+  const cleaned = normalizeSoulMarkdownForEditor(markdown.trim());
+  if (!cleaned.length) return;
 
   const db = getDb();
   const existing = await db.query.memory.findFirst({
@@ -60,7 +61,7 @@ export async function upsertBusinessSoulMarkdown(
     await db
       .update(memory)
       .set({
-        content: trimmed,
+        content: cleaned,
         updatedAt: new Date(),
         version: existing.version + 1,
       })
@@ -70,7 +71,7 @@ export async function upsertBusinessSoulMarkdown(
       businessId,
       agentId: null,
       scope: "business",
-      content: trimmed,
+      content: cleaned,
     });
   }
 }

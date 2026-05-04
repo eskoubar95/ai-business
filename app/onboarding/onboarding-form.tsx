@@ -9,6 +9,7 @@ import type { GrillBusinessType } from "@/lib/grill-me/grill-prompt";
 
 type Step = "path" | "name";
 
+/** Quick create → Grill-Me: `/onboarding?quick=1`, or `/dashboard/onboarding` when adding a workspace from the dashboard. */
 export default function OnboardingForm() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("path");

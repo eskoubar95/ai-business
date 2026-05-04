@@ -49,6 +49,7 @@ export async function POST(req: Request) {
   }
 
   const userText = textFromUIMessage(message).trim();
+  const isAutoStart = userText === "__GRILL_START__";
   if (!userText) {
     return Response.json({ error: "Empty message" }, { status: 400 });
   }
@@ -87,8 +88,9 @@ export async function POST(req: Request) {
       try {
         const { assistantReply } = await startGrillMeTurn(
           businessId,
-          userText,
+          isAutoStart ? "" : userText,
           businessType,
+          isAutoStart,
         );
 
         const messageId = generateId();

@@ -6,6 +6,7 @@ import type { GrillReasoningContext } from "@/lib/grill-me/grill-reasoning-types
 
 export type GrillChatTurnExtras = {
   skillAppendix?: string;
+  autoStart?: boolean;
 };
 
 const CHAT_SYSTEM_REL = "lib/grill-me/grill-me-chat-system.md";
@@ -73,6 +74,12 @@ export function buildGrillChatTurnPrompt(
   for (const line of transcript) {
     out += `${line.role}: ${line.content}\n`;
   }
-  out += `user: ${latestUserMessage}\n`;
+
+  if (extras?.autoStart) {
+    out += `\n[The user has just opened Grill-Me. No messages have been exchanged yet. Start the interview now with a warm, direct opening question — do not wait for the user to speak first.]\n`;
+  } else {
+    out += `user: ${latestUserMessage}\n`;
+  }
+
   return out.trim();
 }

@@ -22,25 +22,26 @@ function assistantIsWorking(messages: UIMessage[]): boolean {
   return false;
 }
 
-function AssistantThinkingRow() {
+function ThinkingDots() {
   return (
     <div
-      className="border-border bg-background/55 flex justify-start rounded-lg border border-dashed px-3 py-2.5"
+      className="flex items-center gap-3 py-1"
       data-testid="grill-me-thinking"
       aria-busy="true"
       aria-label="Assistant is thinking"
     >
-      <span className="text-muted-foreground flex items-center gap-2 font-mono text-[11px] tracking-wide uppercase">
-        <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/50 opacity-60" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-primary/85" />
-        </span>
-        Thinking
+      <span className="relative flex size-2 shrink-0">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/40" />
+        <span className="relative inline-flex size-2 rounded-full bg-primary/70" />
       </span>
-      <span className="ml-3 inline-flex gap-1 pt-1">
-        <span className="bg-muted-foreground/45 size-1.5 animate-bounce rounded-full [animation-delay:-0.2s]" />
-        <span className="bg-muted-foreground/45 size-1.5 animate-bounce rounded-full [animation-delay:-0.1s]" />
-        <span className="bg-muted-foreground/45 size-1.5 animate-bounce rounded-full" />
+      <span className="flex gap-[5px]">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="size-[5px] rounded-full bg-muted-foreground/30 animate-bounce"
+            style={{ animationDelay: `${i * 0.12}s` }}
+          />
+        ))}
       </span>
     </div>
   );
@@ -56,19 +57,13 @@ function AssistantBubbleBody({
   const trimmed = text.trim();
   if (!trimmed) return null;
 
-  const prose =
-    "prose prose-sm prose-invert max-w-none [&_p]:leading-relaxed [&_p:last-child]:mb-0 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-0.5 [&_code]:rounded [&_code]:bg-white/[0.06] [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[12px]";
-  const body = (
-    <div className={prose}>
-      <Markdown>{trimmed}</Markdown>
-    </div>
-  );
-
   return (
     <>
-      {body}
+      <div className="prose prose-sm prose-invert max-w-none leading-relaxed [&_p]:mb-3 [&_p:last-child]:mb-0 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-1 [&_strong]:text-foreground/90 [&_code]:rounded [&_code]:bg-white/[0.08] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[11px]">
+        <Markdown>{trimmed}</Markdown>
+      </div>
       {streaming ? (
-        <span className="text-primary/80 animate-pulse font-mono text-xs" aria-hidden>
+        <span className="text-primary/60 animate-pulse font-mono text-xs" aria-hidden>
           ▍
         </span>
       ) : null}
@@ -83,13 +78,12 @@ export function MessageList({
   assistantBusy = false,
 }: {
   messages: UIMessage[];
-  /** Merges onto the scroll container (layout + max-height in wizards). */
   className?: string;
   embedded?: boolean;
-  /** Request in flight — show thinking row until visible assistant tokens appear. */
   assistantBusy?: boolean;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const showThinking = assistantBusy && assistantIsWorking(messages);
   const lastId = messages.length ? messages[messages.length - 1].id : null;
   const lastIsAssistantStreaming =
@@ -99,55 +93,84 @@ export function MessageList({
     messagePlainText(messages[messages.length - 1]).trim() !== "";
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, showThinking]);
+
+  const visibleMessages = messages.filter((m) => {
+    if (m.role === "assistant" && messagePlainText(m).trim() === "" && showThinking) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <div
+      ref={containerRef}
       data-testid="grill-me-message-list"
       className={cn(
-        "border-border bg-muted/20 flex flex-col gap-3 overflow-y-auto rounded-lg border p-4",
-        className ?? "max-h-[50vh]",
+        "flex flex-col overflow-y-auto scroll-smooth",
+        embedded
+          ? "flex-1 min-h-0 px-4 py-4 gap-4"
+          : "gap-4 px-2 py-4",
+        className,
       )}
     >
-      {messages.map((m) => {
-        if (
-          m.role === "assistant" &&
-          messagePlainText(m).trim() === "" &&
-          showThinking
-        ) {
-          return null;
-        }
+      {visibleMessages.length === 0 && !showThinking ? (
+        <div className="flex flex-1 items-center justify-center py-8">
+          <p className="text-[12px] text-muted-foreground/30 font-mono">Waiting for response…</p>
+        </div>
+      ) : null}
+
+      {visibleMessages.map((m, idx) => {
+        const isUser = m.role === "user";
+        const isLast = idx === visibleMessages.length - 1;
+
         return (
-        <div
-          key={m.id}
-          className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-        >
           <div
+            key={m.id}
             className={cn(
-              "max-w-[min(92%,512px)] rounded-2xl text-sm leading-relaxed",
-              m.role === "user"
-                ? "bg-foreground px-4 py-2.5 text-background"
-                : "border-border text-foreground border bg-black/25 px-3.5 py-2.5 dark:bg-white/[0.04]",
-              embedded && m.role === "assistant" && "shadow-sm shadow-black/20",
+              "flex",
+              isUser ? "justify-end" : "justify-start",
             )}
           >
-            {m.role === "user" ? (
-              <div className="whitespace-pre-wrap">{messagePlainText(m)}</div>
-            ) : (
-              <AssistantBubbleBody
-                text={messagePlainText(m)}
-                streaming={
-                  lastIsAssistantStreaming && m.id === lastId
-                }
-              />
+            {!isUser && (
+              <div className="mr-2 mt-1 shrink-0">
+                <div className="size-6 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center">
+                  <span className="font-mono text-[8px] text-primary/80 font-bold">G</span>
+                </div>
+              </div>
             )}
+            <div
+              className={cn(
+                "max-w-[min(85%,520px)] rounded-2xl text-[13px] leading-relaxed",
+                isUser
+                  ? "bg-foreground/90 px-4 py-2.5 text-background rounded-br-sm"
+                  : "px-4 py-3 text-foreground/90 rounded-bl-sm",
+                !isUser && "bg-white/[0.04] border border-white/[0.07]",
+              )}
+            >
+              {isUser ? (
+                <div className="whitespace-pre-wrap">{messagePlainText(m)}</div>
+              ) : (
+                <AssistantBubbleBody
+                  text={messagePlainText(m)}
+                  streaming={lastIsAssistantStreaming && isLast}
+                />
+              )}
+            </div>
           </div>
-        </div>
         );
       })}
-      {showThinking ? <AssistantThinkingRow /> : null}
-      <div ref={bottomRef} />
+
+      {showThinking ? (
+        <div className="flex justify-start pl-8">
+          <div className="rounded-2xl rounded-bl-sm bg-white/[0.04] border border-white/[0.07] px-4 py-3">
+            <ThinkingDots />
+          </div>
+        </div>
+      ) : null}
+
+      <div ref={bottomRef} className="h-px" />
     </div>
   );
 }

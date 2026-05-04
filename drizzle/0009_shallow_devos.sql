@@ -1,0 +1,1 @@
+ALTER TABLE "businesses" ADD COLUMN "onboarding_phase" text;

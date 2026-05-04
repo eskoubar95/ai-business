@@ -32,7 +32,7 @@ export default async function GrillMePage({
   try {
     await assertUserBusinessAccess(userId, businessId);
   } catch {
-    redirect("/dashboard");
+    redirect("/onboarding");
   }
 
   const initialTurns = await loadGrillMeSessionsForBusiness(businessId);

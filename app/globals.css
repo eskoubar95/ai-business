@@ -400,6 +400,12 @@
   font-family: 'Geist Mono', ui-monospace, monospace;
 }
 
+/* Soul doc — numbered section anchors scroll below sticky title */
+.soul-doc-scroll-root .soul-doc-tiptap .ProseMirror h2[id^="soul-section-"],
+.soul-doc-scroll-root .soul-doc-tiptap .ProseMirror h3[id^="soul-section-"] {
+  scroll-margin-top: 5.75rem;
+}
+
 /* NodeView code block — fix paragraph spacing inside code content */
 .tiptap-editor .code-block-wrapper pre {
   margin: 0;
@@ -795,6 +801,85 @@ span[data-mention]:not([data-mention-type="agent"]) {
 }
 .key-input-loading { animation: input-loading-pulse 1.6s ease-in-out infinite; }
 
+/* Soul document inline prose (section body rendering) */
+.soul-prose p {
+  margin-bottom: 0.65em;
+  color: rgba(255, 255, 255, 0.70);
+  line-height: 1.7;
+}
+.soul-prose p:last-child { margin-bottom: 0; }
+.soul-prose strong {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+}
+.soul-prose ul, .soul-prose ol {
+  margin: 0.5em 0 0.5em 1.1em;
+  color: rgba(255, 255, 255, 0.65);
+}
+.soul-prose li { margin-bottom: 0.25em; line-height: 1.6; }
+.soul-prose h3, .soul-prose h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin: 1em 0 0.3em;
+}
+.soul-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  margin: 0.6em 0;
+}
+.soul-prose th {
+  text-align: left;
+  font-weight: 600;
+  color: rgba(255,255,255,0.45);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 4px 8px 4px 0;
+}
+.soul-prose td {
+  color: rgba(255,255,255,0.65);
+  padding: 5px 8px 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  vertical-align: top;
+}
+.soul-prose em { color: rgba(255,255,255,0.55); }
+.soul-prose code {
+  font-family: monospace;
+  font-size: 11px;
+  background: rgba(255,255,255,0.06);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: rgba(255,255,255,0.7);
+}
+
+/* @uiw/react-md-editor (soul section editor) — dark chrome aligned with editor shell */
+.soul-md-editor-root .w-md-editor {
+  background: #121212;
+  box-shadow: none;
+}
+.soul-md-editor-root .w-md-editor-toolbar {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: #161616;
+}
+.soul-md-editor-root .w-md-editor-content {
+  background: #0f0f0f;
+}
+.soul-md-editor-root .w-md-editor-text,
+.soul-md-editor-root .w-md-editor-text-textarea,
+.soul-md-editor-root .w-md-editor-text-pre {
+  background: #0c0c0c !important;
+  color: rgba(255,255,255,0.88) !important;
+}
+.soul-md-editor-root .w-md-editor-preview {
+  box-shadow: inset 1px 0 0 rgba(255,255,255,0.06);
+  background: #0f0f0f !important;
+}
+
 /* Onboarding prose (soul summary) */
 .onboarding-prose h2 {
   font-size: 11px;
@@ -812,4 +897,66 @@ span[data-mention]:not([data-mention-type="agent"]) {
   color: rgba(255, 255, 255, 0.72);
   line-height: 1.65;
   margin: 0;
+}
+.onboarding-prose h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+  margin: 0 0 0.5em;
+  line-height: 1.25;
+}
+.onboarding-prose h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 1.15em 0 0.35em;
+}
+.onboarding-prose ul,
+.onboarding-prose ol {
+  margin: 0.5em 0 0.75em;
+  padding-left: 1.25em;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.onboarding-prose li {
+  margin: 0.25em 0;
+}
+.onboarding-prose strong {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+}
+.onboarding-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 1em 0;
+}
+.onboarding-prose thead th {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.88);
+  font-weight: 600;
+}
+.onboarding-prose th,
+.onboarding-prose td {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.45em 0.65em;
+  text-align: left;
+  vertical-align: top;
+}
+.onboarding-prose tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.03);
+}
+.onboarding-prose code {
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 0.9em;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.12em 0.35em;
+  border-radius: 4px;
+}
+.onboarding-prose hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 1.25em 0;
 }

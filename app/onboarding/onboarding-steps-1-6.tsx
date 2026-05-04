@@ -448,33 +448,37 @@ export function Step6({
   phase,
   creatingMsgIdx,
   preparingStepIdx,
+  hasGithub = false,
 }: {
   phase: "creating" | "preparing";
   creatingMsgIdx: number;
   preparingStepIdx: number;
+  hasGithub?: boolean;
 }) {
-  const safeCreate = Math.min(
-    creatingMsgIdx,
-    Math.max(0, LOADING_MESSAGES.length - 1),
+  const safeCreate = Math.min(creatingMsgIdx, Math.max(0, LOADING_MESSAGES.length - 1));
+  const visiblePrepSteps = PREPARING_GRILL_STEPS.filter(
+    (s) => hasGithub || !s.toLowerCase().includes("github"),
   );
-  const safePrep = Math.min(
-    preparingStepIdx,
-    Math.max(0, PREPARING_GRILL_STEPS.length - 1),
-  );
+  const safePrep = Math.min(preparingStepIdx, Math.max(0, visiblePrepSteps.length - 1));
 
   if (phase === "creating") {
     return (
-      <div className="flex flex-col items-center justify-center py-10 px-6 gap-5 text-center">
-        <div className="relative size-12">
-          <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
-          <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin" />
+      <div className="flex flex-col items-center justify-center py-12 px-8 gap-8 text-center">
+        {/* Animated rings */}
+        <div className="relative size-16">
+          <div className="absolute inset-0 rounded-full border border-primary/10" />
+          <div className="absolute inset-0 rounded-full border border-primary/25 border-t-primary animate-spin" style={{ animationDuration: "1.2s" }} />
+          <div className="absolute inset-[5px] rounded-full border border-primary/10 border-t-primary/50 animate-spin" style={{ animationDuration: "0.9s", animationDirection: "reverse" }} />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="size-2.5 rounded-full bg-primary/70 animate-pulse" />
+          </div>
         </div>
-        <div>
-          <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground/45 mb-2">
-            Creating business
-          </p>
-          <p className="font-mono text-[12px] text-muted-foreground/70 min-h-[2.5em] max-w-sm transition-all">
+        <div className="space-y-2">
+          <p className="text-[13px] font-medium text-foreground/80">
             {LOADING_MESSAGES[safeCreate]}
+          </p>
+          <p className="text-[11px] font-mono text-muted-foreground/30 uppercase tracking-widest">
+            Creating workspace
           </p>
         </div>
       </div>
@@ -482,41 +486,43 @@ export function Step6({
   }
 
   return (
-    <div className="flex flex-col py-8 px-6 gap-6 max-w-lg mx-auto">
-      <div className="flex items-start gap-3">
-        <div className="relative size-10 shrink-0 mt-0.5">
-          <div className="absolute inset-0 rounded-full bg-primary/10" />
-          <div className="absolute inset-1 rounded-full border border-primary/40 animate-pulse" />
-        </div>
-        <div className="min-w-0 text-left">
-          <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground/45 mb-1">
-            Priming Grill-Me
-          </p>
-          <h3 className="text-[15px] font-semibold text-foreground leading-snug">
-            Reasoning over your signup context
-          </h3>
-          <p className="text-[12px] text-muted-foreground/60 mt-2 leading-relaxed">
-            Using the name, description and repository link you provided so the interviewer starts in the right
-            context — powered by your saved Cursor workspace key when the chat opens.
-          </p>
-        </div>
+    <div className="flex flex-col justify-center py-8 px-6 gap-5 min-h-full">
+      <div className="text-center mb-2">
+        <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground/35 mb-1.5">
+          Priming Grill-Me
+        </p>
+        <p className="text-[16px] font-semibold text-foreground/90 leading-snug">
+          Thinking about your business
+        </p>
+        <p className="text-[12px] text-muted-foreground/45 mt-1.5 leading-relaxed max-w-[300px] mx-auto">
+          Analysing what you provided so the interview starts exactly where it matters.
+        </p>
       </div>
-      <ol className="space-y-3">
-        {PREPARING_GRILL_STEPS.map((label, i) => {
+
+      <ol className="space-y-2.5">
+        {visiblePrepSteps.map((label, i) => {
           const done = i < safePrep;
           const active = i === safePrep;
           return (
             <li
               key={label}
-              className={`flex gap-3 text-left text-[12px] leading-snug rounded-lg border px-3 py-2.5 transition-colors ${
+              className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-[12px] leading-snug transition-all duration-300 ${
                 done
-                  ? "border-green-500/25 bg-green-500/[0.06] text-green-400/95"
+                  ? "border-primary/20 bg-primary/[0.05] text-foreground/70"
                   : active
-                  ? "border-primary/35 bg-primary/[0.07] text-foreground/90"
-                  : "border-border/40 bg-muted/10 text-muted-foreground/40"
+                  ? "border-white/[0.12] bg-white/[0.04] text-foreground/90"
+                  : "border-white/[0.04] bg-transparent text-muted-foreground/30"
               }`}
             >
-              <span className="shrink-0 font-mono text-[11px] w-5">{done ? "✓" : active ? "…" : "○"}</span>
+              <span className="shrink-0 size-4 flex items-center justify-center">
+                {done ? (
+                  <span className="text-primary text-[13px]">✓</span>
+                ) : active ? (
+                  <span className="size-2 rounded-full bg-primary/70 animate-pulse block" />
+                ) : (
+                  <span className="size-1.5 rounded-full bg-muted-foreground/20 block" />
+                )}
+              </span>
               <span>{label}</span>
             </li>
           );

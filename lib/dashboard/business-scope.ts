@@ -5,6 +5,30 @@ import { getDb } from "@/db/index";
 import { businesses, userBusinesses } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
+import { isOnboardingPath } from "./onboarding-path";
+
+export { isDashboardAddBusinessPath, isOnboardingPath } from "./onboarding-path";
+/** @deprecated Use `isOnboardingPath` */
+export { isOnboardingPath as isDashboardOnboardingPath };
+
+/**
+ * When the session user has no businesses, only `/onboarding` applies (not dashboard).
+ * `/dashboard/onboarding` is only for adding an **extra** business once they already have one.
+ * Requires `x-pathname` from middleware.
+ */
+export async function redirectToOnboardingIfNoBusinesses(
+  pathname: string | null | undefined,
+): Promise<void> {
+  if (pathname && isOnboardingPath(pathname)) {
+    return;
+  }
+
+  const rows = await loadUserBusinesses();
+  if (rows.length === 0) {
+    redirect("/onboarding");
+  }
+}
+
 export async function loadUserBusinesses(): Promise<{ id: string; name: string }[]> {
   const { data: session } = await auth.getSession();
   const userId = session?.user?.id;
@@ -44,7 +68,7 @@ export async function resolveBusinessIdParam(
 ): Promise<string> {
   const rows = await loadUserBusinesses();
   if (rows.length === 0) {
-    redirect("/dashboard/onboarding");
+    redirect("/onboarding");
   }
 
   const valid =
