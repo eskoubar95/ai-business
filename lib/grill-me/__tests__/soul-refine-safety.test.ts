@@ -55,4 +55,16 @@ describe("formatGrillTranscriptForSoulRefine", () => {
     expect(s).toContain("Grill-Me");
     expect(s).not.toContain("[[GRILL_ME_COMPLETE]]");
   });
+
+  it("under a tight char budget keeps newer turns and drops older ones", () => {
+    const turns = [
+      { id: "1", role: "user" as const, content: "OLD_THREAD_SHOULD_DROP" },
+      { id: "2", role: "assistant" as const, content: "MID_THREAD_SHOULD_DROP" },
+      { id: "3", role: "user" as const, content: "NEWEST_KEEP_THIS_FRAGMENT" },
+    ];
+    const s = formatGrillTranscriptForSoulRefine(turns, 55);
+    expect(s).toContain("NEWEST_KEEP");
+    expect(s).not.toContain("OLD_THREAD");
+    expect(s).not.toContain("MID_THREAD");
+  });
 });

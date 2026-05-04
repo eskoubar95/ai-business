@@ -106,6 +106,23 @@ export function OnboardingClient() {
 
   const createInFlightRef = useRef(false);
 
+  /** Persist soul-editor side chat across refresh (sessionStorage). */
+  useEffect(() => {
+    if (chatPhase !== "editor" || !businessId || typeof window === "undefined") return;
+    try {
+      if (editorMessages.length === 0 && !editorInput.trim()) {
+        window.sessionStorage.removeItem(soulEditorSideChatStorageKey(businessId));
+        return;
+      }
+      window.sessionStorage.setItem(
+        soulEditorSideChatStorageKey(businessId),
+        JSON.stringify({ messages: editorMessages, input: editorInput }),
+      );
+    } catch {
+      /* quota / private mode */
+    }
+  }, [businessId, chatPhase, editorMessages, editorInput]);
+
   // ── Resume in-progress onboarding from DB on mount ────────────────────────
   useEffect(() => {
     if (resumeAttemptedRef.current) return;
@@ -119,6 +136,7 @@ export function OnboardingClient() {
 
         setBusinessId(active.businessId);
         setBizName(active.bizName);
+        setBizType(active.businessProfile === "new" ? "new" : "existing");
         setResumedTurns(active.turns);
         setResumedSoulMarkdown(active.soulMarkdown);
 

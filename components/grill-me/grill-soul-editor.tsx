@@ -237,6 +237,18 @@ export function GrillSoulEditor({
 
   const saveSeqRef = useRef(0);
   const lastPersistedMarkdownRef = useRef<string>("");
+  /** Reset autosave baseline when switching business. */
+  useEffect(() => {
+    lastPersistedMarkdownRef.current = "";
+  }, [businessId]);
+
+  useEffect(() => {
+    if (!soulMarkdown.trim()) return;
+    if (lastPersistedMarkdownRef.current === "") {
+      lastPersistedMarkdownRef.current = soulMarkdown;
+    }
+  }, [businessId, soulMarkdown]);
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatTaRef = useRef<HTMLTextAreaElement>(null);
   const mobileChatTaRef = useRef<HTMLTextAreaElement>(null);
@@ -338,6 +350,7 @@ export function GrillSoulEditor({
   useEffect(() => {
     const md = soulMarkdown.trim();
     if (!md) return;
+    if (soulMarkdown === lastPersistedMarkdownRef.current) return;
     const t = setTimeout(() => void persist(soulMarkdown), AUTO_SAVE_DEBOUNCE_MS);
     return () => clearTimeout(t);
   }, [soulMarkdown, persist]);

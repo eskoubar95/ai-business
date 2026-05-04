@@ -13,7 +13,9 @@ export function formatGrillTranscriptForSoulRefine(
   const blocks: string[] = [];
   let total = 0;
 
-  for (const m of turns) {
+  // Newest first so a tight budget keeps the latest founder/assistant signal; output stays chronological.
+  for (let i = turns.length - 1; i >= 0; i--) {
+    const m = turns[i]!;
     const label = m.role === "user" ? "Founder" : "Grill-Me";
     let body = m.content
       .replace(/\[\[GRILL_ME_COMPLETE\]\]/gi, "")
@@ -24,10 +26,12 @@ export function formatGrillTranscriptForSoulRefine(
 
     const line = `**${label}:** ${body}\n\n`;
     if (total + line.length > maxTotalChars) {
-      blocks.push("*(Ældre beskeder udeladt af pladshensyn — brug soul-markdown som sandhed.)*\n");
+      blocks.unshift(
+        "*(Ældre beskeder udeladt af pladshensyn — brug soul-markdown som sandhed.)*\n\n",
+      );
       break;
     }
-    blocks.push(line);
+    blocks.unshift(line);
     total += line.length;
   }
 

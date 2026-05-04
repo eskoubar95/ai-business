@@ -34,7 +34,7 @@ export function isUnsafeSoulRefineOutput(previousMarkdown: string, candidateMark
  * Overridden when they clearly order a document mutation.
  */
 export function wantsGuidanceOnlySoulTurn(userMessage: string): boolean {
-  const t = userMessage.toLowerCase().normalize("NFKD");
+  const t = userMessage.toLowerCase().normalize("NFC");
 
   const explicitEdit =
     /\bopdater\w*\b/.test(t) &&

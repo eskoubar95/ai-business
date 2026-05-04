@@ -120,6 +120,7 @@ const SlashCommandList = forwardRef<SlashCommandListHandle, SlashCommandListProp
 
     useImperativeHandle(ref, () => ({
       onKeyDown({ event }) {
+        if (items.length === 0) return false;
         if (event.key === "ArrowUp") {
           setSelected((s) => (s + items.length - 1) % items.length);
           return true;
@@ -129,7 +130,9 @@ const SlashCommandList = forwardRef<SlashCommandListHandle, SlashCommandListProp
           return true;
         }
         if (event.key === "Enter") {
-          command(items[selected]!);
+          const item = items[selected];
+          if (!item) return true;
+          command(item);
           return true;
         }
         return false;

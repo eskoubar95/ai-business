@@ -31,8 +31,11 @@ export default async function GrillMePage({
 
   try {
     await assertUserBusinessAccess(userId, businessId);
-  } catch {
-    redirect("/onboarding");
+  } catch (e) {
+    if (e instanceof Error && e.message === "Forbidden") {
+      redirect("/dashboard");
+    }
+    throw e;
   }
 
   const initialTurns = await loadGrillMeSessionsForBusiness(businessId);

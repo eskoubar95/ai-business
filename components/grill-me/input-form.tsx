@@ -44,7 +44,8 @@ async function buildAttachedFile(file: File): Promise<AttachedFile | null> {
   if (type === "image") {
     previewUrl = await new Promise<string>((resolve) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
+      reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+      reader.onerror = () => resolve("");
       reader.readAsDataURL(file);
     });
   }
