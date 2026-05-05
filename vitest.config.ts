@@ -11,6 +11,7 @@ export default defineConfig({
       "lib/**/*.spec.ts",
       "lib/**/__tests__/**/*.test.ts",
       "scripts/**/*.test.ts",
+      "scripts/**/*.spec.ts",
       "scripts/**/__tests__/**/*.test.ts",
       "app/**/*.test.ts",
       "app/**/*.spec.ts",

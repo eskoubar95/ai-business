@@ -15,7 +15,7 @@ export const AgentShardSchema = z.array(
     mcp_allowlist: z.array(z.string()),
     required_gates_before_output: z.array(z.string()),
   }),
-);
+).min(1);
 
 /** Team definitions inside `teams/teams.json`. */
 export const TeamShardSchema = z.array(
@@ -26,7 +26,7 @@ export const TeamShardSchema = z.array(
     lead_agent_slug: z.string(),
     tier: z.number().int(),
   }),
-);
+).min(1);
 
 /** Gate kinds shard (`gates/gate_kinds.json`). */
 export const GateKindShardSchema = z.object({
@@ -36,7 +36,7 @@ export const GateKindShardSchema = z.object({
       label: z.string(),
       description: z.string(),
     }),
-  ),
+  ).min(1),
   default_mode: z.enum(["blocking", "warn_only"]),
   metadata_schema: z.record(z.string(), z.string()),
 });
@@ -59,7 +59,7 @@ export const CommunicationPolicyShardSchema = z.object({
       quota_per_hour: z.number().int().nullable(),
       quota_mode: z.enum(["warn_only", "enforce"]),
     }),
-  ),
+  ).min(1),
 });
 
 /** Platform error registry (`errors/registry.json`). */

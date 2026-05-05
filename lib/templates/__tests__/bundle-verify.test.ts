@@ -5,6 +5,70 @@ import { canonicalStringify } from "@/lib/templates/canonical-json";
 import { TemplateSeedError } from "@/lib/templates/template-errors";
 import { BundlePayloadSchema } from "@/lib/templates/zod-schemas";
 
+const minimalShards = {
+  teams: [
+    {
+      team_slug: "engineering_team",
+      display_name: "Engineering",
+      description: "",
+      lead_agent_slug: "lead_eng",
+      tier: 1,
+    },
+  ],
+  agents: [
+    {
+      agent_slug: "lead_eng",
+      display_name: "Lead",
+      team_slug: "engineering_team",
+      tier: 1,
+      role_summary: "Lead",
+      execution_adapter: "cursor_agent_cli" as const,
+      model_routing: "cursor_managed" as const,
+      instructions_file: "lead.md",
+      heartbeat_template: "ping",
+      mcp_allowlist: [] as string[],
+      required_gates_before_output: [] as string[],
+    },
+  ],
+  gates: {
+    gate_kinds: [{ slug: "code_review", label: "Code review", description: "" }],
+    default_mode: "blocking" as const,
+    metadata_schema: {},
+  },
+  communication_policy: {
+    schema_version: "1.0.0",
+    default_violation_policy: "hard_block" as const,
+    default_quota_mode: "warn_only" as const,
+    allowed_intents: [] as string[],
+    allowed_artifact_kinds: [] as string[],
+    edges: [
+      {
+        from_role: "lead_eng",
+        to_role: "lead_eng",
+        direction: "one_way" as const,
+        allowed_intents: [] as string[],
+        allowed_artifacts: [] as string[],
+        requires_human_ack: false,
+        quota_per_hour: null,
+        quota_mode: "warn_only" as const,
+      },
+    ],
+  },
+  errors_registry: {
+    registry_version: "1.0.0",
+    language: "en",
+    error_codes: [
+      {
+        code: "TEMPLATE_HASH_MISMATCH",
+        http_status: 409,
+        message: "m",
+        remediation_key: "CONTACT_ADMIN",
+        remediation_hint: "h",
+      },
+    ],
+  },
+} as const;
+
 describe("bundle-verify", () => {
   it("detects hash mismatch after shard mutation", () => {
     const bundle = {
@@ -30,36 +94,7 @@ describe("bundle-verify", () => {
           errors_registry: "badhash",
         },
       },
-      shards: {
-        teams: [],
-        agents: [],
-        gates: {
-          gate_kinds: [],
-          default_mode: "blocking" as const,
-          metadata_schema: {},
-        },
-        communication_policy: {
-          schema_version: "1.0.0",
-          default_violation_policy: "hard_block" as const,
-          default_quota_mode: "warn_only" as const,
-          allowed_intents: [],
-          allowed_artifact_kinds: [],
-          edges: [],
-        },
-        errors_registry: {
-          registry_version: "1.0.0",
-          language: "en",
-          error_codes: [
-            {
-              code: "TEMPLATE_HASH_MISMATCH",
-              http_status: 409,
-              message: "m",
-              remediation_key: "CONTACT_ADMIN",
-              remediation_hint: "h",
-            },
-          ],
-        },
-      },
+      shards: { ...minimalShards },
     };
 
     expect(() => verifyAndParseBundle(bundle)).toThrow(TemplateSeedError);
@@ -114,17 +149,10 @@ describe("bundle-verify", () => {
           },
         },
         shards: {
-          teams: [],
-          agents: [],
-          gates: { gate_kinds: [], default_mode: "blocking", metadata_schema: {} },
-          communication_policy: {
-            schema_version: "1.0.0",
-            default_violation_policy: "hard_block",
-            default_quota_mode: "warn_only",
-            allowed_intents: [],
-            allowed_artifact_kinds: [],
-            edges: [],
-          },
+          teams: minimalShards.teams,
+          agents: minimalShards.agents,
+          gates: minimalShards.gates,
+          communication_policy: minimalShards.communication_policy,
           errors_registry: {
             registry_version: "1.0.0",
             language: "en",

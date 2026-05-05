@@ -6,7 +6,7 @@ Versioned JSON **shards** describe default agent rosters, teams, gate kinds, com
 
 Canonical source lives under:
 
-```
+```text
 templates/conduro/enterprise/v3/
   manifest.json              # Bundle identity + shard paths + sha256 (computed by build)
   agents/agents.json         # Agent roster (adapter, routing, tier, MCP hints)

@@ -1,241 +1,237 @@
-# Parallel Workstreams — Enterprise Template v3
+# Parallel workstreams — Enterprise template v3
 
-**Formål:** Tre agenter (Workers) kan arbejde fuldstændig uafhængigt i **separate git worktrees**.
-Ingen af de tre streams har runtime-afhængigheder af hinanden i MVP-fasen.
-Integration sker ved merge — ikke undervejs.
+**Purpose:** Three workers can progress independently in **separate git worktrees**. None of the three streams has runtime dependencies on the others during the MVP phase. Integration happens at **merge time**, not mid-stream.
 
 ---
 
-## Dependency map (hvorfor de er uafhængige)
+## Dependency map (why they are independent)
 
-```
+```text
 Stream A: Template infrastructure + DB schema
-  ↓ producerer: migrations, seed-loader, hash-validator
-  ↓ ingen afhængighed af B eller C
+  ↓ ships: migrations, seed loader, hash validator
+  ↓ no dependency on B or C
 
 Stream B: RunPod lifecycle + queue orchestrator
-  ↓ producerer: state machine worker, LiteLLM proxy config, wake/sleep logic
-  ↓ ingen afhængighed af A eller C (bruger environment vars, ikke A's migrations)
+  ↓ ships: state machine worker, LiteLLM proxy config, wake/sleep logic
+  ↓ no dependency on A or C for local work (environment variables only, not A's migrations)
 
-Stream C: Communication graph API + UI canvas foundation
-  ↓ producerer: edge CRUD API, policy enforcement middleware, basic canvas
-  ↓ ingen afhængighed af B (bruger DB schema fra A — men A's migrations er simple
-     enough at C kan stub dem med en minimal local schema for parallel dev)
+Stream C: Communication graph API + canvas foundation
+  ↓ ships: edge CRUD API, policy enforcement middleware, basic canvas
+  ↓ no dependency on B (uses DB schema from A — A's migrations are small enough
+     that C can stub them with a minimal local schema while developing in parallel)
 ```
 
-**Integration point:** Alle tre streams merges ind i `main` i denne rækkefølge:
+**Integration:** Merge all three into `main` in this order:
 
-1. Stream A (schema + loader — fundament)
-2. Stream C (graph API — bruger tabeller fra A)
-3. Stream B (orchestrator — bruger org/agent rows fra A)
+1. Stream A (schema + loader — foundation)
+2. Stream C (graph API — uses tables from A)
+3. Stream B (orchestrator — uses org/agent rows seeded from A)
 
 ---
 
-## Stream A — Template Infrastructure + DB Schema
+## Stream A — Template infrastructure + DB schema
 
-**Branch:** `feat/template-infrastructure`
+**Branch:** `feat/template-infrastructure`  
 **Worktree:** `../ai-business-worktree-a`
 
-### Mål
+### Goal
 
-Versioneret template-bundle system med DB-migrationer, seed-loader og hash-validator.
+Versioned template-bundle system with DB migrations, seed loader, and hash validator.
 
-### Opgaveliste
+### Task list
 
-#### A1 — DB migrationer
+#### A1 — DB migrations
 
-- Tilføj `template_id`, `template_version`, `derived_from_template_id`, `derived_from_template_version` til `businesses`-tabellen (Drizzle migration)
-- Tilføj `execution_adapter` (`hermes_agent_cli` | `claude_code_cli` | `cursor_agent_cli`), `model_routing`, `tier` til `agents`-tabellen
-- Opret `gate_kinds`-tabel (slug, label, description, `default_mode`)
-- Opret `communication_edges`-tabel (from_role, to_role, direction, allowed_intents[], allowed_artifacts[], requires_human_ack, quota_per_hour, quota_mode, org_id, template_version, derived_from_*)
-- Kør `npm run db:generate` + `npm run db:migrate` — verificer clean run
+- Add `template_id`, `template_version`, `derived_from_template_id`, `derived_from_template_version` to `businesses` (Drizzle migration).
+- Add `execution_adapter` (`hermes_agent_cli` | `claude_code_cli` | `cursor_agent_cli`), `model_routing`, `tier` to `agents`.
+- Create `gate_kinds` table (slug, label, description, `default_mode`).
+- Create `communication_edges` table (from_role, to_role, direction, allowed_intents[], allowed_artifacts[], requires_human_ack, quota_per_hour, quota_mode, org_id, template_version, derived_from_*).
+- Run `npm run db:generate` and `npm run db:migrate`; verify a clean run.
 
 #### A2 — Template build pipeline
 
-- Opret `scripts/templates/build.ts`:
-  - Læser alle shards fra `templates/conduro/enterprise/v3/`
-  - Validerer mod Zod-skema
-  - Producerer `dist/conduro.enterprise.3.0.0.bundle.json`
-  - Beregner og skriver `sha256` per shard i `manifest.json`
-- Opret `npm run templates:build` script i `package.json`
-- Opret Zod-skema for `AgentShard`, `TeamShard`, `GateKindShard`, `CommunicationPolicyShard`, `ErrorRegistry`
+- Add `scripts/templates/build.ts`:
+  - Read all shards under `templates/conduro/enterprise/v3/`.
+  - Validate with Zod schemas.
+  - Emit `dist/conduro.enterprise.3.0.0.bundle.json`.
+  - Compute and write per-shard `sha256` into `manifest.json`.
+- Add `npm run templates:build` in `package.json`.
+- Add Zod schemas for agent, team, gate kind, communication policy, and error-registry shards.
 
 #### A3 — Seed loader (Server Action / script)
 
-- Opret `scripts/templates/seed-org.ts`:
-  - Tager `org_id` + bundle path
-  - Runtime hash-verificerer bundle mod manifest
-  - Skriver teams, agents, gates, communication_edges til DB med `template_id` + `template_version` + lineage felter
-  - Idempotent (kan køres igen uden duplikat-insert)
-- Opret unit tests: hash mismatch afvises med `TEMPLATE_HASH_MISMATCH`, schema invalid afvises med `BUNDLE_SCHEMA_INVALID`
+- Add `scripts/templates/seed-org.ts`:
+  - Args: `org_id` + bundle path.
+  - Runtime hash verification of the bundle against `manifest`.
+  - Write teams, agents, gates, and communication_edges with `template_id`, `template_version`, and lineage columns.
+  - Idempotent (safe to re-run without duplicate inserts).
+- Unit tests: hash mismatch → `TEMPLATE_HASH_MISMATCH`; invalid schema → `BUNDLE_SCHEMA_INVALID`.
 
 #### A4 — Error registry loader
 
-- Opret `lib/templates/error-registry.ts`: loader der læser `errors/registry.json` + eksporterer typesikker `getError(code)` funktion
-- Enhedstest: alle koder i registry returneres korrekt; ukendt kode kaster
+- Add `lib/templates/error-registry.ts`: load `errors/registry.json` and export a type-safe `getError(code)`.
+- Unit tests: every registry code resolves; unknown code throws.
 
 #### A5 — README
 
-- Opret `templates/README.md`: forklarer shard-struktur, build-pipeline, semver-regler og hvordan man tilføjer ny agent-rolle eller gate_kind
+- Add `templates/README.md`: shard layout, build pipeline, semver rules, how to add an agent role or `gate_kind`.
 
-**Acceptance criteria (Green gate):**
+**Acceptance criteria (green gate)**
 
-- `npm run templates:build` kører uden fejl
-- `npm run db:migrate` er clean
-- Unit tests grønne
-- `seed-org.ts` seeder en test-org korrekt og kan verificeres via `getDb()` query
+- `npm run templates:build` succeeds.
+- `npm run db:migrate` is clean.
+- Unit tests pass.
+- `seed-org.ts` seeds a test org and can be verified with a `getDb()` query.
 
 ---
 
-## Stream B — RunPod Lifecycle + Queue Orchestrator
+## Stream B — RunPod lifecycle + queue orchestrator
 
-**Branch:** `feat/runpod-lifecycle`
+**Branch:** `feat/runpod-lifecycle`  
 **Worktree:** `../ai-business-worktree-b`
 
-### Mål
+### Goal
 
-State machine for RunPod wake/sleep, job queue med fair_share, LiteLLM proxy config og token/correlation metadata.
+RunPod wake/sleep state machine, job queue with `fair_share`, LiteLLM proxy config, and correlation metadata.
 
-### Opgaveliste
+### Task list
 
 #### B1 — RunPod state machine
 
-- Opret `runner/runpod/state-machine.ts`:
-  - States: `cold` → `warming` → `warm` → `draining` → `idle` → `cold`
-  - Wake-trigger: job enqueued på cold server
-  - Shutdown-condition: `queue_empty ∧ in_flight_empty ∧ elapsed_since_last_activity ≥ 7min`
-  - Gem state i DB (ny tabel `runpod_instances`: state, last_activity_at, endpoint_url)
-- Opret `runner/runpod/client.ts`: wrapper til RunPod API (start/stop/status) med secrets fra env (`RUNPOD_API_KEY`, `RUNPOD_ENDPOINT`)
-- Unit tests: shutdown triggers korrekt (mock clock), for-tidlig shutdown blokeres
+- Add `runner/runpod/state-machine.ts`:
+  - States: `cold` → `warming` → `warm` → `draining` → `idle` → `cold`.
+  - Wake trigger: job enqueued while server is cold.
+  - Shutdown: `queue_empty ∧ in_flight_empty ∧ elapsed_since_last_activity ≥ 7min`.
+  - Persist state (new `runpod_instances` table: state, last_activity_at, endpoint_url).
+- Add `runner/runpod/client.ts`: RunPod API wrapper (start/stop/status) using env secrets (`RUNPOD_API_KEY`, `RUNPOD_ENDPOINT`).
+- Unit tests: shutdown fires correctly (mock clock); premature shutdown blocked.
 
 #### B2 — Job queue
 
-- Opret `runner/queue/job-queue.ts`:
-  - `enqueue(job)` — persisterer til DB tabel `agent_jobs` (org_id, agent_slug, adapter, payload, status, correlation_id, enqueued_at, started_at, completed_at)
-  - `fair_share_next()` — henter næste job med fair-share selektion på tværs af org_id
-  - `mark_inflight(job_id)` / `mark_done(job_id, result)` / `mark_failed(job_id, error)`
-- DB migration: `agent_jobs`-tabel
-- Unit tests: fair_share roterer korrekt mellem to orgs; ingen org stjæler al throughput
+- Add `runner/queue/job-queue.ts`:
+  - `enqueue(job)` — persist to `agent_jobs` (org_id, agent_slug, adapter, payload, status, correlation_id, enqueued_at, started_at, completed_at).
+  - `fair_share_next()` — next job with fair-share selection across `org_id`.
+  - `mark_inflight` / `mark_done` / `mark_failed`.
+- DB migration: `agent_jobs` table.
+- Unit tests: fair share rotates across two orgs; no org starves the other.
 
 #### B3 — LiteLLM proxy config + correlation metadata
 
-- Opret `runner/litellm/config-template.yaml`:
-  - `model_list` med RunPod endpoint
-  - `general_settings` med `LITELLM_MASTER_KEY` fra env
-  - `headers_to_pass` inkl. `x-correlation-id`, `x-tenant-id`, `x-agent-id`, `x-job-id`
-- Opret `runner/litellm/metadata.ts`: bygger standard metadata object til LiteLLM request headers
-- Dokumenter Cursor-gap eksplicit i `runner/litellm/README.md`: «Cursor adapter uses Cursor-managed model; correlation_id is best-effort»
+- Add `runner/litellm/config-template.yaml`:
+  - `model_list` with RunPod endpoint.
+  - `general_settings` with `LITELLM_MASTER_KEY` from env.
+  - `headers_to_pass` including `x-correlation-id`, `x-tenant-id`, `x-agent-id`, `x-job-id`.
+- Add `runner/litellm/metadata.ts`: build standard metadata for LiteLLM request headers.
+- Document the Cursor gap in `runner/litellm/README.md`: «Cursor adapter uses Cursor-managed model; correlation_id is best-effort».
 
-#### B4 — Orchestrator HTTP server (agent-orchestrator.js)
+#### B4 — Orchestrator HTTP server
 
-- Opret `runner/orchestrator/server.ts`:
-  - `POST /agent/spawn` — validerer payload, enqueuer job, returnerer `{ job_id, status: "queued" }`
-  - `GET /agent/:job_id` — returnerer job status + output
-  - `GET /health` — returnerer `{ status, runpod_state, queue_depth }`
-  - Spawner Claude Code / Hermes subprocesses med korrekte env vars (HOME, HERMES_HOME, ANTHROPIC_BASE_URL)
-- Dockerfile opdatering: inkl. Hermes CLI install step (TODO-stub hvis Hermes install er uafklaret)
+- Add `runner/orchestrator/server.ts`:
+  - `POST /agent/spawn` — validate payload, enqueue job, return `{ job_id, status: "queued" }`.
+  - `GET /agent/:job_id` — job status + output.
+  - `GET /health` — `{ status, runpod_state, queue_depth }`.
+  - Spawn Claude Code / Hermes subprocesses with correct env (`HOME`, `HERMES_HOME`, `ANTHROPIC_BASE_URL`).
+- Dockerfile: include Hermes CLI install step (TODO stub if install path is still unclear).
 
 #### B5 — Quota warn logger
 
-- Opret `runner/queue/quota-checker.ts`:
-  - Checker `quota_per_hour` per edge-par ved job-dispatch (læser `communication_edges` fra DB)
-  - `warn_only`: logger + returnerer warning i job metadata — blokerer ikke
-- Unit test: quota warning trigges korrekt; `warn_only` blokerer ikke job
+- Add `runner/queue/quota-checker.ts`:
+  - Check `quota_per_hour` per edge pair at dispatch (read `communication_edges`).
+  - `warn_only`: log + attach warning to job metadata — do not block.
+- Unit test: quota warning fires; `warn_only` does not block jobs.
 
-**Acceptance criteria (Green gate):**
+**Acceptance criteria (green gate)**
 
-- State machine tests grønne (mock RunPod API)
-- Fair-share tests grønne
-- `GET /health` returnerer korrekt state
-- Correlation metadata propageres i LiteLLM request headers (integration test mod mock LiteLLM)
+- State machine tests pass (mock RunPod API).
+- Fair-share tests pass.
+- `GET /health` returns expected state.
+- Correlation metadata flows into LiteLLM request headers (integration test with mock LiteLLM).
 
 ---
 
-## Stream C — Communication Graph API + Canvas Foundation
+## Stream C — Communication graph API + canvas foundation
 
-**Branch:** `feat/communication-graph`
+**Branch:** `feat/communication-graph`  
 **Worktree:** `../ai-business-worktree-c`
 
-### Mål
+### Goal
 
-Server-side edge CRUD API, policy enforcement middleware (hard_block + structured errors), og første canvas/liste UI.
+Server-side edge CRUD, policy enforcement middleware (`hard_block` + structured errors), and first canvas/list UI.
 
-### Opgaveliste
+### Task list
 
 #### C1 — Edge CRUD Server Actions
 
-- Opret `app/actions/communication-edges.ts` (`"use server"`):
-  - `createEdge(orgId, edge)` — validerer mod Zod, persisterer, returnerer ny edge
-  - `updateEdge(orgId, edgeId, patch)` — `merge_smart`: patcher kun ikke-driftede felter
-  - `deleteEdge(orgId, edgeId)`
-  - `listEdges(orgId)` — returnerer alle edges for org med policy attributter
-- Zod-skema for edge input (inkl. `direction`, `allowed_intents`, `allowed_artifacts`, `requires_human_ack`, `quota_per_hour`, `quota_mode`)
-- Unit tests for `createEdge` og `updateEdge`
+- Add `app/actions/communication-edges.ts` (`"use server"`):
+  - `createEdge(orgId, edge)` — Zod validate, persist, return edge.
+  - `updateEdge(orgId, edgeId, patch)` — `merge_smart`: only patch non-drifted fields.
+  - `deleteEdge(orgId, edgeId)`.
+  - `listEdges(orgId)` — all edges with policy fields.
+- Zod schema for edge input (`direction`, `allowed_intents`, `allowed_artifacts`, `requires_human_ack`, `quota_per_hour`, `quota_mode`).
+- Unit tests for `createEdge` and `updateEdge`.
 
 #### C2 — Policy enforcement middleware
 
-- Opret `lib/communication/policy-enforcer.ts`:
-  - `checkConsult({ from_role, to_role, intent, artifacts, org_id })` → `{ allowed: boolean, error?: PolicyError }`
-  - `PolicyError` shape: `{ error_code, correlation_id, remediation_key, detail }`
-  - Bruger `getError(code)` fra error-registry (kan stub registry i tests)
-  - `hard_block`: returnerer fejl — kalder **aldrig** videre ved violation
-  - Propagerer `correlation_id` i returværdi (til brug i LiteLLM metadata downstream)
+- Add `lib/communication/policy-enforcer.ts`:
+  - `checkConsult({ from_role, to_role, intent, artifacts, org_id })` → `{ allowed: boolean, error?: PolicyError }`.
+  - `PolicyError`: `{ error_code, correlation_id, remediation_key, detail }`.
+  - Use `getError(code)` from the error registry (stub in tests).
+  - `hard_block`: return error — **never** forward on violation.
+  - Return `correlation_id` for LiteLLM metadata downstream.
 - Unit tests:
-  - Disallowed edge → `CONSULT_EDGE_DISALLOWED`
-  - Wrong artifact → `ARTIFACT_KIND_NOT_ALLOWED`
-  - Missing artifact ref → `MISSING_ARTIFACT_REF`
-  - `requires_human_ack: true` → `HUMAN_ACK_REQUIRED`
-  - Allowed edge → `{ allowed: true }`
+  - Disallowed edge → `CONSULT_EDGE_DISALLOWED`.
+  - Wrong artifact → `ARTIFACT_KIND_NOT_ALLOWED`.
+  - Missing artifact ref → `MISSING_ARTIFACT_REF`.
+  - `requires_human_ack: true` → `HUMAN_ACK_REQUIRED`.
+  - Allowed edge → `{ allowed: true }`.
 
 #### C3 — Communication graph API routes
 
-- Opret `app/api/communication/edges/route.ts` (GET + POST)
-- Opret `app/api/communication/edges/[edgeId]/route.ts` (PATCH + DELETE)
-- Opret `app/api/communication/check/route.ts` (POST — policy check endpoint til orchestrator)
-- Alle routes returnerer strukturerede fejl fra error-registry inkl. `correlation_id`
+- `app/api/communication/edges/route.ts` (GET + POST).
+- `app/api/communication/edges/[edgeId]/route.ts` (PATCH + DELETE).
+- `app/api/communication/check/route.ts` (POST — policy check for orchestrator).
+- All routes return structured errors from the registry including `correlation_id`.
 
-#### C4 — Canvas/liste UI (V1 — form-baseret)
+#### C4 — Canvas/list UI (v1 — forms)
 
-- Opret `app/dashboard/communication/page.tsx`:
-  - Server Component der henter edges for aktiv org
-  - Viser edges i liste (from_role → to_role, direction, intents, artifacts, quota, status)
-- Opret `components/communication/edge-form.tsx` (Client Component):
-  - Formular til opret/rediger edge
-  - Felter: from_role (select fra org agents), to_role (select), direction, allowed_intents (multi-select managed enum), allowed_artifacts (multi-select managed enum), requires_human_ack, quota_per_hour
-  - Submit kalder `createEdge`/`updateEdge` Server Actions
-- Opret `components/communication/edge-list.tsx`:
-  - Tabel med delete-knap og rediger-knap per edge
-  - Violation badge hvis edge er `hard_block`-kandidat (ingen matching policy)
+- `app/dashboard/communication/page.tsx`:
+  - Server Component loading edges for active org.
+  - List: from_role → to_role, direction, intents, artifacts, quota, status.
+- `components/communication/edge-form.tsx` (Client):
+  - Create/edit edge: from_role, to_role, direction, intents, artifacts, requires_human_ack, quota_per_hour.
+  - Submit calls `createEdge` / `updateEdge`.
+- `components/communication/edge-list.tsx`:
+  - Table with edit/delete; violation badge when policy would `hard_block`.
 
-#### C5 — Seed fra bundle (C bruger A's seed-loader stub)
+#### C5 — Seed from bundle (C consumes A's shard types)
 
-- Opret `lib/communication/seed-from-bundle.ts`:
-  - Tager parsed `CommunicationPolicyShard` (fra A's Zod-type — kan importeres direkte)
-  - Kalder `createEdge` for hver edge i bundle
-  - Idempotent via upsert på (org_id, from_role, to_role)
-- Integration test: seed `policy.json` → verificer edges i DB
+- Add `lib/communication/seed-from-bundle.ts`:
+  - Input: parsed `CommunicationPolicyShard` from A.
+  - Call `createEdge` per edge (or equivalent).
+  - Idempotent upsert on `(org_id, from_role, to_role)`.
+- Integration test: seed `policy.json` and assert rows in DB.
 
-**Acceptance criteria (Green gate):**
+**Acceptance criteria (green gate)**
 
-- Policy enforcer unit tests 100% grønne
-- Edge CRUD fungerer end-to-end (Playwright smoke: opret edge → vises i liste → slet)
-- `POST /api/communication/check` returnerer `CONSULT_EDGE_DISALLOWED` for ukendt edge
-- Ingen `shadow state`: canvas viser præcis hvad DB indeholder
+- Policy enforcer unit tests all pass.
+- Edge CRUD smoke (Playwright): create → listed → delete.
+- `POST /api/communication/check` returns `CONSULT_EDGE_DISALLOWED` for unknown edge.
+- No shadow state: canvas reflects DB exactly.
 
 ---
 
-## Merge-rækkefølge
+## Merge order
 
-```
+```text
 main
-  ← Stream A (schema + loader)    ← ingen deps
-  ← Stream B (orchestrator)       ← efter A (bruger agent_jobs schema)
-  ← Stream C (graph API + UI)     ← efter A (bruger communication_edges schema)
+  ← Stream A (schema + loader)        ← no deps
+  ← Stream C (graph API + UI)          ← after A (uses communication_edges)
+  ← Stream B (orchestrator)            ← after A (uses org/agent rows; job schema from B’s migration)
 ```
 
-Stream B og C kan begge merges parallelt **efter** A er merget.
+Streams **B** and **C** can be developed in parallel once **A** is on `main`. **Merge sequence** to `main` is still **A → C → B** as above (or rebase feature branches onto latest `main` in that order).
 
-## Git worktree setup (til Manager)
+## Git worktree setup (for the manager)
 
 ```bash
 git worktree add ../ai-business-worktree-a -b feat/template-infrastructure
@@ -243,4 +239,4 @@ git worktree add ../ai-business-worktree-b -b feat/runpod-lifecycle
 git worktree add ../ai-business-worktree-c -b feat/communication-graph
 ```
 
-Hvert worktree kører `npm install` og `npm run db:migrate` uafhængigt.
+Each worktree runs `npm install` and `npm run db:migrate` independently.

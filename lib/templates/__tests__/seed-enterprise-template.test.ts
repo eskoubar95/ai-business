@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -25,7 +26,7 @@ type TeamRow = {
 };
 
 function loadEnterpriseShards() {
-  const ROOT = join(process.cwd(), "templates/conduro/enterprise/v3");
+  const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../../templates/conduro/enterprise/v3");
   return {
     teams: JSON.parse(readFileSync(join(ROOT, "teams/teams.json"), "utf8")) as TeamRow[],
     agents: JSON.parse(readFileSync(join(ROOT, "agents/agents.json"), "utf8")),
@@ -90,6 +91,36 @@ describe("seedEnterpriseTemplate", () => {
               if (!teamSlugToId.has(s)) teamSlugToId.set(s, randomUUID());
             }
           }
+
+          if (table === agents) {
+            return {
+              returning: vi.fn(() =>
+                Promise.resolve(
+                  rows
+                    .filter((row) => row.slug != null)
+                    .map((row) => {
+                      const slug = String(row.slug);
+                      return { id: agentSlugToId.get(slug)!, slug };
+                    }),
+                ),
+              ),
+            };
+          }
+          if (table === teams) {
+            return {
+              returning: vi.fn(() =>
+                Promise.resolve(
+                  rows
+                    .filter((row) => row.slug != null)
+                    .map((row) => {
+                      const slug = String(row.slug);
+                      return { id: teamSlugToId.get(slug)!, slug };
+                    }),
+                ),
+              ),
+            };
+          }
+
           return Promise.resolve();
         }),
       }),

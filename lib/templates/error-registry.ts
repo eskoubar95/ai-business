@@ -18,6 +18,9 @@ const uniqueCodes = new Set(rawCodes);
 if (uniqueCodes.size !== rawCodes.length) {
   throw new Error("errors/registry.json contains duplicate `code` values");
 }
+if (rawCodes.length === 0) {
+  throw new Error("errors/registry.json must contain at least one error code");
+}
 
 const codeTuple = rawCodes as [string, ...string[]];
 const ErrorCodeSchema = z.enum(codeTuple);

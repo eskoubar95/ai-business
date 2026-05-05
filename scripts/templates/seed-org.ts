@@ -40,7 +40,7 @@ async function run(): Promise<void> {
   const bundle = verifyAndParseBundle(raw);
   const db = getDb();
   await seedEnterpriseTemplate(db, orgId, bundle);
-  console.error(`Seeded organization ${orgId} from ${bundlePath}`);
+  console.log(`Seeded organization ${orgId} from ${bundlePath}`);
 }
 
 run().catch((err) => {

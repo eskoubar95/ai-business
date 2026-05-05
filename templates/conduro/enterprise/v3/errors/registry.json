@@ -32,7 +32,7 @@
     },
     {
       "code": "HUMAN_ACK_REQUIRED",
-      "http_status": 202,
+      "http_status": 403,
       "message": "This edge requires a human acknowledgement before the consult can be forwarded.",
       "remediation_key": "COMPLETE_HUMAN_ACK",
       "remediation_hint": "A human must review and approve this consult in the Approvals dashboard before it proceeds."

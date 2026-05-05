@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import {
   agents,
@@ -41,7 +41,7 @@ export async function seedEnterpriseTemplate(
     );
   }
 
-  await db
+  const agentUpsertRows = await db
     .insert(agents)
     .values(
       bundle.shards.agents.map((agent) => ({
@@ -64,13 +64,12 @@ export async function seedEnterpriseTemplate(
         tier: sql.raw("excluded.tier"),
         updatedAt: sql`now()`,
       },
-    });
+    })
+    .returning({ id: agents.id, slug: agents.slug });
 
-  const agentRows = await db
-    .select({ id: agents.id, slug: agents.slug })
-    .from(agents)
-    .where(and(eq(agents.businessId, businessId)));
-  const agentIdBySlug = new Map(agentRows.filter((r) => r.slug).map((r) => [r.slug!, r.id]));
+  const agentIdBySlug = new Map(
+    agentUpsertRows.filter((r) => r.slug).map((r) => [r.slug!, r.id]),
+  );
 
   const teamValues = bundle.shards.teams.map((team) => {
     const leadId = agentIdBySlug.get(team.lead_agent_slug);
@@ -88,7 +87,7 @@ export async function seedEnterpriseTemplate(
     };
   });
 
-  await db
+  const teamUpsertRows = await db
     .insert(teams)
     .values(teamValues)
     .onConflictDoUpdate({
@@ -98,13 +97,12 @@ export async function seedEnterpriseTemplate(
         leadAgentId: sql.raw("excluded.lead_agent_id"),
         updatedAt: sql`now()`,
       },
-    });
+    })
+    .returning({ id: teams.id, slug: teams.slug });
 
-  const teamRows = await db
-    .select({ id: teams.id, slug: teams.slug })
-    .from(teams)
-    .where(eq(teams.businessId, businessId));
-  const teamIdBySlug = new Map(teamRows.filter((r) => r.slug).map((r) => [r.slug!, r.id]));
+  const teamIdBySlug = new Map(
+    teamUpsertRows.filter((r) => r.slug).map((r) => [r.slug!, r.id]),
+  );
 
   const memberRows = bundle.shards.agents.map((agent) => {
     const teamId = teamIdBySlug.get(agent.team_slug);

@@ -51,7 +51,7 @@ dependency resolution and audit trails.
 
 **Repository layout:**
 
-```
+```text
 templates/
   conduro/
     enterprise/
@@ -148,7 +148,7 @@ shutdown_ready = queue_empty
 
 **Initial gate_kind enum (grows via migrations):**
 
-```
+```text
 security_review
 architecture_review
 code_review
@@ -167,7 +167,7 @@ product_sign_off
 
 **Edge attributes:**
 
-```
+```text
 from_role        string
 to_role          string
 direction        "one_way" | "bidirectional"
@@ -222,7 +222,7 @@ post-provisioning.
 
 **Initial error codes:**
 
-```
+```text
 CONSULT_EDGE_DISALLOWED
 ARTIFACT_KIND_NOT_ALLOWED
 MISSING_ARTIFACT_REF
@@ -236,7 +236,7 @@ BUNDLE_SCHEMA_INVALID
 
 **Remediation keys (mapped per error):**
 
-```
+```text
 ACTIVATE_APPROVED_EDGE
 ADD_ARTIFACT_REF
 PICK_ALLOWED_INTENT

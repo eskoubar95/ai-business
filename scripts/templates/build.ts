@@ -55,8 +55,14 @@ export function main(): void {
   const shards: Record<string, unknown> = {};
   const sha256: Record<string, string> = {};
 
-  for (const key of Object.keys(manifest.shards) as ShardKey[]) {
+  for (const key of Object.keys(shardValidators) as ShardKey[]) {
     const relPath = manifest.shards[key];
+    if (relPath === undefined || relPath === "") {
+      throw new TemplateSeedError(
+        "BUNDLE_SCHEMA_INVALID",
+        `manifest.json shards is missing path for shard key "${key}"`,
+      );
+    }
     const absPath = join(TEMPLATE_ROOT, relPath);
     const rawBody = readJson(absPath);
     const validated = validateShard(key, rawBody);
