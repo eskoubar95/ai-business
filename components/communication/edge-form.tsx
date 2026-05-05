@@ -55,10 +55,26 @@ export function EdgeForm({ businessId, editingEdge, onCancelEdit }: EdgeFormProp
 
   const submit = useCallback(() => {
     setError(null);
+    if (!editingEdge) {
+      if (!fromRole.trim()) {
+        setError("From role is required");
+        return;
+      }
+      if (!toRole.trim()) {
+        setError("To role is required");
+        return;
+      }
+    }
     const quota =
       quotaPerHour.trim() === "" ? null : Number.parseInt(quotaPerHour, 10);
     if (quotaPerHour.trim() !== "" && (Number.isNaN(quota!) || quota! < 1)) {
       setError("quota_per_hour must be a positive integer or empty");
+      return;
+    }
+
+    const intentsList = parseList(allowedIntents);
+    if (intentsList.length === 0) {
+      setError("At least one allowed intent is required");
       return;
     }
 
@@ -67,7 +83,7 @@ export function EdgeForm({ businessId, editingEdge, onCancelEdit }: EdgeFormProp
         if (editingEdge) {
           await updateEdge(businessId, editingEdge.id, {
             direction,
-            allowedIntents: parseList(allowedIntents),
+            allowedIntents: intentsList,
             allowedArtifacts: parseList(allowedArtifacts),
             requiresHumanAck,
             quotaPerHour: quota,
@@ -79,7 +95,7 @@ export function EdgeForm({ businessId, editingEdge, onCancelEdit }: EdgeFormProp
             fromRole: fromRole.trim(),
             toRole: toRole.trim(),
             direction,
-            allowedIntents: parseList(allowedIntents),
+            allowedIntents: intentsList,
             allowedArtifacts: parseList(allowedArtifacts),
             requiresHumanAck,
             quotaPerHour: quota,

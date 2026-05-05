@@ -17,6 +17,8 @@ Server-side **communication edges** and **policy enforcement** for cross-agent c
 | [`orchestrator-auth.ts`](orchestrator-auth.ts) | Bearer secret check for `POST /check` (timing-safe) |
 | [`params.ts`](params.ts) | UUID validation for `[edgeId]` route params |
 
+`loadEnterpriseCommunicationPolicy` resolves `templates/conduro/enterprise/v3/communication/policy.json` from **`process.cwd()`** (repo root). For **standalone / serverless** deploys, `next.config.ts` sets `outputFileTracingIncludes` so those JSON files ship with the traced bundle.
+
 ## HTTP API
 
 | Route | Auth | Description |

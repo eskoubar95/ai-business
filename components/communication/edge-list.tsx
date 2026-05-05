@@ -38,7 +38,9 @@ export function EdgeList({ businessId, edges, onEdit }: EdgeListProps) {
             <th className="py-2 pr-3 font-medium">Artifacts</th>
             <th className="py-2 pr-3 font-medium">Quota</th>
             <th className="py-2 pr-3 font-medium">Policy</th>
-            <th className="py-2 pr-3 font-medium" />
+            <th className="py-2 pr-3 font-medium" scope="col">
+              <span className="sr-only">Actions</span>
+            </th>
           </tr>
         </thead>
         <tbody>

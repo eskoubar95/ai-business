@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { auth } from "@/lib/auth/server";
 import { getDb } from "@/db/index";
 import { assertUserBusinessAccess } from "@/lib/grill-me/access";
@@ -35,13 +37,26 @@ export async function POST(req: NextRequest) {
 
     try {
       await assertUserBusinessAccess(userId, parsed.data.org_id);
-    } catch {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    } catch (err) {
+      if (err instanceof Error && err.message === "Forbidden") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      throw err;
     }
   }
 
-  const db = getDb();
-  const result = await checkConsult(db, parsed.data);
+  let result: Awaited<ReturnType<typeof checkConsult>>;
+  try {
+    const db = getDb();
+    result = await checkConsult(db, parsed.data);
+  } catch (err) {
+    const correlationId = randomUUID();
+    console.error("checkConsult failed", { correlationId, err });
+    return NextResponse.json(
+      { error: "Internal server error", correlation_id: correlationId },
+      { status: 500 },
+    );
+  }
 
   if (!result.allowed) {
     return jsonPolicyViolation(result.error);

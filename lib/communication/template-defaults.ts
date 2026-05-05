@@ -1,6 +1,5 @@
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
 import type { CommunicationPolicyShard } from "@/lib/templates/zod-schemas";
 import { CommunicationPolicyShardSchema } from "@/lib/templates/zod-schemas";
@@ -10,7 +9,7 @@ let cached: CommunicationPolicyShard | null = null;
 /** Canonical enterprise v3 communication policy (for merge_smart drift detection). */
 export function loadEnterpriseCommunicationPolicy(): CommunicationPolicyShard {
   if (cached) return cached;
-  const root = join(dirname(fileURLToPath(import.meta.url)), "../../templates/conduro/enterprise/v3");
+  const root = join(process.cwd(), "templates/conduro/enterprise/v3");
   const raw = readFileSync(join(root, "communication/policy.json"), "utf8");
   cached = CommunicationPolicyShardSchema.parse(JSON.parse(raw));
   return cached;

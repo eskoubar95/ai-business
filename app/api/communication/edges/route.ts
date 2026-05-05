@@ -54,9 +54,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await requireUserBusiness(businessIdRaw);
+    const bid = await requireUserBusiness(businessIdRaw);
     const db = getDb();
-    const row = await upsertCommunicationEdge(db, businessIdRaw.trim(), parsed.data, {
+    const row = await upsertCommunicationEdge(db, bid, parsed.data, {
       templateId: null,
       templateVersion: null,
       derivedFromTemplateId: null,
