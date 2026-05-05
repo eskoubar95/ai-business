@@ -1,5 +1,8 @@
 /**
  * RunPod GraphQL API wrapper (server-side only). Credentials from env — never log API keys.
+ *
+ * Staging check: verify `podResume` / `podStop` / `pod` field names and input types against
+ * the current RunPod GraphQL schema before relying on start/stop in production.
  */
 
 const DEFAULT_GRAPHQL_URL = "https://api.runpod.io/graphql";

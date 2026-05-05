@@ -8,6 +8,10 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { loadRunnerEnv } from "../bootstrap-env";
 import {
+  assertOrchestratorConfiguredForListen,
+  isOrchestratorRequestAuthorized,
+} from "./auth";
+import {
   countQueuedJobs,
   enqueueAgentJob,
   fairShareNext,
@@ -100,7 +104,7 @@ async function runAgentJobSubprocess(job: AgentJobRow): Promise<string> {
   const env = buildAgentEnv();
 
   if (!useReal) {
-    return runProcess(process.execPath, ["-e", "process.stdout.write('mock_ok');"], env);
+    return runProcess(process.execPath, ["-e", "process.stdout.write('orchestrator_mock_ok');"], env);
   }
 
   switch (job.adapter) {
@@ -133,6 +137,11 @@ function json(res: ServerResponse, status: number, body: unknown): void {
 }
 
 async function handleAgentSpawn(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!isOrchestratorRequestAuthorized(req)) {
+    json(res, 401, { error: "unauthorized" });
+    return;
+  }
+
   let body: unknown;
   try {
     body = await readJsonBody(req);
@@ -160,6 +169,20 @@ async function handleAgentSpawn(req: IncomingMessage, res: ServerResponse): Prom
     }
   }
 
+  const telemetry: Record<string, unknown> = {};
+  if (b.tenant_id?.trim()) {
+    telemetry.tenant_id = b.tenant_id.trim();
+  }
+  if (b.agent_id) {
+    telemetry.agent_id = b.agent_id;
+  }
+  if (b.template_version?.trim()) {
+    telemetry.template_version = b.template_version.trim();
+  }
+  if (Object.keys(telemetry).length > 0) {
+    metadata = { ...(metadata ?? {}), ...telemetry };
+  }
+
   const row = await enqueueAgentJob({
     businessId: b.business_id,
     agentSlug: b.agent_slug,
@@ -176,7 +199,12 @@ async function handleAgentSpawn(req: IncomingMessage, res: ServerResponse): Prom
   json(res, 202, { job_id: row.id, status: "queued", correlation_id: row.correlationId });
 }
 
-async function handleJobGet(res: ServerResponse, jobId: string): Promise<void> {
+async function handleJobGet(req: IncomingMessage, res: ServerResponse, jobId: string): Promise<void> {
+  if (!isOrchestratorRequestAuthorized(req)) {
+    json(res, 401, { error: "unauthorized" });
+    return;
+  }
+
   const db = getDb();
   const rows = await db.select().from(agentJobs).where(eq(agentJobs.id, jobId)).limit(1);
   const job = rows[0];
@@ -221,7 +249,7 @@ export function createOrchestratorServer(): Server {
         }
         const m = url.pathname.match(/^\/agent\/([0-9a-f-]{36})$/i);
         if (req.method === "GET" && m) {
-          await handleJobGet(res, m[1]);
+          await handleJobGet(req, res, m[1]);
           return;
         }
         json(res, 404, { error: "not_found" });
@@ -233,10 +261,14 @@ export function createOrchestratorServer(): Server {
   });
 }
 
-export async function listenOrchestrator(port: number): Promise<Server> {
+export async function listenOrchestrator(
+  port: number,
+  host = process.env.ORCHESTRATOR_HOST?.trim() || "127.0.0.1",
+): Promise<Server> {
+  assertOrchestratorConfiguredForListen();
   const server = createOrchestratorServer();
   await new Promise<void>((resolve, reject) => {
-    server.listen(port, () => resolve()).on("error", reject);
+    server.listen(port, host, () => resolve()).on("error", reject);
   });
   return server;
 }
@@ -248,11 +280,12 @@ const isMain =
 
 if (isMain && !process.env.VITEST) {
   const port = Number(process.env.ORCHESTRATOR_PORT) || 8787;
-  void listenOrchestrator(port)
+  const host = process.env.ORCHESTRATOR_HOST?.trim() || "127.0.0.1";
+  void listenOrchestrator(port, host)
     .then((s) => {
       const addr = s.address();
       const p = typeof addr === "object" && addr && "port" in addr ? addr.port : port;
-      console.info(`[orchestrator] listening on :${p}`);
+      console.info(`[orchestrator] listening on ${host}:${p}`);
     })
     .catch((e) => {
       console.error(e);

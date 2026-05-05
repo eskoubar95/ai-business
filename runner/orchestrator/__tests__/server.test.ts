@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { randomUUID } from "node:crypto";
 
 vi.mock("@/runner/runpod/state-machine", () => ({
   getOrCreateDefaultRunpodInstance: vi.fn().mockResolvedValue({
@@ -56,5 +57,24 @@ describe("orchestrator server", () => {
     expect(body.status).toBe("ok");
     expect(body.runpod_state).toBe("warm");
     expect(body.queue_depth).toBe(2);
+  });
+
+  it("POST /agent/spawn returns 401 without Bearer when ORCHESTRATOR_API_KEY is set", async () => {
+    vi.stubEnv("ORCHESTRATOR_API_KEY", "orch-test-secret");
+    vi.stubEnv("ORCHESTRATOR_INSECURE_NO_AUTH", "0");
+    const res = await fetch(`http://127.0.0.1:${port}/agent/spawn`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        business_id: randomUUID(),
+        agent_slug: "test",
+        adapter: "claude_code_cli",
+        payload: {},
+      }),
+    });
+    expect(res.status).toBe(401);
+    const body = (await res.json()) as { error?: string };
+    expect(body.error).toBe("unauthorized");
+    vi.unstubAllEnvs();
   });
 });

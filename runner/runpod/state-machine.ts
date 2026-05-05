@@ -74,17 +74,28 @@ export async function onJobEnqueued(
       .update(runpodInstances)
       .set({ state: "warming", lastActivityAt: now, updatedAt: now })
       .where(eq(runpodInstances.id, inst.id));
-    await client.startInstance();
-    const endpointUrl = process.env.RUNPOD_ENDPOINT?.trim() || inst.endpointUrl;
-    await db
-      .update(runpodInstances)
-      .set({
-        state: "warm",
-        lastActivityAt: now,
-        updatedAt: now,
-        endpointUrl: endpointUrl ?? null,
-      })
-      .where(eq(runpodInstances.id, inst.id));
+    try {
+      await client.startInstance();
+      const endpointUrl = process.env.RUNPOD_ENDPOINT?.trim() || inst.endpointUrl;
+      await db
+        .update(runpodInstances)
+        .set({
+          state: "warm",
+          lastActivityAt: now,
+          updatedAt: now,
+          endpointUrl: endpointUrl ?? null,
+        })
+        .where(eq(runpodInstances.id, inst.id));
+    } catch (err) {
+      console.error(
+        "[runpod] startInstance failed; reverting to cold:",
+        err instanceof Error ? err.message : err,
+      );
+      await db
+        .update(runpodInstances)
+        .set({ state: "cold", updatedAt: new Date() })
+        .where(eq(runpodInstances.id, inst.id));
+    }
     return;
   }
 
@@ -139,7 +150,19 @@ export async function maybeShutdownTick(deps: ShutdownTickDeps = {}): Promise<vo
     .set({ state: "draining", updatedAt: t })
     .where(eq(runpodInstances.id, inst.id));
 
-  await client.stopInstance();
+  try {
+    await client.stopInstance();
+  } catch (err) {
+    console.error(
+      "[runpod] stopInstance failed; reverting to warm:",
+      err instanceof Error ? err.message : err,
+    );
+    await db
+      .update(runpodInstances)
+      .set({ state: "warm", updatedAt: new Date(nowMs()) })
+      .where(eq(runpodInstances.id, inst.id));
+    return;
+  }
 
   await db
     .update(runpodInstances)
