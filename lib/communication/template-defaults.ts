@@ -30,26 +30,3 @@ export function findTemplateEdgeForConsult(
     (e) => e.direction === "bidirectional" && e.from_role === toRole && e.to_role === fromRole,
   );
 }
-
-/** Map a DB row + roles to comparable template shape (canonical policy.json fields). */
-export function rowMatchesTemplateEdge(
-  row: {
-    direction: "one_way" | "bidirectional";
-    allowedIntents: string[];
-    allowedArtifacts: string[];
-    requiresHumanAck: boolean;
-    quotaPerHour: number | null;
-    quotaMode: "warn_only" | "enforce";
-  },
-  template: TemplatePolicyEdge,
-): boolean {
-  const sameDirection = row.direction === template.direction;
-  const sameIntents =
-    [...row.allowedIntents].sort().join("\0") === [...template.allowed_intents].sort().join("\0");
-  const sameArts =
-    [...row.allowedArtifacts].sort().join("\0") === [...template.allowed_artifacts].sort().join("\0");
-  const sameAck = row.requiresHumanAck === template.requires_human_ack;
-  const sameQuota = row.quotaPerHour === (template.quota_per_hour ?? null);
-  const sameMode = row.quotaMode === template.quota_mode;
-  return sameDirection && sameIntents && sameArts && sameAck && sameQuota && sameMode;
-}
