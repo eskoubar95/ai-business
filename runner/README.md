@@ -26,6 +26,13 @@ npm run runner        # runner only
 npm run dev:full      # Next.js + runner (concurrently)
 ```
 
+## Stream B (orchestration sidecar)
+
+- **`runner/orchestrator/server.ts`** — HTTP API: `POST /agent/spawn`, `GET /agent/:job_id`, `GET /health`. Set `DATABASE_URL`, **`ORCHESTRATOR_API_KEY`** (Bearer token for spawn/job — required in production), run `npm run orchestrator`. Listens on **`127.0.0.1`** by default (`ORCHESTRATOR_HOST`). For local dev without a key, only use **`ORCHESTRATOR_INSECURE_NO_AUTH=1`** on trusted localhost — never in production.
+- **`runner/runpod/`** — RunPod GraphQL client + DB-backed wake/shutdown state machine (`runpod_instances`).
+- **`runner/queue/`** — `agent_jobs` fair-share queue + quota warn-only checker (`communication_edges`).
+- **`runner/litellm/`** — LiteLLM config template + `buildLiteLLMHeaders` for correlation headers.
+
 ## Engineer isolation
 
 Agents with system role slug `engineer` run in a `git worktree` under `<localPath>/.worktrees/<taskId-or-eventId>`. The repo must be clean (`git status`) before the worktree is created.

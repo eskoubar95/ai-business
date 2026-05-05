@@ -1,0 +1,18 @@
+model_list:
+  - model_name: runpod-qwen
+    litellm_params:
+      model: openai/your-model-id
+      api_base: ${RUNPOD_ENDPOINT}
+      api_key: ${RUNPOD_API_KEY}
+
+general_settings:
+  master_key: ${LITELLM_MASTER_KEY}
+
+router_settings:
+  headers_to_pass:
+    - x-correlation-id
+    - x-tenant-id
+    - x-agent-id
+    - x-job-id
+    - x-business-id
+    - x-template-version

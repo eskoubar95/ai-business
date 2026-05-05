@@ -23,3 +23,12 @@ EXPOSE 3000
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 CMD ["node", "server.js"]
+
+# --- Orchestrator image (Stream B) — optional separate build; Hermes CLI install path TBD ---
+# FROM node:20-alpine AS orchestrator
+# WORKDIR /app
+# COPY package.json package-lock.json* ./
+# RUN npm ci --legacy-peer-deps
+# COPY . .
+# RUN echo "TODO: install Hermes CLI when distribution/install path is documented"
+# CMD ["npm", "run", "orchestrator"]
