@@ -30,4 +30,4 @@ await seedEnterpriseTemplate(getDb(), businessId, bundle);
 
 `npm run typecheck` uses [`tsconfig.typecheck.json`](../../tsconfig.typecheck.json) (no `.next/` dependency) for a fast CLI pass. Shipping still requires **`npm run build`**, which applies Next.js routing/types checks against generated `.next/types`.
 
-Seeding uses **one multi-row `insert().values([...]).onConflictDoUpdate`** per target table to reduce round-trips to Postgres (Neon).
+Seeding uses **one multi-row `insert().values([...]).onConflictDoUpdate`** per target table to reduce round-trips to Postgres (Neon). The Neon **HTTP** driver does not implement `db.transaction()`; lineage fields on `businesses` are written **after** all upserts so failed runs do not flip template metadata early. **`agents.role`** is filled from shard **`role_summary`** (human-readable); stable keys remain in **`agents.slug`**.

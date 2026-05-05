@@ -77,33 +77,44 @@ export const ErrorRegistrySchema = z.object({
   ),
 });
 
-export const ManifestSchema = z.object({
-  template_id: z.string(),
-  template_version: z.string(),
-  display_name: z.string(),
-  description: z.string(),
-  author: z.string(),
-  released_at: z.string(),
-  shards: z.object({
+/** Shard path entries in `manifest.json` (must match `manifest.sha256` keys exactly). */
+export const ManifestShardRefsSchema = z
+  .object({
     teams: z.string(),
     agents: z.string(),
     gates: z.string(),
     communication_policy: z.string(),
     errors_registry: z.string(),
-  }),
-  sha256: z.record(z.string(), z.string()),
-});
+  })
+  .strict();
+
+export const ManifestSchema = z
+  .object({
+    template_id: z.string(),
+    template_version: z.string(),
+    display_name: z.string(),
+    description: z.string(),
+    author: z.string(),
+    released_at: z.string(),
+    shards: ManifestShardRefsSchema,
+    sha256: ManifestShardRefsSchema,
+  })
+  .strict();
 
 /** Full compiled bundle produced by `npm run templates:build`. */
-export const BundlePayloadSchema = z.object({
-  manifest: ManifestSchema,
-  shards: z.object({
-    teams: TeamShardSchema,
-    agents: AgentShardSchema,
-    gates: GateKindShardSchema,
-    communication_policy: CommunicationPolicyShardSchema,
-    errors_registry: ErrorRegistrySchema,
-  }),
-});
+export const BundlePayloadSchema = z
+  .object({
+    manifest: ManifestSchema,
+    shards: z
+      .object({
+        teams: TeamShardSchema,
+        agents: AgentShardSchema,
+        gates: GateKindShardSchema,
+        communication_policy: CommunicationPolicyShardSchema,
+        errors_registry: ErrorRegistrySchema,
+      })
+      .strict(),
+  })
+  .strict();
 
 export type BundlePayload = z.infer<typeof BundlePayloadSchema>;

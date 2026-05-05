@@ -18,9 +18,12 @@ export function verifyAndParseBundle(raw: unknown): BundlePayload {
     );
   }
   const bundle = parsed.data;
-  for (const key of Object.keys(bundle.manifest.shards)) {
+  const shardKeys = Object.keys(bundle.manifest.shards) as Array<
+    keyof typeof bundle.manifest.shards & keyof typeof bundle.manifest.sha256
+  >;
+  for (const key of shardKeys) {
     const expected = bundle.manifest.sha256[key];
-    const shardBody = bundle.shards[key as keyof typeof bundle.shards];
+    const shardBody = bundle.shards[key];
     const actual = shardSha256(shardBody);
     if (expected !== actual) {
       throw new TemplateSeedError(

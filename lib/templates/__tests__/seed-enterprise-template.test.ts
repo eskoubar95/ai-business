@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   agents,
+  businesses,
   communicationEdges,
   gateKinds,
   teamMembers,
@@ -63,7 +64,11 @@ function buildBundle(shards: ReturnType<typeof loadEnterpriseShards>): BundlePay
 describe("seedEnterpriseTemplate", () => {
   const businessId = "00000000-0000-4000-8000-000000000001";
 
-  function createMockDb(opts?: { businessUpdateHits?: boolean }) {
+  function createMockDb(opts?: {
+    businessRowExists?: boolean;
+    businessUpdateHits?: boolean;
+  }) {
+    const businessRowExists = opts?.businessRowExists ?? true;
     const businessUpdateHits = opts?.businessUpdateHits ?? true;
     const agentSlugToId = new Map<string, string>();
     const teamSlugToId = new Map<string, string>();
@@ -102,21 +107,38 @@ describe("seedEnterpriseTemplate", () => {
     }));
 
     const select = vi.fn(() => ({
-      from: vi.fn((table: object) => ({
-        where: vi.fn(() => {
-          if (table === agents) {
-            return Promise.resolve(
-              Array.from(agentSlugToId.entries()).map(([slug, id]) => ({ id, slug })),
-            );
-          }
-          if (table === teams) {
-            return Promise.resolve(
-              Array.from(teamSlugToId.entries()).map(([slug, id]) => ({ id, slug })),
-            );
-          }
-          return Promise.resolve([]);
-        }),
-      })),
+      from: vi.fn((table: object) => {
+        if (table === businesses) {
+          return {
+            where: vi.fn(() => ({
+              limit: vi.fn(() =>
+                Promise.resolve(businessRowExists ? [{ id: businessId }] : []),
+              ),
+            })),
+          };
+        }
+        if (table === agents) {
+          return {
+            where: vi.fn(() =>
+              Promise.resolve(
+                Array.from(agentSlugToId.entries()).map(([slug, id]) => ({ id, slug })),
+              ),
+            ),
+          };
+        }
+        if (table === teams) {
+          return {
+            where: vi.fn(() =>
+              Promise.resolve(
+                Array.from(teamSlugToId.entries()).map(([slug, id]) => ({ id, slug })),
+              ),
+            ),
+          };
+        }
+        return {
+          where: vi.fn(() => Promise.resolve([])),
+        };
+      }),
     }));
 
     const mockDb = { insert, update, select };
@@ -161,7 +183,17 @@ describe("seedEnterpriseTemplate", () => {
   it("throws BUSINESS_NOT_FOUND when no business row matches org id", async () => {
     const shards = loadEnterpriseShards();
     const bundle = buildBundle(shards);
-    const { mockDb } = createMockDb({ businessUpdateHits: false });
+    const { mockDb } = createMockDb({ businessRowExists: false });
+
+    await expect(seedEnterpriseTemplate(mockDb, businessId, bundle)).rejects.toMatchObject({
+      code: "BUSINESS_NOT_FOUND",
+    });
+  });
+
+  it("throws BUSINESS_NOT_FOUND when lineage update affects no row (concurrent delete)", async () => {
+    const shards = loadEnterpriseShards();
+    const bundle = buildBundle(shards);
+    const { mockDb } = createMockDb({ businessRowExists: true, businessUpdateHits: false });
 
     await expect(seedEnterpriseTemplate(mockDb, businessId, bundle)).rejects.toMatchObject({
       code: "BUSINESS_NOT_FOUND",
