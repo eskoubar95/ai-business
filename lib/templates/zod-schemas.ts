@@ -118,3 +118,4 @@ export const BundlePayloadSchema = z
   .strict();
 
 export type BundlePayload = z.infer<typeof BundlePayloadSchema>;
+export type CommunicationPolicyShard = z.infer<typeof CommunicationPolicyShardSchema>;
