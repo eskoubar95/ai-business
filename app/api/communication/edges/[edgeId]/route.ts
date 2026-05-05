@@ -1,48 +1,18 @@
-import { auth } from "@/lib/auth/server";
 import { getDb } from "@/db/index";
-import { assertUserBusinessAccess } from "@/lib/grill-me/access";
 import { UpdateCommunicationEdgeSchema } from "@/lib/communication/schemas";
 import {
   deleteCommunicationEdge,
   getCommunicationEdgeById,
   mergeSmartUpdateEdge,
 } from "@/lib/communication/edge-store";
+import { parseEdgeIdParam } from "@/lib/communication/params";
+import { handleAuthError, requireUserBusiness } from "@/lib/communication/route-auth";
 import { getError } from "@/lib/templates/error-registry";
 import { randomUUID } from "node:crypto";
 
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
-
-async function requireUserBusiness(businessId: string | null): Promise<string> {
-  if (!businessId?.trim()) {
-    throw new Error("BAD_REQUEST:businessId required");
-  }
-  const { data: session } = await auth.getSession();
-  const userId = session?.user?.id;
-  if (!userId || typeof userId !== "string") {
-    throw new Error("UNAUTHORIZED");
-  }
-  await assertUserBusinessAccess(userId, businessId.trim());
-  return businessId.trim();
-}
-
-function handleAuthError(e: unknown): NextResponse | null {
-  if (!(e instanceof Error)) return null;
-  if (e.message === "UNAUTHORIZED") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (e.message === "Forbidden") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  if (e.message.startsWith("BAD_REQUEST:")) {
-    return NextResponse.json(
-      { error: e.message.replace(/^BAD_REQUEST:/, "").trim() },
-      { status: 400 },
-    );
-  }
-  return null;
-}
 
 function edgeNotFound(correlationId: string) {
   const e = getError("EDGE_NOT_FOUND");
@@ -61,7 +31,12 @@ export async function PATCH(
   req: NextRequest,
   context: { params: Promise<{ edgeId: string }> },
 ) {
-  const { edgeId } = await context.params;
+  const { edgeId: rawEdgeId } = await context.params;
+  const idCheck = parseEdgeIdParam(rawEdgeId);
+  if (!idCheck.ok) {
+    return idCheck.response;
+  }
+  const edgeId = idCheck.edgeId;
   const businessId = req.nextUrl.searchParams.get("businessId");
 
   let body: unknown;
@@ -102,7 +77,12 @@ export async function DELETE(
   req: NextRequest,
   context: { params: Promise<{ edgeId: string }> },
 ) {
-  const { edgeId } = await context.params;
+  const { edgeId: rawEdgeId } = await context.params;
+  const idCheck = parseEdgeIdParam(rawEdgeId);
+  if (!idCheck.ok) {
+    return idCheck.response;
+  }
+  const edgeId = idCheck.edgeId;
   const businessId = req.nextUrl.searchParams.get("businessId");
 
   try {

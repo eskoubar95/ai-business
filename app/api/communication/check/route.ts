@@ -4,6 +4,7 @@ import { assertUserBusinessAccess } from "@/lib/grill-me/access";
 import { ConsultCheckBodySchema } from "@/lib/communication/schemas";
 import { checkConsult } from "@/lib/communication/policy-enforcer";
 import { jsonPolicyViolation } from "@/lib/communication/http";
+import { isOrchestratorAuthorized } from "@/lib/communication/orchestrator-auth";
 
 import { NextRequest, NextResponse } from "next/server";
 
@@ -22,16 +23,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Validation failed", issues: parsed.error.flatten() }, { status: 422 });
   }
 
-  const { data: session } = await auth.getSession();
-  const userId = session?.user?.id;
-  if (!userId || typeof userId !== "string") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const orchestratorSecret = process.env.COMMUNICATION_ORCHESTRATOR_SECRET?.trim();
+  const asOrchestrator = isOrchestratorAuthorized(req, orchestratorSecret);
 
-  try {
-    await assertUserBusinessAccess(userId, parsed.data.org_id);
-  } catch {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!asOrchestrator) {
+    const { data: session } = await auth.getSession();
+    const userId = session?.user?.id;
+    if (!userId || typeof userId !== "string") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    try {
+      await assertUserBusinessAccess(userId, parsed.data.org_id);
+    } catch {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
   }
 
   const db = getDb();

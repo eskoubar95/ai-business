@@ -4,6 +4,7 @@ import { getError, type ErrorCode } from "@/lib/templates/error-registry";
 import type { AppDb } from "@/lib/templates/db-types";
 
 import { listCommunicationEdges, type CommunicationEdgeRow } from "./edge-store";
+
 export type PolicyError = {
   error_code: ErrorCode;
   correlation_id: string;
@@ -51,6 +52,10 @@ export function findStoredEdgeForConsult(
 
 /**
  * Policy gate for cross-agent consults. `hard_block` semantics: violations never pass.
+ *
+ * Quotas: `quota_per_hour` / `quota_mode` are **not** enforced here (no per-hour counters in
+ * this layer). `warn_only` / `enforce` accounting is intended for the job orchestrator / queue
+ * (Stream B). This function validates graph topology, intent, artifacts, and human-ack gates only.
  */
 export function checkConsultAgainstEdges(
   edges: CommunicationEdgeRow[],
