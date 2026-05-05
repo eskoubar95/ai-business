@@ -16,6 +16,7 @@ import {
   Menu,
   Plus,
   Settings,
+  Share2,
   X,
 } from "lucide-react";
 import { SignedIn, SignedOut } from "@neondatabase/auth/react";
@@ -257,6 +258,13 @@ export function AppSidebar({
             icon={Bot}
             collapsed={collapsed}
             isActive={isActive("/dashboard/agents")}
+          />
+          <NavItem
+            href="/dashboard/communication"
+            label="Communication"
+            icon={Share2}
+            collapsed={collapsed}
+            isActive={isActive("/dashboard/communication")}
           />
           <NavItem
             href="/dashboard/projects"

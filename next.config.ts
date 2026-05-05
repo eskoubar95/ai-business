@@ -6,6 +6,11 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname),
+  /** Ensure template JSON is present in standalone/serverless output (merge_smart reads policy.json). */
+  outputFileTracingIncludes: {
+    "/api/**": ["./templates/conduro/enterprise/v3/**/*.json"],
+    "/dashboard/**": ["./templates/conduro/enterprise/v3/**/*.json"],
+  },
   /** Prevent bundling Cursor SDK (dynamic graph pulls .d.ts.map into webpack). */
   serverExternalPackages: ["@cursor/sdk"],
 };
