@@ -33,7 +33,7 @@ Set `COMMUNICATION_ORCHESTRATOR_SECRET` in the server environment (see root `.en
 
 ### Quotas
 
-`checkConsult` does **not** increment or enforce `quota_per_hour` (`warnOnly` / `enforce`). That belongs in the job queue / orchestrator (Stream B). This layer checks graph membership, intent, artifacts, and human-ack only.
+`checkConsult` does **not** increment or enforce `quota_per_hour` (`warn_only` / `enforce`). That belongs in the job queue / orchestrator (Stream B). This layer checks graph membership, intent, artifacts, and human-ack only.
 
 ## Dashboard
 
