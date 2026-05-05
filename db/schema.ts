@@ -378,6 +378,65 @@ export const communicationEdges = pgTable(
   ],
 );
 
+/** RunPod lifecycle row for the orchestrator (single logical instance via `slug`). */
+export const runpodInstanceStateEnum = pgEnum("runpod_instance_state", [
+  "cold",
+  "warming",
+  "warm",
+  "draining",
+  "idle",
+]);
+
+export const runpodInstances = pgTable(
+  "runpod_instances",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull().default("default"),
+    state: runpodInstanceStateEnum("state").notNull().default("cold"),
+    lastActivityAt: timestamp("last_activity_at", { withTimezone: true }).notNull().defaultNow(),
+    endpointUrl: text("endpoint_url"),
+    /** Fair-share queue cursor (last served tenant / business). */
+    lastFairShareBusinessId: uuid("last_fair_share_business_id"),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("runpod_instances_slug_unique").on(t.slug)],
+);
+
+export const agentJobStatusEnum = pgEnum("agent_job_status", [
+  "queued",
+  "inflight",
+  "done",
+  "failed",
+]);
+
+/** Orchestrator queue: one row per spawned agent job. */
+export const agentJobs = pgTable(
+  "agent_jobs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    agentSlug: text("agent_slug").notNull(),
+    adapter: executionAdapterEnum("adapter").notNull(),
+    payload: jsonb("payload").notNull().$type<Record<string, unknown>>(),
+    status: agentJobStatusEnum("status").notNull().default("queued"),
+    correlationId: uuid("correlation_id").notNull().defaultRandom(),
+    /** Optional consult edge attribution for quota checks. */
+    fromRole: text("from_role"),
+    toRole: text("to_role"),
+    output: text("output"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+    enqueuedAt: timestamp("enqueued_at", { withTimezone: true }).notNull().defaultNow(),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("agent_jobs_business_id_status_idx").on(t.businessId, t.status),
+    index("agent_jobs_status_enqueued_idx").on(t.status, t.enqueuedAt),
+  ],
+);
+
 /** Business-scoped initiatives with PRD and sprint breakdown. */
 export const projects = pgTable(
   "projects",
@@ -660,6 +719,7 @@ export const businessesRelations = relations(businesses, ({ many }) => ({
   projectsMany: many(projects),
   gateKindsMany: many(gateKinds),
   communicationEdgesMany: many(communicationEdges),
+  agentJobsMany: many(agentJobs),
 }));
 
 export const userSettingsRelations = relations(userSettings, () => ({}));
@@ -811,6 +871,13 @@ export const gateKindsRelations = relations(gateKinds, ({ one }) => ({
 export const communicationEdgesRelations = relations(communicationEdges, ({ one }) => ({
   business: one(businesses, {
     fields: [communicationEdges.businessId],
+    references: [businesses.id],
+  }),
+}));
+
+export const agentJobsRelations = relations(agentJobs, ({ one }) => ({
+  business: one(businesses, {
+    fields: [agentJobs.businessId],
     references: [businesses.id],
   }),
 }));

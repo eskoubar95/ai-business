@@ -16,6 +16,8 @@ export default defineConfig({
       "app/**/*.test.ts",
       "app/**/*.spec.ts",
       "db/**/*.test.ts",
+      "runner/**/*.test.ts",
+      "runner/**/__tests__/**/*.test.ts",
     ],
     passWithNoTests: true,
   },
