@@ -1,0 +1,69 @@
+{
+  "registry_version": "3.0.0",
+  "language": "en",
+  "error_codes": [
+    {
+      "code": "CONSULT_EDGE_DISALLOWED",
+      "http_status": 403,
+      "message": "No approved communication edge exists between these agent roles.",
+      "remediation_key": "ACTIVATE_APPROVED_EDGE",
+      "remediation_hint": "Go to Communication → Edges and add an approved connection between these roles, or contact your admin."
+    },
+    {
+      "code": "ARTIFACT_KIND_NOT_ALLOWED",
+      "http_status": 422,
+      "message": "The artifact kind is not permitted on this communication edge.",
+      "remediation_key": "PICK_ALLOWED_ARTIFACT",
+      "remediation_hint": "Use one of the allowed artifact kinds defined for this edge, or update the edge policy."
+    },
+    {
+      "code": "INTENT_NOT_ALLOWED",
+      "http_status": 422,
+      "message": "The requested intent is not permitted on this communication edge.",
+      "remediation_key": "PICK_ALLOWED_INTENT",
+      "remediation_hint": "Choose an intent from the allowed list for this edge, or update the edge policy."
+    },
+    {
+      "code": "MISSING_ARTIFACT_REF",
+      "http_status": 422,
+      "message": "A required artifact reference is missing from the consult payload.",
+      "remediation_key": "ADD_ARTIFACT_REF",
+      "remediation_hint": "Include at least one artifact reference (e.g. ticket_ref, pr_ref) before sending this consult."
+    },
+    {
+      "code": "HUMAN_ACK_REQUIRED",
+      "http_status": 202,
+      "message": "This edge requires a human acknowledgement before the consult can be forwarded.",
+      "remediation_key": "COMPLETE_HUMAN_ACK",
+      "remediation_hint": "A human must review and approve this consult in the Approvals dashboard before it proceeds."
+    },
+    {
+      "code": "QUOTA_EXCEEDED",
+      "http_status": 429,
+      "message": "The communication quota for this edge has been exceeded.",
+      "remediation_key": "WAIT_QUOTA_RESET",
+      "remediation_hint": "Quota resets every hour. Check the Communication dashboard for current usage, or contact admin to adjust limits."
+    },
+    {
+      "code": "EDGE_NOT_FOUND",
+      "http_status": 404,
+      "message": "The specified communication edge does not exist.",
+      "remediation_key": "ACTIVATE_APPROVED_EDGE",
+      "remediation_hint": "Create the edge in the Communication canvas before sending consults."
+    },
+    {
+      "code": "TEMPLATE_HASH_MISMATCH",
+      "http_status": 409,
+      "message": "The imported template bundle hash does not match the manifest.",
+      "remediation_key": "CONTACT_ADMIN",
+      "remediation_hint": "The bundle may be corrupted or tampered. Re-download from the official catalog and retry."
+    },
+    {
+      "code": "BUNDLE_SCHEMA_INVALID",
+      "http_status": 422,
+      "message": "The recipe bundle failed schema validation.",
+      "remediation_key": "CONTACT_ADMIN",
+      "remediation_hint": "The bundle does not match the expected schema for this version. Contact Conduro support."
+    }
+  ]
+}

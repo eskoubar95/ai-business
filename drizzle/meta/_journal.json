@@ -71,6 +71,13 @@
       "when": 1777830580473,
       "tag": "0009_shallow_devos",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1777983657307,
+      "tag": "0010_right_blazing_skull",
+      "breakpoints": true
     }
   ]
 }

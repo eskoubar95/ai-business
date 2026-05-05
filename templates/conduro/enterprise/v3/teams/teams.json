@@ -1,0 +1,16 @@
+[
+  {
+    "team_slug": "product_team",
+    "display_name": "Product Stream",
+    "description": "Owns discovery, requirements, market intelligence, UX and design artefacts. Lead: Product Owner.",
+    "lead_agent_slug": "product_owner",
+    "tier": 1
+  },
+  {
+    "team_slug": "engineering_team",
+    "display_name": "Build Stream",
+    "description": "Owns architecture, implementation, code review, DevOps, security and release gates. Lead: Engineering Manager.",
+    "lead_agent_slug": "engineering_manager",
+    "tier": 1
+  }
+]

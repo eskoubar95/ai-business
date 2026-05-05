@@ -1,0 +1,18 @@
+{
+  "gate_kinds": [
+    { "slug": "security_review",      "label": "Security Review",       "description": "Human security check before merging or deploying security-sensitive changes." },
+    { "slug": "architecture_review",  "label": "Architecture Review",   "description": "Human approval for system design or major structural decisions." },
+    { "slug": "code_review",          "label": "Code Review",           "description": "Human or senior-agent review of implementation PRs before merge." },
+    { "slug": "release_deploy",       "label": "Release / Deploy",      "description": "Human approval gate before production deployment." },
+    { "slug": "infra_change",         "label": "Infrastructure Change", "description": "Human approval for server, network or secrets config changes." },
+    { "slug": "secrets_access",       "label": "Secrets Access",        "description": "Human gate before an agent may consume or rotate secrets." },
+    { "slug": "ux_design_approval",   "label": "UX Design Approval",    "description": "Human sign-off on UX flows and design artefacts before engineering handoff." },
+    { "slug": "product_sign_off",     "label": "Product Sign-off",      "description": "Product Owner (human) sign-off on requirements before sprint starts." }
+  ],
+  "default_mode": "blocking",
+  "metadata_schema": {
+    "comment": "string | null",
+    "evidence_urls": "string[]",
+    "approved_by": "string (user_id)"
+  }
+}

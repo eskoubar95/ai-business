@@ -36,6 +36,11 @@ export const businesses = pgTable(
      *   null           — not yet started (created outside onboarding wizard)
      */
     onboardingPhase: text("onboarding_phase").$type<"grill_chat" | "grill_editor" | "complete">(),
+    /** Enterprise template lineage (ADR template provisioning). */
+    templateId: text("template_id"),
+    templateVersion: text("template_version"),
+    derivedFromTemplateId: text("derived_from_template_id"),
+    derivedFromTemplateVersion: text("derived_from_template_version"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("businesses_created_at_idx").on(t.createdAt)],
@@ -108,6 +113,20 @@ export const userBusinesses = pgTable(
 
 export const memoryScopeEnum = pgEnum("memory_scope", ["business", "agent"]);
 
+/** CLI/runtime adapter for enterprise template agents (ADR execution_adapter). */
+export const executionAdapterEnum = pgEnum("execution_adapter", [
+  "hermes_agent_cli",
+  "claude_code_cli",
+  "cursor_agent_cli",
+]);
+
+/** Model routing strategy for LiteLLM vs Cursor-managed flows. */
+export const modelRoutingEnum = pgEnum("model_routing", [
+  "litellm_runpod",
+  "cursor_managed",
+  "cursor_allowlist",
+]);
+
 export const agents = pgTable(
   "agents",
   {
@@ -122,8 +141,14 @@ export const agents = pgTable(
       onDelete: "set null",
     }),
     name: text("name").notNull(),
+    /** Stable roster key from template shards (e.g. product_owner). */
+    slug: text("slug"),
     /** Job / roster role label (distinct from DB role names). */
     role: text("role").notNull(),
+    executionAdapter: executionAdapterEnum("execution_adapter"),
+    modelRouting: modelRoutingEnum("model_routing"),
+    /** 1 = lead, 2 = senior specialist, 3 = specialist (ADR tier). */
+    tier: integer("tier"),
     reportsToAgentId: uuid("reports_to_agent_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -134,6 +159,7 @@ export const agents = pgTable(
       foreignColumns: [t.id],
     }).onDelete("set null"),
     uniqueIndex("agents_business_id_id_unique").on(t.businessId, t.id),
+    uniqueIndex("agents_business_id_slug_unique").on(t.businessId, t.slug),
     index("agents_business_id_idx").on(t.businessId),
     index("agents_reports_to_agent_id_idx").on(t.reportsToAgentId),
     index("agents_archetype_id_idx").on(t.archetypeId),
@@ -264,12 +290,15 @@ export const teams = pgTable(
     leadAgentId: uuid("lead_agent_id")
       .notNull()
       .references(() => agents.id, { onDelete: "restrict" }),
+    /** Template team key (e.g. product_team) for idempotent seeding. */
+    slug: text("slug"),
     name: text("name").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     uniqueIndex("teams_business_id_id_unique").on(t.businessId, t.id),
+    uniqueIndex("teams_business_id_slug_unique").on(t.businessId, t.slug),
     index("teams_business_id_idx").on(t.businessId),
     index("teams_lead_agent_id_idx").on(t.leadAgentId),
   ],
@@ -291,6 +320,61 @@ export const teamMembers = pgTable(
   (t) => [
     uniqueIndex("team_members_team_id_agent_id_unique").on(t.teamId, t.agentId),
     index("team_members_agent_id_idx").on(t.agentId),
+  ],
+);
+
+/** Human gate kinds seeded per business from enterprise templates. */
+export const gateKinds = pgTable(
+  "gate_kinds",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    slug: text("slug").notNull(),
+    label: text("label").notNull(),
+    description: text("description").notNull(),
+    defaultMode: text("default_mode").notNull().$type<"blocking" | "warn_only">(),
+    templateId: text("template_id"),
+    templateVersion: text("template_version"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("gate_kinds_business_id_slug_unique").on(t.businessId, t.slug),
+    index("gate_kinds_business_id_idx").on(t.businessId),
+  ],
+);
+
+/** Directed communication policy edges between agent roles (ADR §8). */
+export const communicationEdges = pgTable(
+  "communication_edges",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    fromRole: text("from_role").notNull(),
+    toRole: text("to_role").notNull(),
+    direction: text("direction").notNull().$type<"one_way" | "bidirectional">(),
+    allowedIntents: jsonb("allowed_intents").$type<string[]>().notNull(),
+    allowedArtifacts: jsonb("allowed_artifacts").$type<string[]>().notNull(),
+    requiresHumanAck: boolean("requires_human_ack").notNull().default(false),
+    quotaPerHour: integer("quota_per_hour"),
+    quotaMode: text("quota_mode").notNull().default("warn_only").$type<"warn_only" | "enforce">(),
+    templateId: text("template_id"),
+    templateVersion: text("template_version"),
+    derivedFromTemplateId: text("derived_from_template_id"),
+    derivedFromTemplateVersion: text("derived_from_template_version"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("communication_edges_business_from_to_unique").on(
+      t.businessId,
+      t.fromRole,
+      t.toRole,
+    ),
+    index("communication_edges_business_id_idx").on(t.businessId),
   ],
 );
 
@@ -574,6 +658,8 @@ export const businessesRelations = relations(businesses, ({ many }) => ({
   tasksMany: many(tasks),
   taskRelationsMany: many(taskRelations),
   projectsMany: many(projects),
+  gateKindsMany: many(gateKinds),
+  communicationEdgesMany: many(communicationEdges),
 }));
 
 export const userSettingsRelations = relations(userSettings, () => ({}));
@@ -712,6 +798,20 @@ export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
   agent: one(agents, {
     fields: [teamMembers.agentId],
     references: [agents.id],
+  }),
+}));
+
+export const gateKindsRelations = relations(gateKinds, ({ one }) => ({
+  business: one(businesses, {
+    fields: [gateKinds.businessId],
+    references: [businesses.id],
+  }),
+}));
+
+export const communicationEdgesRelations = relations(communicationEdges, ({ one }) => ({
+  business: one(businesses, {
+    fields: [communicationEdges.businessId],
+    references: [businesses.id],
   }),
 }));
 
