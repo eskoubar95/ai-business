@@ -1,0 +1,22 @@
+{
+  "template_id": "conduro.enterprise",
+  "template_version": "3.0.0",
+  "display_name": "Conduro Enterprise Agent Team",
+  "description": "Full product-to-engineering agent organisation. Two streams: Product and Build.",
+  "author": "Conduro Platform",
+  "released_at": "2026-05-05",
+  "shards": {
+    "teams": "teams/teams.json",
+    "agents": "agents/agents.json",
+    "gates": "gates/gate_kinds.json",
+    "communication_policy": "communication/policy.json",
+    "errors_registry": "errors/registry.json"
+  },
+  "sha256": {
+    "teams": "fddb5ad138a64e285e281f9d684fe98e3f5b55bcca94fb6340e1a27370be95d7",
+    "agents": "9b5fa52162759c7e0572e2e4625452dc28d080cae2bbf1d5d9fb98fa94fdb65a",
+    "gates": "fee0dddad4b8d4cb5052c6266f4fd9b295a39cd4b9a867fe54aae4a89e26bf10",
+    "communication_policy": "3a7eb1858c7b17ce253112bde046f88a3d4def90c8cafdcc7b787d0b12aee708",
+    "errors_registry": "0faf971a54e21b2757b339686dad71bee1c8f8d32fc30b9f2e5beaafbf47ddd1"
+  }
+}

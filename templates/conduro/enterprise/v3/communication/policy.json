@@ -1,0 +1,139 @@
+{
+  "schema_version": "1.0.0",
+  "default_violation_policy": "hard_block",
+  "default_quota_mode": "warn_only",
+  "allowed_intents": [
+    "request_design_asset",
+    "clarify_requirement",
+    "request_ticket_decomposition",
+    "request_architecture_decision",
+    "request_security_input",
+    "report_blocker",
+    "request_test_coverage",
+    "notify_completion"
+  ],
+  "allowed_artifact_kinds": [
+    "requirements_card",
+    "ticket_ref",
+    "figma_digest",
+    "component_spec",
+    "openapi_snippet",
+    "test_report",
+    "architecture_decision_record",
+    "security_finding",
+    "pr_ref",
+    "design_brief"
+  ],
+  "edges": [
+    {
+      "from_role": "product_owner",
+      "to_role": "engineering_manager",
+      "direction": "bidirectional",
+      "allowed_intents": ["clarify_requirement", "report_blocker", "notify_completion", "request_architecture_decision"],
+      "allowed_artifacts": ["requirements_card", "ticket_ref", "architecture_decision_record"],
+      "requires_human_ack": false,
+      "quota_per_hour": 20,
+      "quota_mode": "warn_only"
+    },
+    {
+      "from_role": "product_owner",
+      "to_role": "market_intelligence_analyst",
+      "direction": "bidirectional",
+      "allowed_intents": ["clarify_requirement", "request_ticket_decomposition", "notify_completion"],
+      "allowed_artifacts": ["requirements_card", "ticket_ref"],
+      "requires_human_ack": false,
+      "quota_per_hour": 15,
+      "quota_mode": "warn_only"
+    },
+    {
+      "from_role": "product_owner",
+      "to_role": "ux_designer",
+      "direction": "bidirectional",
+      "allowed_intents": ["request_design_asset", "clarify_requirement", "notify_completion"],
+      "allowed_artifacts": ["requirements_card", "figma_digest", "design_brief"],
+      "requires_human_ack": false,
+      "quota_per_hour": 15,
+      "quota_mode": "warn_only"
+    },
+    {
+      "from_role": "requirements_analyst",
+      "to_role": "product_owner",
+      "direction": "one_way",
+      "allowed_intents": ["report_blocker", "clarify_requirement"],
+      "allowed_artifacts": ["requirements_card", "ticket_ref"],
+      "requires_human_ack": false,
+      "quota_per_hour": 10,
+      "quota_mode": "warn_only"
+    },
+    {
+      "from_role": "engineering_manager",
+      "to_role": "software_engineer",
+      "direction": "bidirectional",
+      "allowed_intents": ["request_ticket_decomposition", "report_blocker", "notify_completion"],
+      "allowed_artifacts": ["ticket_ref", "pr_ref"],
+      "requires_human_ack": false,
+      "quota_per_hour": 30,
+      "quota_mode": "warn_only"
+    },
+    {
+      "from_role": "engineering_manager",
+      "to_role": "tech_lead",
+      "direction": "bidirectional",
+      "allowed_intents": ["request_architecture_decision", "clarify_requirement", "report_blocker"],
+      "allowed_artifacts": ["architecture_decision_record", "ticket_ref"],
+      "requires_human_ack": false,
+      "quota_per_hour": 20,
+      "quota_mode": "warn_only"
+    },
+    {
+      "from_role": "software_engineer",
+      "to_role": "ux_designer",
+      "direction": "one_way",
+      "allowed_intents": ["request_design_asset"],
+      "allowed_artifacts": ["component_spec", "figma_digest", "design_brief"],
+      "requires_human_ack": false,
+      "quota_per_hour": 10,
+      "quota_mode": "warn_only"
+    },
+    {
+      "from_role": "software_engineer",
+      "to_role": "security_reviewer",
+      "direction": "one_way",
+      "allowed_intents": ["request_security_input"],
+      "allowed_artifacts": ["pr_ref", "openapi_snippet"],
+      "requires_human_ack": false,
+      "quota_per_hour": 10,
+      "quota_mode": "warn_only"
+    },
+    {
+      "from_role": "software_engineer",
+      "to_role": "qa_engineer",
+      "direction": "bidirectional",
+      "allowed_intents": ["request_test_coverage", "report_blocker", "notify_completion"],
+      "allowed_artifacts": ["pr_ref", "test_report", "ticket_ref"],
+      "requires_human_ack": false,
+      "quota_per_hour": 15,
+      "quota_mode": "warn_only"
+    },
+    {
+      "from_role": "devops_engineer",
+      "to_role": "engineering_manager",
+      "direction": "one_way",
+      "allowed_intents": ["report_blocker", "notify_completion"],
+      "allowed_artifacts": ["pr_ref", "ticket_ref"],
+      "requires_human_ack": false,
+      "quota_per_hour": 10,
+      "quota_mode": "warn_only"
+    },
+    {
+      "from_role": "security_reviewer",
+      "to_role": "engineering_manager",
+      "direction": "one_way",
+      "allowed_intents": ["report_blocker", "notify_completion"],
+      "allowed_artifacts": ["security_finding", "pr_ref"],
+      "requires_human_ack": true,
+      "quota_per_hour": 10,
+      "quota_mode": "warn_only"
+    }
+  ]
+}

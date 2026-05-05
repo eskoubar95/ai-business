@@ -16,6 +16,9 @@ npm-debug.log*
 # typescript
 *.tsbuildinfo
 
+# Generated template bundles (npm run templates:build)
+/dist/
+
 # Playwright
 /test-results/
 /playwright-report/
