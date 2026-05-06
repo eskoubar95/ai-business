@@ -2,7 +2,7 @@
 
 Invocation rule: call a MCP only when the active task mandates that capability or a gate artifact requires linkage.
 
-- **github** — artefact repos, flaky test triage cues.
+- **GitHub** — artefact repos, flaky test triage cues.
 - **linear** — attach repro snippets and calibrated severity tags.
 
 ## Tool error fallback

@@ -1,6 +1,15 @@
 import { z } from "zod";
+import {
+  AGENT_PLATFORM_ICON_IDS,
+  type AgentPlatformIconId,
+} from "@/lib/agents/agent-platform-icon-ids";
 
 const agentDocumentSlugEnum = z.enum(["agents", "soul", "heartbeat", "tools"]);
+
+/** Matches `agents.icon_key` allowlist (`normalizeAgentIconKeyForSave`) — catches typos at bundle parse time. */
+const enterpriseAgentIconKeySchema = z.enum(
+  AGENT_PLATFORM_ICON_IDS as unknown as [AgentPlatformIconId, ...AgentPlatformIconId[]],
+);
 
 /** Single agent row inside `agents/agents.json` (source shard; bundled rows include `agent_documents` bodies). */
 export const EnterpriseAgentShardEntrySchema = z.object({
@@ -17,7 +26,7 @@ export const EnterpriseAgentShardEntrySchema = z.object({
   mcp_allowlist: z.array(z.string()),
   required_gates_before_output: z.array(z.string()),
   /** Default emoji-style icon picker key seeded onto `agents.icon_key`. */
-  icon_key: z.string().nullable().optional(),
+  icon_key: enterpriseAgentIconKeySchema.nullable().optional(),
   /** Populated when building bundle or when testing seeded payloads. */
   agent_documents: z
     .array(

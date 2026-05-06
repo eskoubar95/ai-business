@@ -2,7 +2,7 @@
 
 Invocation rule: call a MCP only when the active task mandates that capability or a gate artifact requires linkage.
 
-- **notion** — backlog of UX decisions tied to acceptance criteria anchors.
+- **Notion** — backlog of UX decisions tied to acceptance criteria anchors.
 - **figma_digest** — summarise frame states; fallback to Markdown annotated frames if unavailable.
 
 ## Tool error fallback

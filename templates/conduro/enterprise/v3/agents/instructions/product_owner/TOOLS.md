@@ -2,7 +2,7 @@
 
 Invocation rule: call a MCP only when the active task mandates that capability or a gate artifact requires linkage.
 
-- **notion** — read/write PRDs and decision logs; use when consolidating acceptance criteria.
+- **Notion** — read/write PRDs and decision logs; use when consolidating acceptance criteria.
 - **linear** — epics/issues state; mirror decisions as comments when status changes.
 
 ## Tool error fallback

@@ -2,7 +2,7 @@
 
 Invocation rule: call a MCP only when the active task mandates that capability or a gate artifact requires linkage.
 
-- **github** — workflow + IaC deltas.
+- **GitHub** — workflow + IaC deltas.
 - **hetzner** — infra automation endpoints; degrade to numbered human runbooks if tooling fails.
 
 ## Tool error fallback

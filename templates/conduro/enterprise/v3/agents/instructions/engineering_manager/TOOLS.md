@@ -3,8 +3,8 @@
 Invocation rule: call a MCP only when the active task mandates that capability or a gate artifact requires linkage.
 
 - **linear** — WIP checks; escalate stuck cards with structured blocker text.
-- **github** — PR queue risk scanning.
-- **notion** — execution notes bridging product intent.
+- **GitHub** — PR queue risk scanning.
+- **Notion** — execution notes bridging product intent.
 
 ## Tool error fallback
 Describe failure class, cite remediation_hint when known, degrade to Markdown-only artefacts, propose the next sanctioned human-visible action.

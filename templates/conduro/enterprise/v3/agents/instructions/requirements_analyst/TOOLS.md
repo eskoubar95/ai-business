@@ -2,7 +2,7 @@
 
 Invocation rule: call a MCP only when the active task mandates that capability or a gate artifact requires linkage.
 
-- **notion** — PRD truth; annotate deltas.
+- **Notion** — PRD truth; annotate deltas.
 - **linear** — ticket bodies describe implementation-ready scope; hyperlink intelligence sources.
 
 ## Tool error fallback

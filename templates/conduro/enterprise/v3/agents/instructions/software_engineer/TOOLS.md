@@ -2,7 +2,7 @@
 
 Invocation rule: call a MCP only when the active task mandates that capability or a gate artifact requires linkage.
 
-- **github** — branches, pushes, CI feedback loops.
+- **GitHub** — branches, pushes, CI feedback loops.
 - **linear** — accurate status transitions and PR backlinks.
 
 ## Tool error fallback

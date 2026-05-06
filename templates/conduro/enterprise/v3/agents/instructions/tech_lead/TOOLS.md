@@ -2,8 +2,8 @@
 
 Invocation rule: call a MCP only when the active task mandates that capability or a gate artifact requires linkage.
 
-- **github** — authoritative diffs/design feedback.
-- **notion** — durable ADRs; fall back to PR descriptions if tooling is offline.
+- **GitHub** — authoritative diffs/design feedback.
+- **Notion** — durable ADRs; fall back to PR descriptions if tooling is offline.
 
 ## Tool error fallback
 Describe failure class, cite remediation_hint when known, degrade to Markdown-only artefacts, propose the next sanctioned human-visible action.
