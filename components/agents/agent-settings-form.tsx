@@ -25,7 +25,10 @@ import {
   AGENT_PLATFORM_ICON_IDS,
   isAgentPlatformIconId,
 } from "@/lib/agents/agent-platform-icon-ids";
-import { MAX_AGENT_AVATAR_BYTES } from "@/lib/agents/avatar-validation";
+import {
+  assertValidAgentAvatarUrl,
+  maxAvatarUploadFileBytes,
+} from "@/lib/agents/avatar-validation";
 import { AGENT_PLATFORM_ICONS } from "@/components/agents/agent-platform-icons";
 import { AgentRosterAvatar } from "@/components/agents/agent-roster-avatar";
 import { cn } from "@/lib/utils";
@@ -108,7 +111,9 @@ export function AgentSettingsForm({
       if (prev) URL.revokeObjectURL(prev);
       return null;
     });
-  }, [agent.id]);
+  }, [agent.id, agent.iconKey, agent.avatarUrl]);
+
+  const rawUploadCeilBytes = maxAvatarUploadFileBytes();
 
   const previewAvatarUrl =
     pickedObjectUrl ??
@@ -129,6 +134,15 @@ export function AgentSettingsForm({
         let nextAvatar: string | null | undefined = undefined;
         if (pickedFile) {
           nextAvatar = await readSelectedImageAsDataUrl(pickedFile);
+          try {
+            assertValidAgentAvatarUrl(nextAvatar);
+          } catch (err) {
+            const msg =
+              err instanceof Error ? err.message : "Avatar did not pass validation.";
+            toast.error(msg);
+            setError(msg);
+            return;
+          }
         } else if (clearPersistedAvatar) {
           nextAvatar = null;
         }
@@ -227,7 +241,8 @@ export function AgentSettingsForm({
             )}
           </div>
           <p className="text-[11px] text-muted-foreground/40">
-            JPG, PNG or GIF · Max 2 MB
+            PNG, JPEG, GIF or WebP · max ~{(rawUploadCeilBytes / (1024 * 1024)).toFixed(1)} MB file (stored data URL ≤
+            2 MB UTF-8)
           </p>
         </div>
         <input
@@ -238,8 +253,10 @@ export function AgentSettingsForm({
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (!file) return;
-            if (file.size > MAX_AGENT_AVATAR_BYTES) {
-              toast.error(`Choose an image up to ${MAX_AGENT_AVATAR_BYTES / (1024 * 1024)} MB.`);
+            if (file.size > rawUploadCeilBytes) {
+              toast.error(
+                `Choose a smaller image (max ~${(rawUploadCeilBytes / (1024 * 1024)).toFixed(1)} MB file before encoding).`,
+              );
               e.target.value = "";
               return;
             }
