@@ -30,7 +30,13 @@ export default async function AgentsDashboardPage({
         getAgentStatus(a.id),
       ]);
       return {
-        agent: { id: a.id, name: a.name, role: a.role },
+        agent: {
+          id: a.id,
+          name: a.name,
+          role: a.role,
+          avatarUrl: a.avatarUrl,
+          iconKey: a.iconKey,
+        },
         skillCount: skills.length,
         mcpCount: mcps.length,
         lifecycle,

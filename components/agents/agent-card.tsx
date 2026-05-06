@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AgentRosterAvatar } from "@/components/agents/agent-roster-avatar";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { AgentLifecycleStatus } from "@/lib/orchestration/events";
@@ -8,6 +9,8 @@ export type AgentCardAgent = {
   id: string;
   name: string;
   role: string;
+  avatarUrl?: string | null;
+  iconKey?: string | null;
 };
 
 function statusDot(status: AgentLifecycleStatus) {
@@ -53,9 +56,12 @@ export function AgentCard(props: {
       >
         {/* Top row: monogram + name/role + status */}
         <div className="flex items-start gap-3">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.07] font-mono text-[11px] font-semibold text-foreground/60 mt-0.5">
-            {a.name.slice(0, 2).toUpperCase()}
-          </span>
+          <AgentRosterAvatar
+            name={a.name}
+            avatarUrl={a.avatarUrl}
+            iconKey={a.iconKey}
+            sizeClasses="size-8 rounded-md mt-0.5"
+          />
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-medium tracking-[-0.01em] text-foreground">
               {a.name}

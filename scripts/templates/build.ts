@@ -8,7 +8,9 @@ import {
   GateKindShardSchema,
   ManifestSchema,
   TeamShardSchema,
+  type EnterpriseAgentShardEntry,
 } from "@/lib/templates/zod-schemas";
+import { enrichAgentsShardWithInstructionBodies } from "@/lib/templates/enrich-agents-shard";
 import { shardSha256 } from "@/lib/templates/bundle-verify";
 import { TemplateSeedError } from "@/lib/templates/template-errors";
 
@@ -65,7 +67,14 @@ export function main(): void {
     }
     const absPath = join(TEMPLATE_ROOT, relPath);
     const rawBody = readJson(absPath);
-    const validated = validateShard(key, rawBody);
+    let validated = validateShard(key, rawBody);
+    if (key === "agents") {
+      validated = enrichAgentsShardWithInstructionBodies(
+        TEMPLATE_ROOT,
+        validated as EnterpriseAgentShardEntry[],
+      );
+      AgentShardSchema.parse(validated);
+    }
     shards[key] = validated;
     sha256[key] = shardSha256(validated);
   }

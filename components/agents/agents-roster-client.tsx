@@ -6,6 +6,7 @@ import { LayoutGrid, List, Search } from "lucide-react";
 import type { ReactNode } from "react";
 import type { AgentCardAgent } from "@/components/agents/agent-card";
 import { AgentCard } from "@/components/agents/agent-card";
+import { AgentRosterAvatar } from "@/components/agents/agent-roster-avatar";
 import { Card } from "@/components/ui/card";
 import { PageEmptyState } from "@/components/page-empty-state";
 import { AgentStatusBadge } from "@/components/agents/agent-status-badge";
@@ -157,9 +158,12 @@ export function AgentsRosterClient({
             >
               {/* Name + role */}
               <div className="flex items-center gap-3 min-w-0">
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-white/[0.07] font-mono text-[11px] font-semibold text-foreground/60">
-                  {a.name.slice(0, 2).toUpperCase()}
-                </span>
+                <AgentRosterAvatar
+                  name={a.name}
+                  avatarUrl={a.avatarUrl}
+                  iconKey={a.iconKey}
+                  sizeClasses="size-7 shrink-0 rounded-md text-[11px]"
+                />
                 <div className="min-w-0">
                   <p className="truncate text-[13px] font-medium text-foreground tracking-[-0.01em]">
                     {a.name}

@@ -3,12 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, useRef } from "react";
 import { toast } from "sonner";
-import {
-  Bot, Brain, Cpu, Zap, Shield, Target, Globe, Eye,
-  Code2, Search, Layers, BarChart3, PenLine, Palette,
-  Wrench, Users, Star, Lightbulb, Rocket, FlaskConical,
-  Upload, X, Save,
-} from "lucide-react";
+import { Upload, X, Save } from "lucide-react";
 import {
   AgentSettingsPermissionsSection,
   type AgentSettingsPermissionsState,
@@ -22,9 +17,17 @@ import { PrimaryButton } from "@/components/ui/primary-button";
 
 import { CustomSelect } from "@/components/ui/custom-select";
 
-import { updateAgent, deleteAgent } from "@/lib/agents/actions";
+import { updateAgent, deleteAgent, updateAgentAvatar } from "@/lib/agents/actions";
 import type { AgentWithInstructions } from "@/lib/agents/actions";
 import type { agents, systemRoles as systemRolesTable } from "@/db/schema";
+import type { AgentPlatformIconId } from "@/lib/agents/agent-platform-icon-ids";
+import {
+  AGENT_PLATFORM_ICON_IDS,
+  isAgentPlatformIconId,
+} from "@/lib/agents/agent-platform-icon-ids";
+import { MAX_AGENT_AVATAR_BYTES } from "@/lib/agents/avatar-validation";
+import { AGENT_PLATFORM_ICONS } from "@/components/agents/agent-platform-icons";
+import { AgentRosterAvatar } from "@/components/agents/agent-roster-avatar";
 import { cn } from "@/lib/utils";
 
 type Peer = Pick<typeof agents.$inferSelect, "id" | "name">;
@@ -38,32 +41,15 @@ type Props = {
   platformSystemRoles: PlatformSystemRole[];
 };
 
-// ─── Icon Library ────────────────────────────────────────────────────────────
-
-const ICON_LIBRARY = [
-  { id: "bot", Icon: Bot },
-  { id: "brain", Icon: Brain },
-  { id: "cpu", Icon: Cpu },
-  { id: "zap", Icon: Zap },
-  { id: "shield", Icon: Shield },
-  { id: "target", Icon: Target },
-  { id: "globe", Icon: Globe },
-  { id: "eye", Icon: Eye },
-  { id: "code", Icon: Code2 },
-  { id: "search", Icon: Search },
-  { id: "layers", Icon: Layers },
-  { id: "chart", Icon: BarChart3 },
-  { id: "pen", Icon: PenLine },
-  { id: "palette", Icon: Palette },
-  { id: "wrench", Icon: Wrench },
-  { id: "users", Icon: Users },
-  { id: "star", Icon: Star },
-  { id: "bulb", Icon: Lightbulb },
-  { id: "rocket", Icon: Rocket },
-  { id: "flask", Icon: FlaskConical },
-] as const;
-
-type IconId = (typeof ICON_LIBRARY)[number]["id"];
+function readSelectedImageAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () =>
+      typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Read failed"));
+    reader.onerror = () => reject(reader.error ?? new Error("Read failed"));
+    reader.readAsDataURL(file);
+  });
+}
 
 
 export function AgentSettingsForm({
@@ -82,7 +68,12 @@ export function AgentSettingsForm({
   const [role, setRole] = useState(agent.role);
   const [systemRoleId, setSystemRoleId] = useState(agent.systemRoleId ?? "");
   const [reportsToAgentId, setReportsToAgentId] = useState<string>(agent.reportsToAgentId ?? "");
-  const [selectedIcon, setSelectedIcon] = useState<IconId | null>(null);
+  const [pickedFile, setPickedFile] = useState<File | null>(null);
+  const [pickedObjectUrl, setPickedObjectUrl] = useState<string | null>(null);
+  const [clearPersistedAvatar, setClearPersistedAvatar] = useState(false);
+  const [selectedIcon, setSelectedIcon] = useState<AgentPlatformIconId | null>(() =>
+    agent.iconKey && isAgentPlatformIconId(agent.iconKey) ? agent.iconKey : null,
+  );
   const [showIconPicker, setShowIconPicker] = useState(false);
 
   // Adapter (UI-only stubs)
@@ -109,9 +100,20 @@ export function AgentSettingsForm({
     setSystemRoleId(agent.systemRoleId ?? "");
   }, [agent.systemRoleId]);
 
-  // Derive monogram from name
-  const monogram = name.slice(0, 2).toUpperCase() || "??";
-  const SelectedIcon = selectedIcon ? ICON_LIBRARY.find((i) => i.id === selectedIcon)?.Icon : null;
+  useEffect(() => {
+    setSelectedIcon(agent.iconKey && isAgentPlatformIconId(agent.iconKey) ? agent.iconKey : null);
+    setPickedFile(null);
+    setClearPersistedAvatar(false);
+    setPickedObjectUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+  }, [agent.id]);
+
+  const previewAvatarUrl =
+    pickedObjectUrl ??
+    (!clearPersistedAvatar ? agent.avatarUrl ?? null
+    : null);
 
   function handleSave() {
     setError(null);
@@ -123,6 +125,26 @@ export function AgentSettingsForm({
           reportsToAgentId: reportsToAgentId || null,
           systemRoleId: systemRoleId || null,
         });
+
+        let nextAvatar: string | null | undefined = undefined;
+        if (pickedFile) {
+          nextAvatar = await readSelectedImageAsDataUrl(pickedFile);
+        } else if (clearPersistedAvatar) {
+          nextAvatar = null;
+        }
+
+        await updateAgentAvatar(agent.id, {
+          ...(nextAvatar !== undefined ? { avatarUrl: nextAvatar } : {}),
+          iconKey: selectedIcon,
+        });
+
+        setPickedFile(null);
+        setClearPersistedAvatar(false);
+        setPickedObjectUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return null;
+        });
+
         toast.success("Settings saved.");
         router.refresh();
       } catch (e) {
@@ -154,23 +176,16 @@ export function AgentSettingsForm({
       {/* Avatar */}
       <div className="mb-5 flex items-center gap-4">
         {/* Avatar preview */}
-        <div
-          className={cn(
-            "flex size-14 shrink-0 items-center justify-center rounded-xl",
-            "bg-white/[0.07] border border-white/[0.07]",
-          )}
-        >
-          {SelectedIcon ? (
-            <SelectedIcon className="size-6 text-foreground/60" />
-          ) : (
-            <span className="font-mono text-[15px] font-semibold text-foreground/50">
-              {monogram}
-            </span>
-          )}
-        </div>
+        <AgentRosterAvatar
+          name={name || "Agent"}
+          avatarUrl={previewAvatarUrl}
+          iconKey={selectedIcon}
+          sizeClasses="size-14 shrink-0 rounded-xl font-mono text-[15px]"
+          className="border border-white/[0.07]"
+        />
 
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => setShowIconPicker((v) => !v)}
@@ -191,11 +206,21 @@ export function AgentSettingsForm({
               <Upload className="size-3" />
               Upload
             </button>
-            {selectedIcon && (
+            {(previewAvatarUrl ?? selectedIcon) && (
               <button
                 type="button"
-                onClick={() => setSelectedIcon(null)}
+                onClick={() => {
+                  setSelectedIcon(null);
+                  setClearPersistedAvatar(true);
+                  setPickedFile(null);
+                  setPickedObjectUrl((prev) => {
+                    if (prev) URL.revokeObjectURL(prev);
+                    return null;
+                  });
+                  setShowIconPicker(false);
+                }}
                 className="flex cursor-pointer items-center gap-1 rounded px-1.5 py-1.5 text-[11px] text-muted-foreground/40 transition-colors hover:text-muted-foreground"
+                title="Clear icon and uploaded photo"
               >
                 <X className="size-3" />
               </button>
@@ -205,28 +230,56 @@ export function AgentSettingsForm({
             JPG, PNG or GIF · Max 2 MB
           </p>
         </div>
-        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            if (file.size > MAX_AGENT_AVATAR_BYTES) {
+              toast.error(`Choose an image up to ${MAX_AGENT_AVATAR_BYTES / (1024 * 1024)} MB.`);
+              e.target.value = "";
+              return;
+            }
+            setClearPersistedAvatar(false);
+            setPickedFile(file);
+            setPickedObjectUrl((prev) => {
+              if (prev) URL.revokeObjectURL(prev);
+              return URL.createObjectURL(file);
+            });
+            e.target.value = "";
+          }}
+        />
       </div>
 
       {/* Icon picker */}
       {showIconPicker && (
         <div className="mb-4 rounded-md border border-border bg-white/[0.02] p-3">
           <div className="grid grid-cols-10 gap-1">
-            {ICON_LIBRARY.map(({ id, Icon }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => { setSelectedIcon(id); setShowIconPicker(false); }}
-                className={cn(
-                  "flex size-9 cursor-pointer items-center justify-center rounded-md transition-colors",
-                  selectedIcon === id
-                    ? "bg-primary/15 text-primary"
-                    : "text-muted-foreground/50 hover:bg-white/[0.06] hover:text-foreground",
-                )}
-              >
-                <Icon className="size-4" />
-              </button>
-            ))}
+            {AGENT_PLATFORM_ICON_IDS.map((id) => {
+              const IconComp = AGENT_PLATFORM_ICONS[id];
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedIcon(id);
+                    setShowIconPicker(false);
+                  }}
+                  className={cn(
+                    "flex size-9 cursor-pointer items-center justify-center rounded-md transition-colors",
+                    selectedIcon === id
+                      ? "bg-primary/15 text-primary"
+                      : "text-muted-foreground/50 hover:bg-white/[0.06] hover:text-foreground",
+                  )}
+                  aria-label={`Icon ${id}`}
+                >
+                  <IconComp className="size-4" aria-hidden />
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

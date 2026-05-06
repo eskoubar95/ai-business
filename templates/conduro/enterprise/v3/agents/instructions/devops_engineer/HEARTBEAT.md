@@ -1,0 +1,10 @@
+# Heartbeat — DevOps Engineer
+
+Max deliberate reasoning loops before irreversible edits: **≤3**.
+
+## Activation checklist
+1. Ingest activating task payloads plus attachments referenced therein.
+2. Diff declared vs observed infrastructure, narrate rollout plus rollback arcs before edits land.
+3. Reflect accurate task statuses—or mark `blocked` with explicit blocker narration—prior to concluding the heartbeat.
+
+If the same MCP error strikes twice sequentially, cease automation attempts, summarise the failure classification, notify via edge policy, await human unblock.

@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  agentDocuments,
   agents,
   businesses,
   communicationEdges,
@@ -12,10 +13,16 @@ import {
   teamMembers,
   teams,
 } from "@/db/schema";
+import { enrichAgentsShardWithInstructionBodies } from "@/lib/templates/enrich-agents-shard";
 import { shardSha256 } from "@/lib/templates/bundle-verify";
 import type { AppDb } from "@/lib/templates/db-types";
 import { seedEnterpriseTemplate } from "@/lib/templates/seed-enterprise-template";
-import { BundlePayloadSchema, type BundlePayload } from "@/lib/templates/zod-schemas";
+import { BundlePayloadSchema, AgentShardSchema, type BundlePayload } from "@/lib/templates/zod-schemas";
+
+const ENTERPRISE_V3_TEMPLATE_ROOT = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "../../../templates/conduro/enterprise/v3",
+);
 
 type TeamRow = {
   team_slug: string;
@@ -26,17 +33,26 @@ type TeamRow = {
 };
 
 function loadEnterpriseShards() {
-  const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../../templates/conduro/enterprise/v3");
   return {
-    teams: JSON.parse(readFileSync(join(ROOT, "teams/teams.json"), "utf8")) as TeamRow[],
-    agents: JSON.parse(readFileSync(join(ROOT, "agents/agents.json"), "utf8")),
-    gates: JSON.parse(readFileSync(join(ROOT, "gates/gate_kinds.json"), "utf8")),
-    communication_policy: JSON.parse(readFileSync(join(ROOT, "communication/policy.json"), "utf8")),
-    errors_registry: JSON.parse(readFileSync(join(ROOT, "errors/registry.json"), "utf8")),
+    teams: JSON.parse(readFileSync(join(ENTERPRISE_V3_TEMPLATE_ROOT, "teams/teams.json"), "utf8")) as TeamRow[],
+    agents: AgentShardSchema.parse(
+      JSON.parse(readFileSync(join(ENTERPRISE_V3_TEMPLATE_ROOT, "agents/agents.json"), "utf8")),
+    ),
+    gates: JSON.parse(readFileSync(join(ENTERPRISE_V3_TEMPLATE_ROOT, "gates/gate_kinds.json"), "utf8")),
+    communication_policy: JSON.parse(
+      readFileSync(join(ENTERPRISE_V3_TEMPLATE_ROOT, "communication/policy.json"), "utf8"),
+    ),
+    errors_registry: JSON.parse(
+      readFileSync(join(ENTERPRISE_V3_TEMPLATE_ROOT, "errors/registry.json"), "utf8"),
+    ),
   };
 }
 
 function buildBundle(shards: ReturnType<typeof loadEnterpriseShards>): BundlePayload {
+  const agentsEnriched = enrichAgentsShardWithInstructionBodies(
+    ENTERPRISE_V3_TEMPLATE_ROOT,
+    shards.agents,
+  );
   const manifest = {
     template_id: "conduro.enterprise",
     template_version: "3.0.0",
@@ -53,13 +69,16 @@ function buildBundle(shards: ReturnType<typeof loadEnterpriseShards>): BundlePay
     },
     sha256: {
       teams: shardSha256(shards.teams),
-      agents: shardSha256(shards.agents),
+      agents: shardSha256(agentsEnriched),
       gates: shardSha256(shards.gates),
       communication_policy: shardSha256(shards.communication_policy),
       errors_registry: shardSha256(shards.errors_registry),
     },
   };
-  return BundlePayloadSchema.parse({ manifest, shards });
+  return BundlePayloadSchema.parse({
+    manifest,
+    shards: { ...shards, agents: agentsEnriched },
+  });
 }
 
 describe("seedEnterpriseTemplate", () => {
@@ -195,6 +214,7 @@ describe("seedEnterpriseTemplate", () => {
     expect(insertCounts.get(teams)).toBe(1);
     expect(insertCounts.get(teamMembers)).toBe(1);
     expect(insertCounts.get(gateKinds)).toBe(1);
+    expect(insertCounts.get(agentDocuments)).toBe(1);
     expect(insertCounts.get(communicationEdges)).toBe(1);
   });
 

@@ -8,6 +8,8 @@ import { and, asc, eq } from "drizzle-orm";
 
 import { validateReportsToForBusiness } from "./reports-cycle";
 
+import { assertValidAgentAvatarUrl, normalizeAgentIconKeyForSave } from "@/lib/agents/avatar-validation";
+
 /** Columns persisted on `agents` (no legacy `instructions` column; soul is in `agent_documents`). */
 const agentsPublicColumns = {
   id: true,
@@ -20,6 +22,8 @@ const agentsPublicColumns = {
   executionAdapter: true,
   modelRouting: true,
   tier: true,
+  avatarUrl: true,
+  iconKey: true,
   reportsToAgentId: true,
   createdAt: true,
   updatedAt: true,
@@ -193,6 +197,39 @@ export async function updateAgent(
   const soulContent = soulRows[0]?.content ?? "";
 
   return { ...updated, instructions: soulContent };
+}
+
+/** Updates persisted avatar URL and/or roster icon picker key (both optional). */
+export async function updateAgentAvatar(
+  agentId: string,
+  patch: { avatarUrl?: string | null; iconKey?: string | null },
+) {
+  await assertUserOwnsAgent(agentId);
+
+  if (patch.avatarUrl === undefined && patch.iconKey === undefined) {
+    return;
+  }
+
+  const db = getDb();
+  const payload: Partial<typeof agents.$inferInsert> = {
+    updatedAt: new Date(),
+  };
+
+  if (patch.avatarUrl !== undefined) {
+    const avatarValue = patch.avatarUrl;
+    if (avatarValue === null || avatarValue.trim() === "") {
+      payload.avatarUrl = null;
+    } else {
+      assertValidAgentAvatarUrl(avatarValue);
+      payload.avatarUrl = avatarValue.trim();
+    }
+  }
+
+  if (patch.iconKey !== undefined) {
+    payload.iconKey = normalizeAgentIconKeyForSave(patch.iconKey);
+  }
+
+  await db.update(agents).set(payload).where(eq(agents.id, agentId));
 }
 
 export async function deleteAgent(agentId: string): Promise<void> {
