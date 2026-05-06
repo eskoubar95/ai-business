@@ -2,7 +2,8 @@ export type TemplateSeedErrorCode =
   | "TEMPLATE_HASH_MISMATCH"
   | "BUNDLE_SCHEMA_INVALID"
   | "SEED_REFERENCE_MISSING"
-  | "BUSINESS_NOT_FOUND";
+  | "BUSINESS_NOT_FOUND"
+  | "INSTRUCTION_FILES_MISSING";
 
 /** Structured failure when validating or applying enterprise template bundles. */
 export class TemplateSeedError extends Error {

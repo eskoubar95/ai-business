@@ -24,7 +24,7 @@ const minimalShards = {
       role_summary: "Lead",
       execution_adapter: "cursor_agent_cli" as const,
       model_routing: "cursor_managed" as const,
-      instructions_file: "lead.md",
+      instructions_path: "lead.md/",
       heartbeat_template: "ping",
       mcp_allowlist: [] as string[],
       required_gates_before_output: [] as string[],

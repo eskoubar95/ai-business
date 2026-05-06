@@ -149,6 +149,10 @@ export const agents = pgTable(
     modelRouting: modelRoutingEnum("model_routing"),
     /** 1 = lead, 2 = senior specialist, 3 = specialist (ADR tier). */
     tier: integer("tier"),
+    /** Custom avatar image URL; takes priority over icon_key in UI when set. */
+    avatarUrl: text("avatar_url"),
+    /** Platform icon slug from the picker (e.g. bot, shield). Nullable when avatar_url is used. */
+    iconKey: text("icon_key"),
     reportsToAgentId: uuid("reports_to_agent_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

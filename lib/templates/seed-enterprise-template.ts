@@ -1,6 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 
 import {
+  agentDocuments,
   agents,
   businesses,
   communicationEdges,
@@ -52,6 +53,8 @@ export async function seedEnterpriseTemplate(
         executionAdapter: agent.execution_adapter,
         modelRouting: agent.model_routing,
         tier: agent.tier,
+        avatarUrl: null,
+        iconKey: agent.icon_key ?? null,
       })),
     )
     .onConflictDoUpdate({
@@ -62,6 +65,7 @@ export async function seedEnterpriseTemplate(
         executionAdapter: sql.raw("excluded.execution_adapter"),
         modelRouting: sql.raw("excluded.model_routing"),
         tier: sql.raw("excluded.tier"),
+        iconKey: sql.raw("excluded.icon_key"),
         updatedAt: sql`now()`,
       },
     })
@@ -70,6 +74,36 @@ export async function seedEnterpriseTemplate(
   const agentIdBySlug = new Map(
     agentUpsertRows.filter((r) => r.slug).map((r) => [r.slug!, r.id]),
   );
+
+  const documentRows = bundle.shards.agents.flatMap((ag) => {
+    const aid = agentIdBySlug.get(ag.agent_slug);
+    if (!aid) {
+      throw new TemplateSeedError(
+        "SEED_REFERENCE_MISSING",
+        `Agent slug missing after upsert: ${ag.agent_slug}`,
+      );
+    }
+    return ag.agent_documents.map((doc) => ({
+      agentId: aid,
+      slug: doc.slug,
+      filename: doc.filename,
+      content: doc.content,
+    }));
+  });
+
+  if (documentRows.length > 0) {
+    await db
+      .insert(agentDocuments)
+      .values(documentRows)
+      .onConflictDoUpdate({
+        target: [agentDocuments.agentId, agentDocuments.slug],
+        set: {
+          filename: sql.raw("excluded.filename"),
+          content: sql.raw("excluded.content"),
+          updatedAt: sql`now()`,
+        },
+      });
+  }
 
   const teamValues = bundle.shards.teams.map((team) => {
     const leadId = agentIdBySlug.get(team.lead_agent_slug);

@@ -1,12 +1,9 @@
-# Agents (roster)
+# Agent helpers (`lib/agents`)
 
-Server Actions for business-scoped agents: create, update, delete, list, and `reports_to_agent_id` validation (cycle + same-business checks).
+Shared guardrails for roster UI and server actions:
 
-| File | Role |
-|------|------|
-| `actions.ts` | Neon Auth + `user_businesses` gated CRUD. |
-| `document-model.ts` | Shared slugs + row shape for `agent_documents` (no Server Actions). |
-| `document-actions.ts` | `getAgentDocuments` / `updateAgentDocument` for soul, tools, and heartbeat markdown. |
-| `reports-cycle.ts` | Shared `wouldIntroduceReportsCycle` / `validateReportsToForBusiness` (pure DB types; testable without Neon Auth). |
+- `agent-platform-icon-ids.ts` — allowlist of `icon_key` slugs used by the picker and `agents.icon_key`.
+- `avatar-validation.ts` — validates stored `avatar_url` (https or allowed `data:image/*;base64,` with size cap).
+- `avatar-upsert.ts` — pure resolver from `updateAgentAvatar` patch → validated DB columns (unit-tested).
 
-Use Server Actions from this folder only via Next’s server action wiring (`"use server"`). Do not import `getDb` or other server-only modules into Client Components.
+Server actions remain in [`actions.ts`](./actions.ts); avatar persistence uses `updateAgentAvatar`.

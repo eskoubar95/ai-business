@@ -8,6 +8,8 @@ import { and, asc, eq } from "drizzle-orm";
 
 import { validateReportsToForBusiness } from "./reports-cycle";
 
+import { resolveAvatarColumnsForUpsert } from "@/lib/agents/avatar-upsert";
+
 /** Columns persisted on `agents` (no legacy `instructions` column; soul is in `agent_documents`). */
 const agentsPublicColumns = {
   id: true,
@@ -20,6 +22,8 @@ const agentsPublicColumns = {
   executionAdapter: true,
   modelRouting: true,
   tier: true,
+  avatarUrl: true,
+  iconKey: true,
   reportsToAgentId: true,
   createdAt: true,
   updatedAt: true,
@@ -193,6 +197,29 @@ export async function updateAgent(
   const soulContent = soulRows[0]?.content ?? "";
 
   return { ...updated, instructions: soulContent };
+}
+
+/** Updates persisted avatar URL and/or roster icon picker key (both optional). */
+export async function updateAgentAvatar(
+  agentId: string,
+  patch: { avatarUrl?: string | null; iconKey?: string | null },
+) {
+  await assertUserOwnsAgent(agentId);
+
+  const resolved = resolveAvatarColumnsForUpsert(patch);
+  if (!resolved) {
+    return;
+  }
+
+  const db = getDb();
+
+  await db
+    .update(agents)
+    .set({
+      ...resolved,
+      updatedAt: new Date(),
+    })
+    .where(eq(agents.id, agentId));
 }
 
 export async function deleteAgent(agentId: string): Promise<void> {
